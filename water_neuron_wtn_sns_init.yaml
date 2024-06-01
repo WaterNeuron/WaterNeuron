@@ -1,0 +1,294 @@
+name: WaterNeuron
+
+description: |
+    WaterNeuron is a liquid staking protocol designed for the Internet Computer network. 
+    Staking ICP becomes straightforward and efficient. 
+
+    Learn more: https://docs.waterneuron.fi | https://x.com/waterneuron | https://t.me/waterneuron
+
+Principals: []
+
+logo: WTN.png
+
+url: https://forum.dfinity.org/t/introducing-waterneuron/30897
+
+NnsProposal:
+    title: "NNS Proposal to create an SNS named 'WaterNeuron'"
+
+    url: "https://forum.dfinity.org/t/introducing-waterneuron/30897"
+
+    summary: |
+        ## WaterNeuron SNS
+
+        Proposal to create an SNS for the project WaterNeuron.
+
+        100% of the ICP raised will be directed towards the 8-year neuron of the protocol.
+
+        ## SNS parameters
+
+         * WTN tokens for swap: 28 600 000 WTN
+         * WTN tokens for the team: 22 000 000 WTN
+         * ICP to raise min: 200 000 ICP
+         * ICP to raise max: 420 000 ICP
+         * Min number of tokens per contributor: 1 ICP
+         * Max number of tokens per contributor: 200 000 ICP
+         * Duration: 14 days
+
+         ## Learn more
+         
+         * https://docs.waterneuron.fi
+         * https://x.com/waterneuron
+         * https://t.me/waterneuron
+         * https://taggr.link/#/realm/WATERNEURON
+
+fallback_controller_principals: []
+
+dapp_canisters: []
+
+Token:
+    name: WaterNeuron
+
+    symbol: WTN
+
+    transaction_fee: 1_000_000 e8s
+
+    logo: WTN.png
+
+Proposals:
+    rejection_fee: 100 token
+
+    initial_voting_period: 2 days
+
+    maximum_wait_for_quiet_deadline_extension: 1 day
+
+Neurons:
+    minimum_creation_stake: 100 tokens
+
+Voting:
+    minimum_dissolve_delay: 3 months
+    MaximumVotingPowerBonuses:
+        DissolveDelay:
+            duration: 3 years
+            bonus: 50%
+        Age:
+            duration: 3 years
+            bonus: 25%
+
+    RewardRate:
+        initial: 3%
+        final: 0.24%
+        transition_duration: 1 years
+
+Distribution:
+    Neurons:
+        - principal: gsqeg-utfkx-osmyu-vphdp-3snmy-grdl4-7g7wm-hatz3-zs23g-ijrqf-2ae
+          stake: 1_500_000 tokens
+          memo: 0
+          dissolve_delay: 0 months
+          vesting_period: 1 year
+        - principal: gsqeg-utfkx-osmyu-vphdp-3snmy-grdl4-7g7wm-hatz3-zs23g-ijrqf-2ae
+          stake: 1_500_000 tokens
+          memo: 1
+          dissolve_delay: 6 months
+          vesting_period: 6 months
+        - principal: gsqeg-utfkx-osmyu-vphdp-3snmy-grdl4-7g7wm-hatz3-zs23g-ijrqf-2ae
+          stake: 1_500_000 tokens
+          memo: 2
+          dissolve_delay: 12 months
+          vesting_period: 3 months
+        - principal: gsqeg-utfkx-osmyu-vphdp-3snmy-grdl4-7g7wm-hatz3-zs23g-ijrqf-2ae
+          stake: 1_500_000 tokens
+          memo: 3
+          dissolve_delay: 18 months
+          vesting_period: 3 months
+        - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
+          stake: 1_500_000 tokens
+          memo: 0
+          dissolve_delay: 0 months
+          vesting_period: 1 year
+        - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
+          stake: 1_500_000 tokens
+          memo: 1
+          dissolve_delay: 6 months
+          vesting_period: 6 months
+        - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
+          stake: 1_500_000 tokens
+          memo: 2
+          dissolve_delay: 12 months
+          vesting_period: 3 months
+        - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
+          stake: 1_500_000 tokens
+          memo: 3
+          dissolve_delay: 18 months
+          vesting_period: 3 months
+        - principal: zig7t-6lekg-6am6v-r3xaj-wb7gg-4d7fm-w7int-ww6sq-lcimu-wouly-rae
+          stake: 1_000_000 tokens
+          memo: 0
+          dissolve_delay: 1 year
+          vesting_period: 0 year
+        - principal: tvzok-mjsfd-pqcap-agv7j-atctg-4bwha-k4z5p-f5rc4-vwxte-txuru-vae
+          stake: 400_000 tokens
+          memo: 0
+          dissolve_delay: 1 year
+          vesting_period: 0 year
+        - principal: uvmbn-bific-o5p44-rsopk-t2f7c-stqhy-uxvdb-ksz2o-g73xv-mv56r-vqe
+          stake: 100_000 tokens
+          memo: 0
+          dissolve_delay: 1 year
+          vesting_period: 0 year
+        - principal: zwmmr-fk3at-oe3ip-uuq7k-2ou5h-qoa4v-6tuhv-lzmvi-hsct2-b4al3-wqe
+          stake: 1_400_000 tokens
+          memo: 0
+          dissolve_delay: 1 year
+          vesting_period: 0 year
+        - principal: pyvyi-4ps46-l4f7i-zlyqu-h2vuc-4rycv-knjyz-aqraj-3cyqk-mr6zk-pae
+          stake: 1_500_000 tokens
+          memo: 0
+          dissolve_delay: 0 months
+          vesting_period: 1 year
+        - principal: pyvyi-4ps46-l4f7i-zlyqu-h2vuc-4rycv-knjyz-aqraj-3cyqk-mr6zk-pae
+          stake: 2_000_000 tokens
+          memo: 1
+          dissolve_delay: 6 months
+          vesting_period: 6 months
+        - principal: pyvyi-4ps46-l4f7i-zlyqu-h2vuc-4rycv-knjyz-aqraj-3cyqk-mr6zk-pae
+          stake: 2_000_000 tokens
+          memo: 2
+          dissolve_delay: 12 months
+          vesting_period: 3 months
+        - principal: pyvyi-4ps46-l4f7i-zlyqu-h2vuc-4rycv-knjyz-aqraj-3cyqk-mr6zk-pae
+          stake: 2_000_000 tokens
+          memo: 3
+          dissolve_delay: 18 months
+          vesting_period: 3 months
+
+    InitialBalances:
+        governance: 62_960_000 tokens
+        swap: 28_600_000 tokens
+    total: 113_960_000 tokens
+
+Swap:
+    minimum_participants: 100
+
+    # Minimum amount of ICP from direct participants. This amount is required for
+    # the swap to succeed. If this amount is not achieved, the swap will be
+    # aborted (instead of committed) when the due date/time occurs.
+    # Must be smaller than or equal than `maximum_direct_participation_icp`.
+    minimum_direct_participation_icp: 250_000 tokens
+
+    # Maximum amount of ICP from dire500_000 participants. If this amount is achieved,
+    # the swap will finalize immediately, without waiting for the due date/time;
+    # in this case, the swap would be committed if and only if the number of
+    # direct participants (`minimum_participants`) is reached (otherwise, it
+    # would be aborted).
+    # Must be at least `min_participants * minimum_direct_participation_icp`.
+    maximum_direct_participation_icp: 350_000 tokens
+
+    # The minimum amount of ICP that each participant must contribute
+    # to participate. This field is specified as a token. For instance,
+    # "1 token".
+    minimum_participant_icp: 10 tokens
+
+    # The maximum amount of ICP that each participant may contribute
+    # to participate. This field is specified as a token. For instance,
+    # "1 token".
+    maximum_participant_icp: 200_000 tokens
+
+    # The text that swap participants must confirm before they may participate
+    # in the swap.
+    #
+    # This field is optional. If set, must be within 1 to 1,000 characters and
+    # at most 8,000 bytes.
+    confirmation_text: >
+        I confirm my understanding of the responsibilities and risks
+        associated with participating in this token swap and that I'm
+        not resident of one of the sanctioned countries listed below.
+
+    # A list of countries from which swap participation should not be allowed.
+    #
+    # This field is optional. By default, participants from all countries
+    # are allowed.
+    #
+    # Each list element must be an ISO 3166-1 alpha-2 country code.
+    restricted_countries:
+      - AF # AFGHANISTAN
+      - BY # BELARUS
+      - BA # BOSNIA AND HERZEGOVINA
+      - BI # BURUNDI
+      - CF # CENTRAL AFRICAN REPUBLIC
+      - KP # NORTH KOREA
+      - CD # DEMOCRATIC REPUBLIC OF THE CONGO
+      - IR # IRAN
+      - IQ # IRAQ
+      - LB # LEBANON
+      - LY # LIBYA
+      - ML # MALI
+      - ME # MONTENEGRO
+      - MM # MYANMAR
+      - NI # NICARAGUA
+      - RU # RUSSIA
+      - RS # SERBIA
+      - SO # SOMALIA
+      - SD # SUDAN
+      - SY # SYRIA
+      - UA # UKRAINE
+      - VE # VENEZUELA
+      - YE # YEMEN
+      - ZW # ZIMBABWE
+
+    # Configuration of the vesting schedule of the neuron basket, i.e., the SNS
+    # neurons that a participants will receive from a successful
+    # decentralization swap.
+    VestingSchedule:
+        # The number of events in the vesting schedule. This translates to how
+        # many neurons will be in each participant's neuron basket. Note that
+        # the first neuron in each neuron basket will have zero dissolve delay.
+        # This value should thus be greater than or equal to `2`.
+        events: 5
+
+        # The interval at which the schedule will be increased per event. The
+        # first neuron in the basket will be unlocked with zero dissolve delay.
+        # Each other neuron in the schedule will have its dissolve delay
+        # increased by `interval` compared to the previous one. For example,
+        # if `events` is set to `3` and `interval` is `1 month`, then each
+        # participant's neuron basket will have three neurons (with equal stake)
+        # with dissolve delays zero, 1 month, and 2 months. Note that the notion
+        # of `Distribution.neurons.vesting_period` applies only to developer
+        # neurons. While neuron basket neurons do not use `vesting_period`, they
+        # have a vesting schedule. This field is specified as a duration. For
+        # example: "1 month".
+        interval: 6 months
+
+    # Absolute time of day when the decentralization swap is supposed to start.
+    #
+    # An algorithm will be applied to allow at least 24 hours between the time
+    # of execution of the CreateServiceNervousSystem proposal and swap start.
+    # For example, if start_time is 23:30 UTC and the proposal is adopted and
+    # executed at 23:20 UTC, then the swap start will be at 23:30 UTC the next
+    # day (i.e., in 24 hours and 10 min from the proposal execution time).
+    #
+    # WARNING: Swap start_time works differently on mainnet and in testing.
+    #
+    # On mainnet:
+    # - Setting start_time to some value (e.g., 23:30 UTC) will allow the swap
+    #   participants to be prepared for the swap in advance, e.g.,
+    #   by obtaining ICPs that they would like to participate with.
+    # - If start_time is not specified, the actual start time of the swap will
+    #   be chosen at random (allowing at least 24 hours and less than 48 hours,
+    #   as described above).
+    #
+    # In testing:
+    # - Setting start_time to some value works the same as explained above.
+    # - If start_time is not specified, the swap will begin immediately after
+    #   the CreateServiceNervousSystem proposal is executed. This facilitates
+    #   testing in an accelerated manner.
+    #
+    start_time: 16:00UTC   # Intentionally commented out for testing.
+
+    # The duration of the decentralization swap. When `start_time` is calculated
+    # during CreateServiceNervousSystem proposal execution, this `duration` will
+    # be added to that absolute time and set as the swap's deadline.
+    duration: 14 days
+
+    # Whether Neurons' Fund participation is requested.
+    neurons_fund_participation: true
