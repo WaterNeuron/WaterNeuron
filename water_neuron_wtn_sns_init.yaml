@@ -176,7 +176,7 @@ Swap:
     # Must be smaller than or equal than `maximum_direct_participation_icp`.
     minimum_direct_participation_icp: 250_000 tokens
 
-    # Maximum amount of ICP from dire500_000 participants. If this amount is achieved,
+    # Maximum amount of ICP from direct participants. If this amount is achieved,
     # the swap will finalize immediately, without waiting for the due date/time;
     # in this case, the swap would be committed if and only if the number of
     # direct participants (`minimum_participants`) is reached (otherwise, it
