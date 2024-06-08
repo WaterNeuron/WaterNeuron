@@ -27,10 +27,10 @@ NnsProposal:
         ## SNS parameters
 
          * WTN tokens for swap: 28 600 000 WTN
-         * WTN tokens for the team: 22 000 000 WTN
-         * ICP to raise min: 200 000 ICP
-         * ICP to raise max: 420 000 ICP
-         * Min number of tokens per contributor: 1 ICP
+         * WTN tokens for the team: 22 400 000 WTN
+         * ICP to raise min: 250 000 ICP
+         * ICP to raise max: 420 000 ICP (Including Neuron Fund)
+         * Min number of tokens per contributor: 10 ICP
          * Max number of tokens per contributor: 200 000 ICP
          * Duration: 14 days
 
