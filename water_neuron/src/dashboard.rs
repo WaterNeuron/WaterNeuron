@@ -1,0 +1,402 @@
+use crate::read_state;
+use crate::state::{ICP_LEDGER_ID, NNS_GOVERNANCE_ID};
+use candid::Principal;
+use std::fmt;
+use std::io::Write;
+
+pub fn build_dashboard() -> Vec<u8> {
+    format!(
+        "
+    <!DOCTYPE html>
+    <html lang=\"en\">
+        <head>
+            <title>WaterNeuron Dashboard</title>
+            <style>
+                body {{
+                    font-family: monospace;
+                }}
+                table {{
+                    border: solid;
+                    text-align: left;
+                    width: 100%;
+                    border-width: thin;
+                }}
+                h3 {{
+                    font-variant: small-caps;
+                    margin-top: 30px;
+                    margin-bottom: 5px;
+                }}
+                table table {{ font-size: small; }}
+                .background {{ margin: 0; padding: 0; }}
+                .content {{ max-width: 100vw; width: fit-content; margin: 0 auto; }}
+                tbody tr:nth-child(odd) {{ background-color: #eeeeee; }}
+            </style>
+            <script>
+                document.addEventListener(\"DOMContentLoaded\", function() {{
+                    var tds = document.querySelectorAll(\".ts-class\");
+                    for (var i = 0; i < tds.length; i++) {{
+                    var td = tds[i];
+                    var timestamp = td.textContent / 1000000;
+                    var date = new Date(timestamp);
+                    var options = {{
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        second: 'numeric'
+                    }};
+                    td.title = td.textContent;
+                    td.textContent = date.toLocaleString(undefined, options);
+                    }}
+                }});
+            </script>
+        </head>
+        <body>
+            <div class=\"background content\">
+                <div>
+                    <h3>Metadata</h3>
+                    {}
+                </div>
+            </div>
+            <div>
+                <h3>Withdrawal Requests</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Withdrawal Id</th>
+                            <th>Received at</th>
+                            <th>Receiver</th>
+                            <th>nICP Burned Amount</th>
+                            <th>nICP Burn Index</th>
+                            <th>ICP Due Amount</th>
+                            <th>Status</th>
+                            <th>Neuron ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {}
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <h3>Deposits History</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Transfer Id</th>
+                            <th>Receiver</th>
+                            <th>Amount (nICP)</th>
+                            <th>Block Index</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {}
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <h3>Maturity Neuron Spawned</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Neuron Id</th>
+                            <th>Block Index</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {}
+                    </tbody>
+                </table>
+            </div>
+            {}
+            <div>
+                <h3>Tasks</h3>
+                <ul>{}</ul>
+            </div>
+        </div>
+    </body>
+</html>
+    ",
+        construct_metadata_table(),
+        construct_withdrawal_table(),
+        construct_deposit_table(),
+        construct_maturity_neuron_table(),
+        get_pending_transfer_table(),
+        dispaly_tasks(),
+    )
+    .into_bytes()
+}
+
+fn with_utf8_buffer(f: impl FnOnce(&mut Vec<u8>)) -> String {
+    let mut buf = Vec::new();
+    f(&mut buf);
+    String::from_utf8(buf).unwrap()
+}
+
+fn construct_maturity_neuron_table() -> String {
+    with_utf8_buffer(|buf| {
+        read_state(|s| {
+            for (neuron_id, block_index) in s.maturity_neuron_to_block_indicies.iter() {
+                write!(
+                    buf,
+                    "<tr><td><a href=\"{}\" target=\"_blank\">{}</a></td><td>{}</td></tr>",
+                    neuron_id.to_dashboard_link(),
+                    neuron_id.id,
+                    block_index
+                )
+                .unwrap();
+            }
+        });
+    })
+}
+
+fn construct_metadata_table() -> String {
+    read_state(|s| {
+        format!(
+            "<table>
+                <tbody>
+                    <tr>
+                        <th>ICP Ledger Principal</th>
+                        <td>{}</td>
+                    </tr>
+                    <tr>
+                        <th>nICP Ledger Principal</th>
+                        <td>{}</td>
+                    </tr>
+                    <tr>
+                        <th>NNS Governance Principal</th>
+                        <td>{}</td>
+                    </tr>
+                    <tr>
+                        <th>SNS Governance Principal</th>
+                        <td>{}</td>
+                    </tr>
+                    <tr>
+                        <th>WTN Ledger Principal</th>
+                        <td>{}</td>
+                    </tr>
+                    <tr>
+                        <th>6-month nICP Neuron</th>
+                        <td>{} {} ICP</td>
+                    </tr>
+                    <tr>
+                        <th>8-year SNS Neuron</th>
+                        <td>{} {} ICP</td>
+                    </tr>
+                    <tr>
+                        <th>nICP Circulating</th>
+                        <td>{} nICP</td>
+                    </tr>
+                    <tr>
+                        <th>Stakers Count</th>
+                        <td>{}</td>
+                    </tr>
+                    <tr>
+                        <th>Exchange Rate</th>
+                        <td>{}</td>
+                    </tr>
+                </tbody>
+            </table>",
+            link_to_dashboard(ICP_LEDGER_ID),
+            link_to_dashboard(s.nicp_ledger_id),
+            link_to_dashboard(NNS_GOVERNANCE_ID),
+            s.sns_governance_id
+                .map(link_to_dashboard)
+                .unwrap_or("Not set".to_string()),
+            s.wtn_ledger_id
+                .map(link_to_dashboard)
+                .unwrap_or("Not set".to_string()),
+            s.neuron_id_6m
+                .map(|n| format!(
+                    "<a href=\"{}\" target=\"_blank\">{}</a>",
+                    n.to_dashboard_link(),
+                    n.id
+                ))
+                .unwrap_or_else(|| "Neuron Not Set".to_string()),
+            s.main_neuron_6m_staked,
+            s.neuron_id_8y
+                .map(|n| format!(
+                    "<a href=\"{}\" target=\"_blank\">{}</a>",
+                    n.to_dashboard_link(),
+                    n.id
+                ))
+                .unwrap_or_else(|| "Neuron Not Set".to_string()),
+            s.main_neuron_8y_stake,
+            s.total_circulating_nicp,
+            s.principal_to_deposit.keys().len(),
+            s.get_icp_to_ncip_exchange_rate_e8s()
+        )
+    })
+}
+
+fn link_to_dashboard(principal: Principal) -> String {
+    format!("<a href=\"https://dashboard.internetcomputer.org/canister/{principal}\" target=\"_blank\">{principal}</a>")
+}
+
+fn construct_withdrawal_table() -> String {
+    with_utf8_buffer(|buf| {
+        read_state(|s| {
+            for req in s.withdrawal_id_to_request.values() {
+                write!(
+                    buf,
+                    "<tr><td>{}</td><td class=\"ts-class\">{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+                    req.withdrawal_id,
+                    req.timestamp,
+                    req.receiver,
+                    req.nicp_burned,
+                    req.nicp_burn_index,
+                    req.icp_due,
+                    s.get_withdrawal_status(req.withdrawal_id),
+                    req.neuron_id
+                        .map(|n| format!(
+                            "<a href=\"{}\" target=\"_blank\">{}</a>",
+                            n.to_dashboard_link(),
+                            n.id
+                        ))
+                        .unwrap_or_else(|| "Neuron Not Set".to_string())
+                )
+                .unwrap();
+            }
+        });
+    })
+}
+
+fn construct_deposit_table() -> String {
+    with_utf8_buffer(|buf| {
+        read_state(|s| {
+            for (principal, transfer_ids) in s.principal_to_deposit.iter() {
+                for transfer_id in transfer_ids {
+                    if let Some(deposit) = s.transfer_executed.get(transfer_id) {
+                        write!(
+                            buf,
+                            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{:?}</td></tr>",
+                            deposit.transfer.transfer_id,
+                            principal,
+                            DisplayAmount(deposit.transfer.amount),
+                            deposit.block_index
+                        )
+                        .unwrap();
+                    }
+                }
+            }
+        });
+    })
+}
+
+fn get_pending_transfer_table() -> String {
+    with_utf8_buffer(|buf| {
+        read_state(|s| {
+            if !s.pending_transfers.is_empty() {
+                write!(
+                    buf,
+                    "
+                    <div>
+                    <h3>Pending Transfers</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Transfer Id</th>
+                                <th>Receiver</th>
+                                <th>Amount</th>
+                                <th>Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {}
+                        </tbody>
+                    </table>
+                </div>
+                ",
+                    construct_pending_transfer_table()
+                )
+                .unwrap();
+            }
+        });
+    })
+}
+
+fn construct_pending_transfer_table() -> String {
+    with_utf8_buffer(|buf| {
+        read_state(|s| {
+            for transfer in s.pending_transfers.values() {
+                write!(
+                    buf,
+                    "
+                <tr>
+                    <td>{}</td>
+                    <td>{}</td>
+                    <td>{}</td>
+                    <td>{}</td>
+                </tr>
+                ",
+                    transfer.transfer_id,
+                    transfer.receiver,
+                    DisplayAmount(transfer.amount),
+                    transfer.unit,
+                )
+                .unwrap();
+            }
+            write!(
+                buf,
+                "<tr><td colspan='3' style='text-align: right;'><b>Pending Transfers Count</b></td><td>{}</td></tr>",
+                s.pending_transfers.len()
+            )
+            .unwrap();
+        });
+    })
+}
+
+fn dispaly_tasks() -> String {
+    with_utf8_buffer(|buf| {
+        let tasks = crate::tasks::get_task_queue();
+        for task in tasks {
+            write!(
+                buf,
+                "<li style=\"display: flex; flex-direction: row; align-items: center; gap: 1em;\">{:?} at <p class=\"ts-class\">{}</p></li>",
+                task.task_type, task.execute_at
+            )
+            .unwrap()
+        }
+    })
+}
+
+pub struct DisplayAmount(pub u64);
+
+impl fmt::Display for DisplayAmount {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        const E8S: u64 = 100_000_000;
+        let int = self.0 / E8S;
+        let frac = self.0 % E8S;
+
+        if frac > 0 {
+            let frac_width: usize = {
+                // Count decimal digits in the fraction part.
+                let mut d = 0;
+                let mut x = frac;
+                while x > 0 {
+                    d += 1;
+                    x /= 10;
+                }
+                d
+            };
+            debug_assert!(frac_width <= 8);
+            let frac_prefix: u64 = {
+                // The fraction part without trailing zeros.
+                let mut f = frac;
+                while f % 10 == 0 {
+                    f /= 10
+                }
+                f
+            };
+
+            write!(fmt, "{}.", int)?;
+            for _ in 0..(8 - frac_width) {
+                write!(fmt, "0")?;
+            }
+            write!(fmt, "{}", frac_prefix)
+        } else {
+            write!(fmt, "{}.0", int)
+        }
+    }
+}

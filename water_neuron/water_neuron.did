@@ -1,0 +1,153 @@
+type Account = record { owner : principal; subaccount : opt blob };
+type CanisterInfo = record {
+  neuron_6m_account : Account;
+  neuron_id_6m : opt NeuronId;
+  neuron_id_8y : opt NeuronId;
+  tracked_6m_stake : nat64;
+  minimum_withdraw_amount : nat64;
+  neuron_8y_stake_e8s : nat64;
+  neuron_8y_account : Account;
+  minimum_deposit_amount : nat64;
+  neuron_6m_stake_e8s : nat64;
+  exchange_rate : nat64;
+  nicp_supply : nat64;
+  total_icp_deposited : nat64;
+  stakers_count : nat64;
+};
+type ConversionArg = record { maybe_subaccount : opt blob; amount_e8s : nat64 };
+type ConversionError = variant {
+  GenericError : record { code : int32; message : text };
+  TransferError : TransferError;
+  AmountTooLow : record { minimum_amount_e8s : nat64 };
+  TransferFromError : TransferFromError;
+  GuardError : record { guard_error : GuardError };
+};
+type DepositSuccess = record { block_index : nat; transfer_id : nat64 };
+type Event = record { timestamp : nat64; payload : EventType };
+type EventType = variant {
+  ClaimedAirdrop : record { block_index : nat64; caller : principal };
+  StartedToDissolve : record { withdrawal_id : nat64 };
+  MaturityNeuron : record {
+    from_neuron_type : NeuronOrigin;
+    neuron_id : NeuronId;
+  };
+  NeuronSixMonths : NeuronId;
+  Upgrade : UpgradeArg;
+  Init : InitArg;
+  MirroredProposal : record {
+    nns_proposal_id : NeuronId;
+    sns_proposal_id : NeuronId;
+  };
+  NeuronEightYears : NeuronId;
+  DistributeICPtoSNS : record { amount : nat64; receiver : principal };
+  NIcpWithdrawal : record {
+    nicp_burned : nat64;
+    nicp_burn_index : nat64;
+    receiver : Account;
+  };
+  IcpDeposit : record {
+    block_index : nat64;
+    amount : nat64;
+    receiver : Account;
+  };
+  DisbursedUserNeuron : record {
+    withdrawal_id : nat64;
+    transfer_block_height : nat64;
+  };
+  TransferExecuted : record { block_index : opt nat64; transfer_id : nat64 };
+  DisbursedMaturityNeuron : record {
+    transfer_block_height : nat64;
+    neuron_id : NeuronId;
+  };
+  DispatchICPRewards : record {
+    nicp_amount : nat64;
+    sns_gov_amount : nat64;
+    from_neuron_type : NeuronOrigin;
+  };
+  SplitNeuron : record { withdrawal_id : nat64; neuron_id : NeuronId };
+};
+type ExecutedTransfer = record {
+  block_index : opt nat64;
+  timestamp : nat64;
+  transfer : PendingTransfer;
+};
+type GetEventsArg = record { start : nat64; length : nat64 };
+type GetEventsResult = record { total_event_count : nat64; events : vec Event };
+type GuardError = variant { AlreadyProcessing; TooManyConcurrentRequests };
+type InitArg = record { nicp_ledger_id : principal };
+type LiquidArg = variant { Upgrade : opt UpgradeArg; Init : InitArg };
+type NeuronId = record { id : nat64 };
+type NeuronOrigin = variant { NICPSixMonths; SnsGovernanceEightYears };
+type PendingTransfer = record {
+  memo : opt nat64;
+  unit : Unit;
+  from_subaccount : opt blob;
+  transfer_id : nat64;
+  amount : nat64;
+  receiver : Account;
+};
+type Result = variant { Ok : nat64; Err : ConversionError };
+type Result_1 = variant { Ok : DepositSuccess; Err : ConversionError };
+type Result_2 = variant { Ok : WithdrawalSuccess; Err : ConversionError };
+type TransferError = variant {
+  GenericError : record { message : text; error_code : nat };
+  TemporarilyUnavailable;
+  BadBurn : record { min_burn_amount : nat };
+  Duplicate : record { duplicate_of : nat };
+  BadFee : record { expected_fee : nat };
+  CreatedInFuture : record { ledger_time : nat64 };
+  TooOld;
+  InsufficientFunds : record { balance : nat };
+};
+type TransferFromError = variant {
+  GenericError : record { message : text; error_code : nat };
+  TemporarilyUnavailable;
+  InsufficientAllowance : record { allowance : nat };
+  BadBurn : record { min_burn_amount : nat };
+  Duplicate : record { duplicate_of : nat };
+  BadFee : record { expected_fee : nat };
+  CreatedInFuture : record { ledger_time : nat64 };
+  TooOld;
+  InsufficientFunds : record { balance : nat };
+};
+type TransferStatus = variant {
+  Executed : ExecutedTransfer;
+  Unknown;
+  Pending : PendingTransfer;
+};
+type Unit = variant { ICP; WTN; NICP };
+type UpgradeArg = record {
+  wtn_ledger_id : opt principal;
+  sns_governance_id : opt principal;
+};
+type WithdrawalDetails = record {
+  status : WithdrawalStatus;
+  request : WithdrawalRequest;
+};
+type WithdrawalRequest = record {
+  nicp_burned : nat64;
+  withdrawal_id : nat64;
+  icp_due : nat64;
+  nicp_burn_index : nat64;
+  timestamp : nat64;
+  receiver : Account;
+  neuron_id : opt NeuronId;
+};
+type WithdrawalStatus = variant {
+  ConversionDone : record { transfer_block_height : nat64 };
+  NotFound;
+  WaitingToSplitNeuron;
+  WaitingDissolvement : record { neuron_id : NeuronId };
+  WaitingToStartDissolving : record { neuron_id : NeuronId };
+};
+type WithdrawalSuccess = record { block_index : nat; withdrawal_id : nat64 };
+service : (LiquidArg) -> {
+  claim_airdrop : () -> (Result);
+  get_airdrop_allocation : () -> (nat64) query;
+  get_events : (GetEventsArg) -> (GetEventsResult) query;
+  get_info : () -> (CanisterInfo) query;
+  get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
+  get_withdrawal_requests : (opt principal) -> (vec WithdrawalDetails) query;
+  icp_to_nicp : (ConversionArg) -> (Result_1);
+  nicp_to_icp : (ConversionArg) -> (Result_2);
+}
