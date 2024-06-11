@@ -28,8 +28,8 @@ NnsProposal:
 
          * WTN tokens for swap: 28 600 000 WTN
          * WTN tokens for the team: 22 400 000 WTN
-         * ICP to raise min: 250 000 ICP
-         * ICP to raise max: 420 000 ICP (Including Neuron Fund)
+         * ICP to raise min: 200 000 ICP
+         * ICP to raise max: 350 000 ICP (Without NF)
          * Min number of tokens per contributor: 10 ICP
          * Max number of tokens per contributor: 200 000 ICP
          * Duration: 14 days
@@ -85,42 +85,42 @@ Distribution:
           stake: 1_500_000 tokens
           memo: 0
           dissolve_delay: 0 months
-          vesting_period: 1 year
+          vesting_period: 2 year
         - principal: gsqeg-utfkx-osmyu-vphdp-3snmy-grdl4-7g7wm-hatz3-zs23g-ijrqf-2ae
           stake: 1_500_000 tokens
           memo: 1
           dissolve_delay: 6 months
-          vesting_period: 6 months
+          vesting_period: 12 months
         - principal: gsqeg-utfkx-osmyu-vphdp-3snmy-grdl4-7g7wm-hatz3-zs23g-ijrqf-2ae
           stake: 1_500_000 tokens
           memo: 2
           dissolve_delay: 12 months
-          vesting_period: 3 months
+          vesting_period: 6 months
         - principal: gsqeg-utfkx-osmyu-vphdp-3snmy-grdl4-7g7wm-hatz3-zs23g-ijrqf-2ae
           stake: 1_500_000 tokens
           memo: 3
-          dissolve_delay: 18 months
-          vesting_period: 3 months
+          dissolve_delay: 36 months
+          vesting_period: 0 months
         - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
           stake: 1_500_000 tokens
           memo: 0
           dissolve_delay: 0 months
-          vesting_period: 1 year
+          vesting_period: 2 year
         - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
           stake: 1_500_000 tokens
           memo: 1
           dissolve_delay: 6 months
-          vesting_period: 6 months
+          vesting_period: 12 months
         - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
           stake: 1_500_000 tokens
           memo: 2
           dissolve_delay: 12 months
-          vesting_period: 3 months
+          vesting_period: 6 months
         - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
           stake: 1_500_000 tokens
           memo: 3
-          dissolve_delay: 18 months
-          vesting_period: 3 months
+          dissolve_delay: 36 months
+          vesting_period: 0 months
         - principal: zig7t-6lekg-6am6v-r3xaj-wb7gg-4d7fm-w7int-ww6sq-lcimu-wouly-rae
           stake: 1_000_000 tokens
           memo: 0
@@ -145,27 +145,26 @@ Distribution:
           stake: 1_500_000 tokens
           memo: 0
           dissolve_delay: 0 months
-          vesting_period: 1 year
+          vesting_period: 2 year
         - principal: pyvyi-4ps46-l4f7i-zlyqu-h2vuc-4rycv-knjyz-aqraj-3cyqk-mr6zk-pae
           stake: 2_000_000 tokens
           memo: 1
           dissolve_delay: 6 months
-          vesting_period: 6 months
+          vesting_period: 12 months
         - principal: pyvyi-4ps46-l4f7i-zlyqu-h2vuc-4rycv-knjyz-aqraj-3cyqk-mr6zk-pae
           stake: 2_000_000 tokens
           memo: 2
           dissolve_delay: 12 months
-          vesting_period: 3 months
+          vesting_period: 6 months
         - principal: pyvyi-4ps46-l4f7i-zlyqu-h2vuc-4rycv-knjyz-aqraj-3cyqk-mr6zk-pae
           stake: 2_000_000 tokens
           memo: 3
-          dissolve_delay: 18 months
-          vesting_period: 3 months
-
+          dissolve_delay: 36 months
+          vesting_period: 0 months
     InitialBalances:
-        governance: 62_960_000 tokens
+        governance: 64_960_000 tokens
         swap: 28_600_000 tokens
-    total: 113_960_000 tokens
+    total: 115_960_000 tokens
 
 Swap:
     minimum_participants: 100
@@ -174,7 +173,7 @@ Swap:
     # the swap to succeed. If this amount is not achieved, the swap will be
     # aborted (instead of committed) when the due date/time occurs.
     # Must be smaller than or equal than `maximum_direct_participation_icp`.
-    minimum_direct_participation_icp: 250_000 tokens
+    minimum_direct_participation_icp: 200_000 tokens
 
     # Maximum amount of ICP from direct participants. If this amount is achieved,
     # the swap will finalize immediately, without waiting for the due date/time;
