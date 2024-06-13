@@ -57,7 +57,7 @@ Token:
 Proposals:
     rejection_fee: 100 token
 
-    initial_voting_period: 2 days
+    initial_voting_period: 4 days
 
     maximum_wait_for_quiet_deadline_extension: 1 day
 
