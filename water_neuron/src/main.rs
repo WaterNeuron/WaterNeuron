@@ -1,12 +1,14 @@
-use candid::Nat;
-use candid::Principal;
+use candid::{Nat, Principal};
 use ic_canister_log::log;
 use ic_canisters_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_cdk_macros::{init, post_upgrade, query, update};
 use ic_metrics_encoder::MetricsEncoder;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
+use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
 use water_neuron::logs::INFO;
+use water_neuron::management::register_vote;
+use water_neuron::nns_types::{GovernanceError, ManageNeuronResponse, Neuron, ProposalId};
 use water_neuron::numeric::{ICP, WTN};
 use water_neuron::sns_distribution::compute_rewards;
 use water_neuron::state::audit::{process_event, replay_events};
@@ -33,7 +35,7 @@ fn init(args: LiquidArg) {
     match args {
         LiquidArg::Init(arg) => {
             water_neuron::storage::record_event(EventType::Init(arg.clone()), ts);
-            replace_state(State::from_init_args(arg, ts));
+            replace_state(State::from_init_args(arg));
         }
         LiquidArg::Upgrade(_) => ic_cdk::trap("expected init args, got upgrade"),
     }
@@ -102,6 +104,14 @@ fn check_postcondition<T>(t: T) -> T {
     t
 }
 
+#[export_name = "canister_global_timer"]
+fn timer() {
+    #[cfg(feature = "self_check")]
+    ok_or_die(check_invariants());
+
+    water_neuron::timer();
+}
+
 #[query]
 fn get_events(args: GetEventsArg) -> GetEventsResult {
     const MAX_EVENTS_PER_QUERY: u64 = 2_000;
@@ -121,6 +131,62 @@ fn get_airdrop_allocation() -> WTN {
     reject_anonymous_call();
 
     read_state(|s| *s.airdrop.get(&ic_cdk::caller()).unwrap_or(&WTN::ZERO))
+}
+
+#[query]
+fn get_wtn_proposal_id(nns_proposal_id: u64) -> Option<u64> {
+    read_state(|s| {
+        s.proposals
+            .get(&ProposalId {
+                id: nns_proposal_id,
+            })
+            .map(|p| p.id)
+    })
+}
+
+#[update(hidden = true)]
+async fn get_full_neuron(neuron_id: u64) -> Result<Result<Neuron, GovernanceError>, String> {
+    assert_eq!(
+        ic_cdk::caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+
+    water_neuron::management::get_full_neuron(neuron_id).await
+}
+
+#[update(hidden = true)]
+async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
+    assert_eq!(ic_cdk::caller(), read_state(|s| s.wtn_governance_id));
+
+    let neuron_6m = match read_state(|s| s.neuron_id_6m) {
+        Some(neuron_6m_id) => neuron_6m_id,
+        None => return Err("6 months neuron not set".to_string()),
+    };
+
+    match register_vote(neuron_6m, ProposalId { id }, true).await {
+        Ok(response) => {
+            log!(
+                INFO,
+                "[approve_proposal] Successfully approved proposal {id} with response {response:?}"
+            );
+            Ok(response)
+        }
+
+        Err(error) => {
+            log!(
+                INFO,
+                "[approve_proposal] Failed to approve proposal {id} with error: {error}"
+            );
+            Err(error)
+        }
+    }
+}
+
+#[update(hidden = true)]
+async fn approve_proposal_validate(id: u64) -> Result<String, String> {
+    assert_eq!(ic_cdk::caller(), read_state(|s| s.wtn_governance_id));
+
+    Ok(format!("{id}"))
 }
 
 #[update]
@@ -146,11 +212,13 @@ async fn claim_airdrop() -> Result<u64, ConversionError> {
         });
     }
 
-    let wtn_ledger = read_state(|s| s.wtn_ledger_id.expect("WTN ledger not set"));
+    let wtn_ledger = read_state(|s| s.wtn_ledger_id);
+
+    let allocation_minus_fee = allocation.0.checked_sub(Unit::WTN.fee()).unwrap();
 
     match water_neuron::management::transfer(
         caller,
-        Nat::from(allocation.0.checked_sub(Unit::WTN.fee()).unwrap()),
+        Nat::from(allocation_minus_fee),
         Some(Nat::from(Unit::WTN.fee())),
         None,
         wtn_ledger,
@@ -159,6 +227,11 @@ async fn claim_airdrop() -> Result<u64, ConversionError> {
     .await
     {
         Ok(block_index) => {
+            log!(
+                INFO,
+                "[claim_airdrop] {caller} claimed {} WTN at block {block_index}",
+                DisplayAmount(allocation_minus_fee)
+            );
             mutate_state(|s| {
                 process_event(
                     s,
@@ -190,6 +263,7 @@ fn get_info() -> CanisterInfo {
         nicp_supply: s.total_circulating_nicp,
         minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
         minimum_withdraw_amount: MINIMUM_WITHDRAWAL_AMOUNT,
+        governance_fee_share_e8s: s.governance_fee_share_e8s,
     })
 }
 
@@ -229,11 +303,10 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 
 #[query(hidden = true)]
 fn http_request(req: HttpRequest) -> HttpResponse {
-    if ic_cdk::api::data_certificate().is_none() {
-        ic_cdk::trap("update call rejected");
-    }
-
     if req.path() == "/dashboard" {
+        if ic_cdk::api::data_certificate().is_none() {
+            ic_cdk::trap("update call rejected");
+        };
         use water_neuron::dashboard::build_dashboard;
 
         let dashboard = build_dashboard();
@@ -264,19 +337,14 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                     "Stakers count",
                 )?;
                 w.encode_gauge(
-                    "neuron_6m_stake",
+                    "neuron_6m_fetched_stake",
                     s.main_neuron_6m_staked.0 as f64,
                     "6 months neuron fetched stake",
                 )?;
                 w.encode_gauge(
-                    "neuron_6m_stake",
+                    "neuron_6m_tracked_stake",
                     s.tracked_6m_stake.0 as f64,
                     "6 months neuron tracked stake",
-                )?;
-                w.encode_gauge(
-                    "nicp_supply",
-                    s.total_circulating_nicp.0 as f64,
-                    "nICP total supply.",
                 )?;
                 w.encode_gauge(
                     "neuron_8y_stake",
@@ -293,13 +361,47 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                     s.total_icp_deposited.0 as f64,
                     "Total ICP deposited.",
                 )?;
-                w.encode_gauge("transfer_id", s.transfer_id as f64, "Transfer Id.")?;
-                w.encode_gauge("withdrawal_id", s.withdrawal_id as f64, "Withdrawal Id.")?;
+                w.encode_gauge(
+                    "next_transfer_id",
+                    s.transfer_id as f64,
+                    "Next transfer Id.",
+                )?;
+                w.encode_gauge(
+                    "next_withdrawal_id",
+                    s.withdrawal_id as f64,
+                    "Next withdrawal Id.",
+                )?;
                 w.encode_gauge("guards", s.principal_guards.len() as f64, "Guard.")?;
                 w.encode_gauge(
                     "exchange_rate",
                     s.get_icp_to_ncip_exchange_rate_e8s() as f64,
                     "Exchange Rate.",
+                )?;
+                w.encode_gauge(
+                    "nns_proposals_mirrored_count",
+                    s.proposals.len() as f64,
+                    "Count of NNS proposals mirrored.",
+                )?;
+                w.encode_gauge(
+                    "airdrop_participants_count",
+                    s.airdrop.len() as f64,
+                    "Count of airdrop participants.",
+                )?;
+                w.encode_gauge(
+                    "airdrop_wtn_allocated",
+                    s.airdrop.values().map(|v| v.0).sum::<u64>() as f64,
+                    "Amount of WTN allocated.",
+                )?;
+                w.encode_gauge(
+                    "in_flight_neurons",
+                    (s.withdrawal_to_start_dissolving.len() + s.withdrawal_to_disburse.len())
+                        as f64,
+                    "Count of in-flight neurons.",
+                )?;
+                w.encode_gauge(
+                    "finalized_withdrawals",
+                    s.withdrawal_finalized.len() as f64,
+                    "Count of finalized withdrawals requests.",
                 )?;
 
                 Ok(())
@@ -321,7 +423,33 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                 .build();
             }
         }
+    } else if req.path() == "api/metadata" {
+        use serde_json;
+
+        let bytes: Vec<u8> = serde_json::to_string(&read_state(|s| CanisterInfo {
+            neuron_id_6m: s.neuron_id_6m,
+            neuron_6m_stake_e8s: s.main_neuron_6m_staked,
+            tracked_6m_stake: s.tracked_6m_stake,
+            neuron_6m_account: s.get_6m_neuron_account(),
+            neuron_id_8y: s.neuron_id_8y,
+            neuron_8y_stake_e8s: s.main_neuron_8y_stake,
+            neuron_8y_account: s.get_8y_neuron_account(),
+            exchange_rate: s.get_icp_to_ncip_exchange_rate_e8s(),
+            stakers_count: s.principal_to_deposit.keys().len(),
+            total_icp_deposited: s.total_icp_deposited,
+            nicp_supply: s.total_circulating_nicp,
+            minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
+            minimum_withdraw_amount: MINIMUM_WITHDRAWAL_AMOUNT,
+            governance_fee_share_e8s: s.governance_fee_share_e8s,
+        }))
+        .unwrap_or_default()
+        .into_bytes();
+        return HttpResponseBuilder::ok()
+            .header("Content-Type", "application/json; charset=utf-8")
+            .with_body_and_content_length(bytes)
+            .build();
     }
+
     use std::str::FromStr;
     use water_neuron::logs::{Log, Priority, Sort};
 

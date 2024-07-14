@@ -75,3 +75,33 @@ impl Drop for TaskGuard {
         });
     }
 }
+
+#[test]
+fn should_accept_and_reject_duplicate_task() {
+    use crate::state::replace_state;
+    use crate::state::test::default_state;
+
+    let state = default_state();
+    replace_state(state);
+
+    let task_type = TaskType::VoteOnProposal { id: 2, vote: true };
+    let _guard = match TaskGuard::new(task_type) {
+        Ok(guard) => guard,
+        Err(_) => {
+            panic!();
+        }
+    };
+
+    let _guard = match TaskGuard::new(task_type) {
+        Ok(_guard) => panic!(),
+        Err(_) => {}
+    };
+
+    let task_type = TaskType::VoteOnProposal { id: 3, vote: true };
+    let _guard = match TaskGuard::new(task_type) {
+        Ok(guard) => guard,
+        Err(_) => {
+            panic!();
+        }
+    };
+}

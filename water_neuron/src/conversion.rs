@@ -58,7 +58,7 @@ pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, Conver
             Ok(block_index) => {
                 log!(
                     INFO,
-                    "[nicp_to_icp] Converted {} NICP for {} ICP by {}",
+                    "[nicp_to_icp] Converted {} nICP for {} ICP by {}",
                     nicp_amount,
                     read_state(|s| s.convert_nicp_to_icp(nicp_amount)),
                     receiver
@@ -111,8 +111,6 @@ pub async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, Conversio
         subaccount: maybe_subaccount,
     };
 
-    let nicp_received = read_state(|s| s.convert_icp_to_nicp(amount));
-
     match client
         .transfer_from(TransferFromArgs {
             spender_subaccount: None,
@@ -129,9 +127,9 @@ pub async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, Conversio
             Ok(block_index) => {
                 log!(
                     INFO,
-                    "[icp_to_nicp] Converted {} ICP for {} NICP by {}",
+                    "[icp_to_nicp] Converted {} ICP for {} nICP by {}",
                     amount,
-                    nicp_received,
+                    read_state(|s| s.convert_icp_to_nicp(amount)),
                     receiver
                 );
                 schedule_now(TaskType::ProcessPendingTransfers);

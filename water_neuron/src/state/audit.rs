@@ -2,7 +2,7 @@ pub use super::event::{Event, EventType};
 use super::State;
 use crate::state::SNS_GOVERNANCE_SUBACCOUNT;
 use crate::storage::{record_event, with_event_iter};
-use crate::{timestamp_nanos, DEFAULT_LEDGER_FEE, ICP, INITIAL_NEURON_STAKE, ONE_WEEK_NANOS};
+use crate::{nICP, timestamp_nanos, DEFAULT_LEDGER_FEE, ICP, INITIAL_NEURON_STAKE};
 
 /// Updates the state to reflect the given state transition.
 /// public because it's used in tests since process_event
@@ -60,7 +60,7 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             neuron_id,
         } => state.record_neuron_split(*withdrawal_id, *neuron_id),
         EventType::StartedToDissolve { withdrawal_id } => {
-            state.record_started_to_dissolve_neuron(*withdrawal_id, timestamp)
+            state.record_started_to_dissolve_neuron(*withdrawal_id)
         }
         EventType::DisbursedUserNeuron {
             withdrawal_id,
@@ -69,9 +69,7 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
         EventType::MaturityNeuron {
             neuron_id,
             from_neuron_type,
-        } => {
-            state.record_maturity_neuron(*neuron_id, *from_neuron_type, timestamp + ONE_WEEK_NANOS)
-        }
+        } => state.record_maturity_neuron(*neuron_id, *from_neuron_type),
         EventType::DisbursedMaturityNeuron {
             neuron_id,
             transfer_block_height,
@@ -79,6 +77,7 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
         EventType::NeuronSixMonths(neuron_id) => {
             state.record_6m_neuron_id(*neuron_id);
             state.tracked_6m_stake += ICP::from_e8s(INITIAL_NEURON_STAKE);
+            state.total_circulating_nicp += nICP::from_e8s(INITIAL_NEURON_STAKE);
         }
         EventType::NeuronEightYears(neuron_id) => {
             state.record_8y_neuron_id(*neuron_id);
@@ -120,8 +119,8 @@ pub fn replay_events() -> State {
         let mut state = match iter.next().expect("the event log should not be empty") {
             Event {
                 payload: EventType::Init(init_arg),
-                timestamp,
-            } => State::from_init_args(init_arg, timestamp),
+                timestamp: _,
+            } => State::from_init_args(init_arg),
             other => panic!("the first event must be an Init event, got: {other:?}"),
         };
         for event in iter {

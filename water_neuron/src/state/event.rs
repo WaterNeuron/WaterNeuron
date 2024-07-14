@@ -1,7 +1,6 @@
 use crate::numeric::{nICP, ICP};
 use crate::state::{NeuronOrigin, WithdrawalId};
-use crate::ProposalId;
-use crate::{InitArg, NeuronId, Principal, TransferId, UpgradeArg};
+use crate::{InitArg, NeuronId, Principal, ProposalId, TransferId, UpgradeArg};
 use candid::CandidType;
 use icrc_ledger_types::icrc1::account::Account;
 use minicbor_derive::{Decode, Encode};

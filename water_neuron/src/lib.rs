@@ -2,16 +2,16 @@ use crate::dashboard::DisplayAmount;
 use crate::guards::{GuardError, TaskGuard};
 use crate::logs::{DEBUG, INFO};
 use crate::management::{
-    balance_of, disburse, follow_neuron, get_full_neuron_by_nonce, get_pending_proposals,
-    increase_dissolve_delay, list_neurons, refresh_neuron, register_vote, spawn_all_maturity,
-    split_neuron, start_dissolving, transfer,
+    balance_of, disburse, follow_neuron, get_full_neuron, get_full_neuron_by_nonce,
+    get_pending_proposals, increase_dissolve_delay, list_neurons, manage_neuron_sns,
+    refresh_neuron, register_vote, spawn_all_maturity, split_neuron, start_dissolving, transfer,
 };
 use crate::nns_types::{
-    neuron::DissolveState::DissolveDelaySeconds, CommandResponse, ListNeurons, NeuronId,
-    ProposalId, TOPIC_GOVERNANCE, TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
+    neuron::DissolveState, CommandResponse, ListNeurons, NeuronId, ProposalId, TOPIC_GOVERNANCE,
+    TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
 };
 use crate::numeric::{nICP, ICP};
-use crate::proposal::{mirror_proposals, schedule_default_voting, schedule_voting_with_sns};
+use crate::proposal::{mirror_proposals, schedule_voting_with_sns};
 use crate::sns_governance::{CanisterRuntime, IcCanisterRuntime};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
@@ -49,19 +49,31 @@ pub mod state;
 pub mod storage;
 pub mod tasks;
 
+#[cfg(test)]
+pub mod state_machine;
+
 const RETRY_DELAY: Duration = Duration::from_secs(10);
+const RETRY_DELAY_VOTING: Duration = Duration::from_secs(60);
+
+#[cfg(feature = "self_check")]
+const LOGIC_DELAY: Duration = RETRY_DELAY;
+
+#[cfg(not(feature = "self_check"))]
+const LOGIC_DELAY: Duration = ONE_HOUR;
+
 const ONE_MINUTE: Duration = Duration::from_secs(60);
+const ONE_HOUR: Duration = Duration::from_secs(60 * 60);
 pub const ONE_DAY: Duration = Duration::from_secs(24 * 60 * 60);
 
 pub const SEC_NANOS: u64 = 1_000_000_000;
 pub const ONE_WEEK_NANOS: u64 = 7 * 24 * 60 * 60 * SEC_NANOS;
 
 const ONE_HOUR_SECONDS: u64 = 60 * 60;
-pub const ONE_DAY_SECONDS: u32 = 24 * 60 * 60;
-pub const ONE_YEAR_SECONDS: u32 = (4 * 365 + 1) * ONE_DAY_SECONDS / 4;
-pub const ONE_MONTH_SECONDS: u32 = ONE_YEAR_SECONDS / 12;
-pub const MAX_DISSOLVE_DELAY_SECONDS: u32 = 8 * ONE_YEAR_SECONDS;
-pub const MIN_DISSOLVE_DELAY_FOR_REWARDS: u32 = 6 * ONE_MONTH_SECONDS + ONE_DAY_SECONDS;
+pub const ONE_DAY_SECONDS: u64 = 24 * 60 * 60;
+pub const ONE_YEAR_SECONDS: u64 = (4 * 365 + 1) * ONE_DAY_SECONDS / 4;
+pub const ONE_MONTH_SECONDS: u64 = ONE_YEAR_SECONDS / 12;
+pub const MAX_DISSOLVE_DELAY_SECONDS: u64 = 8 * ONE_YEAR_SECONDS;
+pub const MIN_DISSOLVE_DELAY_FOR_REWARDS: u64 = 6 * ONE_MONTH_SECONDS + ONE_DAY_SECONDS;
 
 pub const DEFAULT_LEDGER_FEE: u64 = 10_000;
 pub const NEURON_LEDGER_FEE: u64 = 1_000_000;
@@ -104,17 +116,19 @@ pub enum LiquidArg {
 pub struct InitArg {
     #[cbor(n(0), with = "crate::cbor::principal")]
     nicp_ledger_id: Principal,
+    #[cbor(n(1), with = "crate::cbor::principal")]
+    pub wtn_governance_id: Principal,
+    #[cbor(n(2), with = "crate::cbor::principal")]
+    pub wtn_ledger_id: Principal,
 }
 
 #[derive(Deserialize, CandidType, Encode, Decode, PartialEq, Eq, Clone, Debug)]
 pub struct UpgradeArg {
-    #[cbor(n(0), with = "crate::cbor::principal::option")]
-    pub sns_governance_id: Option<Principal>,
-    #[cbor(n(1), with = "crate::cbor::principal::option")]
-    pub wtn_ledger_id: Option<Principal>,
+    #[n(0)]
+    pub governance_fee_share_e8s: Option<u64>,
 }
 
-#[derive(CandidType, Debug, Deserialize, PartialEq, Eq)]
+#[derive(CandidType, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct CanisterInfo {
     pub neuron_id_6m: Option<NeuronId>,
     pub neuron_6m_stake_e8s: ICP,
@@ -129,6 +143,7 @@ pub struct CanisterInfo {
     pub nicp_supply: nICP,
     pub minimum_deposit_amount: ICP,
     pub minimum_withdraw_amount: ICP,
+    pub governance_fee_share_e8s: u64,
 }
 
 #[derive(CandidType, Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Encode, Decode)]
@@ -152,10 +167,10 @@ impl fmt::Display for Unit {
 }
 
 impl Unit {
-    pub fn ledger_id(&self) -> Option<Principal> {
+    pub fn ledger_id(&self) -> Principal {
         match self {
-            Unit::ICP => Some(ICP_LEDGER_ID),
-            Unit::NICP => read_state(|s| Some(s.nicp_ledger_id)),
+            Unit::ICP => ICP_LEDGER_ID,
+            Unit::NICP => read_state(|s| s.nicp_ledger_id),
             Unit::WTN => read_state(|s| s.wtn_ledger_id),
         }
     }
@@ -220,9 +235,11 @@ pub enum ConversionError {
 
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This
 /// function must be kept in sync with the Nervous System UI equivalent.
+/// This code comes from the IC repo:
+/// https://github.com/dfinity/ic/blob/master/rs/nervous_system/common/src/ledger.rs#L211
 pub fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64) -> [u8; 32] {
     const DOMAIN: &[u8] = b"neuron-stake";
-    const DOMAIN_LENGTH: [u8; 1] = [0x0d];
+    const DOMAIN_LENGTH: [u8; 1] = [0x0c];
 
     let mut hasher = Sha256::new();
     hasher.update(DOMAIN_LENGTH);
@@ -247,6 +264,8 @@ pub fn timer() {
                         schedule_after(RETRY_DELAY, TaskType::MaybeInitializeMainNeurons);
                     });
 
+                    let _ = configure_sns_voting_neuron().await;
+
                     if let Err(e) = initialize_main_neurons().await {
                         log!(
                             INFO,
@@ -269,7 +288,7 @@ pub fn timer() {
                     dispatch_icp(&runtime).await;
                     distribute_icp_to_sns_neurons().await;
 
-                    schedule_after(ONE_DAY, TaskType::MaybeDistributeICP);
+                    schedule_after(ONE_HOUR, TaskType::MaybeDistributeICP);
                 });
             }
             TaskType::ScheduleVoting => {
@@ -279,12 +298,14 @@ pub fn timer() {
                         Err(_) => return,
                     };
 
-                    if read_state(|s| s.sns_governance_id.is_some()) {
-                        mirror_proposals().await;
-                        schedule_voting_with_sns().await;
-                    } else {
-                        schedule_default_voting().await;
+                    if let Err(e) = mirror_proposals().await {
+                        log!(
+                            INFO,
+                            "[ScheduleVoting] failed to mirror proposals with error: {e}"
+                        );
+                        schedule_after(RETRY_DELAY, TaskType::ScheduleVoting);
                     }
+                    schedule_voting_with_sns().await;
 
                     schedule_after(Duration::from_secs(30 * 60), TaskType::ScheduleVoting);
                 });
@@ -311,7 +332,7 @@ pub fn timer() {
                                 INFO,
                                 "[VoteOnProposal] Failed to vote on proposal {id} with error: {error}"
                             );
-                            schedule_after(RETRY_DELAY, TaskType::VoteOnProposal { id, vote });
+                            schedule_after(RETRY_DELAY_VOTING, TaskType::VoteOnProposal { id, vote });
                         }
                     }
                 });
@@ -342,7 +363,7 @@ pub fn timer() {
                     process_start_dissolving().await;
                     process_disburse().await;
 
-                    schedule_after(ONE_MINUTE, TaskType::ProcessLogic);
+                    schedule_after(LOGIC_DELAY, TaskType::ProcessLogic);
                 });
             }
             TaskType::SpawnNeurons => {
@@ -363,6 +384,7 @@ pub fn timer() {
                         Err(_) => return,
                     };
 
+                    let _ = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await;
                     if let Ok(main_neuron_6m_staked) =
                         fetch_neuron_stake(SIX_MONTHS_NEURON_NONCE).await
                     {
@@ -375,6 +397,7 @@ pub fn timer() {
 }
 
 async fn refresh_stakes() {
+    let _ = refresh_neuron(EIGHT_YEARS_NEURON_NONCE).await;
     if let Ok(neuron_8y_stake_e8s) = fetch_neuron_stake(EIGHT_YEARS_NEURON_NONCE).await {
         mutate_state(|s| s.main_neuron_8y_stake = neuron_8y_stake_e8s);
     }
@@ -418,9 +441,42 @@ async fn neuron_8y_follows_6m() -> Result<(), String> {
     let neuron_id_6m = read_state(|s| s.neuron_id_6m.expect("neuron id 6-month not set."));
     let neuron_id_8y = read_state(|s| s.neuron_id_8y.expect("neuron id 8-year not set."));
 
+    // The `Unspecified` topic is used as a fallback when
+    // following. That is, if no followees are specified for a given
+    // topic, the followees for this topic are used instead.
+    // https://github.com/dfinity/ic/blob/master/rs/nns/governance/proto/ic_nns_governance/pb/v1/governance.proto#L45
     follow_neuron(neuron_id_8y, TOPIC_UNSPECIFIED, neuron_id_6m).await?;
+
+    // For the GOVERNANCE and the SNS topics, the default following doesn't apply.
+    // We need to also follow the 6 months neuron with those topics.
+    // https://github.com/dfinity/ic/blob/17df8febdb922c3981475035d830f09d9b990a5a/rs/nns/governance/src/governance.rs#L5408
     follow_neuron(neuron_id_8y, TOPIC_GOVERNANCE, neuron_id_6m).await?;
     follow_neuron(neuron_id_8y, TOPIC_SNS_AND_COMMUNITY_FUND, neuron_id_6m).await?;
+
+    Ok(())
+}
+
+async fn configure_sns_voting_neuron() -> Result<(), String> {
+    use ic_sns_governance::pb::v1::manage_neuron::configure::Operation as OperationSns;
+    use ic_sns_governance::pb::v1::manage_neuron::{
+        Command as CommandSns, Configure as ConfigureSns,
+        IncreaseDissolveDelay as IncreaseDissolveDelaySns,
+    };
+
+    let arg = CommandSns::Configure(ConfigureSns {
+        operation: Some(OperationSns::IncreaseDissolveDelay(
+            IncreaseDissolveDelaySns {
+                additional_dissolve_delay_seconds: 94_672_800,
+            },
+        )),
+    });
+
+    let subaccount = compute_neuron_staking_subaccount_bytes(self_canister_id(), 0).to_vec();
+    let result = manage_neuron_sns(subaccount, arg).await?;
+    log!(
+        DEBUG,
+        "[configure_sns_voting_neuron] manage sns neuron response {result:?}"
+    );
 
     Ok(())
 }
@@ -437,9 +493,6 @@ async fn process_pending_transfer() -> u64 {
 
     for transfer in pending_transfers {
         let (ledger_id, fee) = (transfer.unit.ledger_id(), transfer.unit.fee());
-        if ledger_id.is_none() {
-            continue;
-        }
         if transfer.amount <= fee {
             log!(
                 INFO,
@@ -465,7 +518,7 @@ async fn process_pending_transfer() -> u64 {
                 .into(),
             Some(Nat::from(fee)),
             transfer.from_subaccount,
-            ledger_id.unwrap(),
+            ledger_id,
             transfer.memo,
         )
         .await
@@ -505,7 +558,7 @@ async fn process_pending_transfer() -> u64 {
 
 async fn initialize_main_neuron(
     neuron_nonce: u64,
-    dissolve_delay_seconds: u32,
+    dissolve_delay_seconds: u64,
 ) -> Result<NeuronId, String> {
     let target = Account {
         owner: NNS_GOVERNANCE_ID,
@@ -516,7 +569,7 @@ async fn initialize_main_neuron(
     };
 
     if balance_of(target, ICP_LEDGER_ID).await? < E8S + 1 {
-        let res = transfer(
+        let block_index = transfer(
             target,
             Nat::from(INITIAL_NEURON_STAKE),
             Some(Nat::from(DEFAULT_LEDGER_FEE)),
@@ -529,39 +582,62 @@ async fn initialize_main_neuron(
         log!(
             DEBUG,
             "[initialize_main_neuron] Successfully transfered at index {}",
-            res
+            block_index
         );
     }
 
-    let res = refresh_neuron(neuron_nonce).await?;
-    log!(DEBUG, "[initialize_main_neuron] refresh_neuron {:?}", res);
+    let refresh_neuron_result = refresh_neuron(neuron_nonce).await?.command.unwrap();
+    let neuron_id = if let CommandResponse::ClaimOrRefresh(refresh_response) = refresh_neuron_result
+    {
+        refresh_response.refreshed_neuron_id.unwrap()
+    } else {
+        return Err(format!(
+            "Failed to refresh neuron with error: {refresh_neuron_result:?}"
+        ));
+    };
 
-    match get_full_neuron_by_nonce(neuron_nonce).await? {
+    match get_full_neuron(neuron_id.id).await? {
         Ok(neuron) => {
-            if let Some(neuron_id) = neuron.id {
-                if let Some(DissolveDelaySeconds(found_dissolve_delay_seconds)) =
-                    neuron.dissolve_state
-                {
-                    match (found_dissolve_delay_seconds as u32).cmp(&dissolve_delay_seconds) {
+            match neuron
+                .dissolve_state
+                .expect("BUG: this field should be set at any time")
+            {
+                DissolveState::DissolveDelaySeconds(found_dissolve_delay_seconds) => {
+                    match (found_dissolve_delay_seconds).cmp(&dissolve_delay_seconds) {
                         Ordering::Greater => {
                             // TODO: decrease dissolve delay
+                            // S5: you could remove this TODO and change the contract of this function that it guarantees at least the given dissolve duration.
+                            // If you go this path, then you could greatly simplify this `match` by using a simple `if`.
                         }
                         Ordering::Less => {
                             let dissolve_delay_diff =
-                                dissolve_delay_seconds - found_dissolve_delay_seconds as u32;
-                            increase_dissolve_delay(neuron_nonce, dissolve_delay_diff).await?;
+                                dissolve_delay_seconds - found_dissolve_delay_seconds;
+                            let result =
+                                increase_dissolve_delay(neuron_nonce, dissolve_delay_diff as u32)
+                                    .await?;
+                            log!(
+                                INFO,
+                                "[initialize_main_neuron] increase disolve delay result: {:?}",
+                                result
+                            );
                         }
                         Ordering::Equal => {
                             // Don't do anything, the dissolve delay is set as expected.
                         }
                     }
                 }
-                Ok(neuron_id)
-            } else {
-                Err(format!(
-                    "neuron id not set for neuron nonce: {neuron_nonce}"
-                ))
+                DissolveState::WhenDissolvedTimestampSeconds(_) => {
+                    let result =
+                        increase_dissolve_delay(neuron_nonce, dissolve_delay_seconds as u32)
+                            .await?;
+                    log!(
+                        INFO,
+                        "[initialize_main_neuron] increase disolve delay result: {:?}",
+                        result
+                    );
+                }
             }
+            Ok(neuron_id)
         }
         Err(error) => Err(format!("failed to get full neuron with error: {error:?}")),
     }
@@ -580,24 +656,22 @@ async fn process_start_dissolving() {
         return;
     }
 
-    let dissolve_requests = read_state(|s| s.get_withdrawal_requests_to_dissolve());
-    let mut neuron_ids: Vec<u64> = vec![];
+    let dissolve_request_ids = read_state(|s| s.get_withdrawal_request_ids_to_dissolve());
 
-    for req in &dissolve_requests {
-        let id = req.neuron_id.expect("bug: neuron_id should be set").id;
-        neuron_ids.push(id);
-        let neuron_id = NeuronId { id };
-        let result = start_dissolving(neuron_id).await;
+    for neuron_id in &dissolve_request_ids {
+        let result = start_dissolving(*neuron_id).await;
         if result.is_ok() {
             mutate_state(|s| {
-                if let Some(withdrawal_id) = s.neuron_id_to_withdrawal_id(neuron_id) {
+                if let Some(withdrawal_id) = s.neuron_id_to_withdrawal_id(*neuron_id) {
                     process_event(s, EventType::StartedToDissolve { withdrawal_id });
+                } else {
+                    panic!("bug: neuron_id_to_withdrawal_id doesn't contain withdrawal id associated with neuron {neuron_id:?}");
                 }
             });
             log!(
                 DEBUG,
                 "[process_start_dissolving] Dissolving neuron with id: {}",
-                id
+                neuron_id.id
             );
         } else {
             log!(
@@ -666,7 +740,7 @@ async fn process_disburse() {
                                                     .transfer_block_height,
                                             },
                                         );
-                                        schedule_now(TaskType::MaybeDistributeICP);
+                                        schedule_after(ONE_MINUTE, TaskType::MaybeDistributeICP);
                                     }
                                 });
                             }
@@ -688,9 +762,12 @@ async fn process_disburse() {
 /// Distribute ICP to the SNS neurons. This will fetch all the SNS neurons
 /// and distribute rewards proportionally.
 async fn distribute_icp_to_sns_neurons() {
-    if !read_state(|s| !s.is_processing_icp_transfer() && s.sns_governance_id.is_some()) {
+    if read_state(|s| s.is_processing_icp_transfer()) {
         schedule_now(TaskType::ProcessPendingTransfers);
-        log!(DEBUG, "[distribute_icp_to_sns_neurons] Still processing ICP transfers or SNS governance not set");
+        log!(
+            DEBUG,
+            "[distribute_icp_to_sns_neurons] Still processing ICP transfers."
+        );
         return;
     }
 
@@ -792,6 +869,10 @@ async fn process_spawn() {
         if let Some(id) = neuron_id {
             match spawn_all_maturity(id).await {
                 Ok(neuron_id) => {
+                    log!(
+                        INFO,
+                        "[process_spawn] Spawned neuron {neuron_id:?} with type {from_neuron_type}",
+                    );
                     mutate_state(|s| {
                         process_event(
                             s,
@@ -850,12 +931,24 @@ pub async fn process_witdhrawals_splitting() {
                                     },
                                 );
                             });
+                        } else {
+                            log!(
+                                INFO,
+                                "[process_witdhrawals_splitting] bug: neuron with no id {:?}",
+                                manage_neuron_response
+                            );
                         }
                         continue;
                     }
                     log!(
                         INFO,
                         "[process_witdhrawals_splitting] failed to split neuron: {:?}",
+                        manage_neuron_response
+                    );
+                } else {
+                    log!(
+                        INFO,
+                        "[process_witdhrawals_splitting] bug: unexppected response {:?}",
                         manage_neuron_response
                     );
                 }
@@ -865,5 +958,135 @@ pub async fn process_witdhrawals_splitting() {
                 "[process_witdhrawals_splitting] failed to split neurons: {e}"
             ),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::sns_governance::CanisterRuntime;
+    use crate::state::test::default_state;
+    use crate::state::{replace_state, ICP_LEDGER_ID, SNS_GOVERNANCE_SUBACCOUNT};
+    use crate::{
+        dispatch_icp, read_state, self_canister_id, Account, NeuronOrigin, PendingTransfer, Unit,
+        E8S,
+    };
+    use async_trait::async_trait;
+    use candid::Principal;
+    use ic_sns_governance::pb::v1::{ListNeurons, ListNeuronsResponse};
+    use mockall::mock;
+
+    mock! {
+        pub CanisterRuntime{}
+
+         #[async_trait]
+         impl CanisterRuntime for CanisterRuntime {
+            async fn list_neurons(&self, args: ListNeurons) -> Result<ListNeuronsResponse, String>;
+
+            async fn balance_of(
+                &self,
+                target: Account,
+                ledger_canister_id: Principal,
+            ) -> Result<u64, String>;
+         }
+    }
+
+    #[tokio::test]
+    async fn should_schedule_icp_distribution() {
+        let mut runtime = MockCanisterRuntime::new();
+        replace_state(default_state());
+
+        runtime
+            .expect_balance_of()
+            .withf(move |account, ledger_id| {
+                account
+                    == &Account {
+                        owner: self_canister_id(),
+                        subaccount: Some(NeuronOrigin::SnsGovernanceEightYears.to_subaccount()),
+                    }
+                    || account
+                        == &Account {
+                            owner: self_canister_id(),
+                            subaccount: Some(NeuronOrigin::NICPSixMonths.to_subaccount()),
+                        }
+                        && ledger_id == &ICP_LEDGER_ID
+            })
+            .times(2)
+            .return_const(Ok(10 * E8S));
+
+        dispatch_icp(&runtime).await;
+
+        runtime
+            .expect_balance_of()
+            .withf(move |account, ledger_id| {
+                account
+                    == &Account {
+                        owner: self_canister_id(),
+                        subaccount: Some(NeuronOrigin::SnsGovernanceEightYears.to_subaccount()),
+                    }
+                    || account
+                        == &Account {
+                            owner: self_canister_id(),
+                            subaccount: Some(NeuronOrigin::NICPSixMonths.to_subaccount()),
+                        }
+                        && ledger_id == &ICP_LEDGER_ID
+            })
+            .times(2)
+            .return_const(Ok(20 * E8S));
+
+        dispatch_icp(&runtime).await;
+
+        read_state(|s| {
+            assert_eq!(s.pending_transfers.len(), 4);
+            assert_eq!(
+                s.pending_transfers[&0],
+                PendingTransfer {
+                    transfer_id: 0,
+                    from_subaccount: Some(NeuronOrigin::SnsGovernanceEightYears.to_subaccount()),
+                    memo: None,
+                    amount: 18 * E8S,
+                    receiver: s.get_6m_neuron_account(),
+                    unit: Unit::ICP,
+                }
+            );
+            assert_eq!(
+                s.pending_transfers[&1],
+                PendingTransfer {
+                    transfer_id: 1,
+                    from_subaccount: Some(NeuronOrigin::SnsGovernanceEightYears.to_subaccount()),
+                    memo: None,
+                    amount: 2 * E8S,
+                    receiver: Account {
+                        owner: self_canister_id(),
+                        subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT)
+                    },
+                    unit: Unit::ICP,
+                }
+            );
+            assert_eq!(
+                s.pending_transfers[&2],
+                PendingTransfer {
+                    transfer_id: 2,
+                    from_subaccount: Some(NeuronOrigin::NICPSixMonths.to_subaccount()),
+                    memo: None,
+                    amount: 18 * E8S,
+                    receiver: s.get_6m_neuron_account(),
+                    unit: Unit::ICP,
+                }
+            );
+            assert_eq!(
+                s.pending_transfers[&3],
+                PendingTransfer {
+                    transfer_id: 3,
+                    from_subaccount: Some(NeuronOrigin::NICPSixMonths.to_subaccount()),
+                    memo: None,
+                    amount: 2 * E8S,
+                    receiver: Account {
+                        owner: self_canister_id(),
+                        subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT)
+                    },
+                    unit: Unit::ICP,
+                }
+            );
+        });
     }
 }

@@ -41,7 +41,8 @@ NnsProposal:
          * https://t.me/waterneuron
          * https://taggr.link/#/realm/WATERNEURON
 
-fallback_controller_principals: []
+fallback_controller_principals:
+ - yhztw-zoulg-d355y-bn57l-tecqd-725gl-lsew5-mtoen-dpyjb-44wno-uqe
 
 dapp_canisters: []
 
@@ -99,7 +100,7 @@ Distribution:
         - principal: gsqeg-utfkx-osmyu-vphdp-3snmy-grdl4-7g7wm-hatz3-zs23g-ijrqf-2ae
           stake: 1_500_000 tokens
           memo: 3
-          dissolve_delay: 36 months
+          dissolve_delay: 35 months
           vesting_period: 0 months
         - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
           stake: 1_500_000 tokens
@@ -119,7 +120,7 @@ Distribution:
         - principal: 3eifv-szkqr-6n6gw-fktqo-f7wop-akker-ym6k4-qxiej-k6i2d-3mkwu-2qe
           stake: 1_500_000 tokens
           memo: 3
-          dissolve_delay: 36 months
+          dissolve_delay: 35 months
           vesting_period: 0 months
         - principal: zig7t-6lekg-6am6v-r3xaj-wb7gg-4d7fm-w7int-ww6sq-lcimu-wouly-rae
           stake: 1_000_000 tokens
@@ -159,7 +160,7 @@ Distribution:
         - principal: pyvyi-4ps46-l4f7i-zlyqu-h2vuc-4rycv-knjyz-aqraj-3cyqk-mr6zk-pae
           stake: 2_000_000 tokens
           memo: 3
-          dissolve_delay: 36 months
+          dissolve_delay: 35 months
           vesting_period: 0 months
     InitialBalances:
         governance: 64_960_000 tokens
@@ -282,7 +283,7 @@ Swap:
     #   the CreateServiceNervousSystem proposal is executed. This facilitates
     #   testing in an accelerated manner.
     #
-    start_time: 16:00UTC   # Intentionally commented out for testing.
+    start_time: 16:00 UTC   # Intentionally commented out for testing.
 
     # The duration of the decentralization swap. When `start_time` is calculated
     # during CreateServiceNervousSystem proposal execution, this `duration` will

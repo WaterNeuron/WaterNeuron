@@ -109,6 +109,20 @@ pub fn build_dashboard() -> Vec<u8> {
                     </tbody>
                 </table>
             </div>
+            <div>
+                <h3>Spawned Neurons</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Neuron Id</th>
+                            <th>Receiver</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {}
+                    </tbody>
+                </table>
+            </div>
             {}
             <div>
                 <h3>Tasks</h3>
@@ -122,8 +136,9 @@ pub fn build_dashboard() -> Vec<u8> {
         construct_withdrawal_table(),
         construct_deposit_table(),
         construct_maturity_neuron_table(),
+        construct_to_disburse_table(),
         get_pending_transfer_table(),
-        dispaly_tasks(),
+        display_tasks(),
     )
     .into_bytes()
 }
@@ -178,7 +193,7 @@ fn construct_metadata_table() -> String {
                     </tr>
                     <tr>
                         <th>6-month nICP Neuron</th>
-                        <td>{} {} ICP</td>
+                        <td>{} Fetched {} ICP - Tracked {} ICP</td>
                     </tr>
                     <tr>
                         <th>8-year SNS Neuron</th>
@@ -201,12 +216,8 @@ fn construct_metadata_table() -> String {
             link_to_dashboard(ICP_LEDGER_ID),
             link_to_dashboard(s.nicp_ledger_id),
             link_to_dashboard(NNS_GOVERNANCE_ID),
-            s.sns_governance_id
-                .map(link_to_dashboard)
-                .unwrap_or("Not set".to_string()),
-            s.wtn_ledger_id
-                .map(link_to_dashboard)
-                .unwrap_or("Not set".to_string()),
+            link_to_dashboard(s.wtn_governance_id),
+            link_to_dashboard(s.wtn_ledger_id),
             s.neuron_id_6m
                 .map(|n| format!(
                     "<a href=\"{}\" target=\"_blank\">{}</a>",
@@ -215,6 +226,7 @@ fn construct_metadata_table() -> String {
                 ))
                 .unwrap_or_else(|| "Neuron Not Set".to_string()),
             s.main_neuron_6m_staked,
+            s.tracked_6m_stake,
             s.neuron_id_8y
                 .map(|n| format!(
                     "<a href=\"{}\" target=\"_blank\">{}</a>",
@@ -284,6 +296,21 @@ fn construct_deposit_table() -> String {
     })
 }
 
+fn construct_to_disburse_table() -> String {
+    with_utf8_buffer(|buf| {
+        read_state(|s| {
+            for (neuron_id, disburse_request) in s.to_disburse.iter() {
+                write!(
+                    buf,
+                    "<tr><td>{:?}</td><td>{}</td></tr>",
+                    neuron_id, disburse_request.receiver,
+                )
+                .unwrap();
+            }
+        });
+    })
+}
+
 fn get_pending_transfer_table() -> String {
     with_utf8_buffer(|buf| {
         read_state(|s| {
@@ -347,7 +374,7 @@ fn construct_pending_transfer_table() -> String {
     })
 }
 
-fn dispaly_tasks() -> String {
+fn display_tasks() -> String {
     with_utf8_buffer(|buf| {
         let tasks = crate::tasks::get_task_queue();
         for task in tasks {

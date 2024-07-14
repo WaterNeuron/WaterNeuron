@@ -3,14 +3,13 @@ use crate::numeric::{nICP, ICP, WTN};
 use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
-    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, InitArg,
-    PendingTransfer, Unit, UpgradeArg, E8S, ONE_WEEK_NANOS,
+    compute_neuron_staking_subaccount_bytes, self_canister_id, InitArg, PendingTransfer, Unit,
+    UpgradeArg, E8S,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
 use minicbor::{Decode, Encode};
 use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
@@ -19,6 +18,8 @@ use strum_macros::EnumIter;
 
 pub mod audit;
 pub mod event;
+#[cfg(test)]
+pub mod tests;
 
 thread_local! {
     static __STATE: RefCell<Option<State>> = RefCell::default();
@@ -107,7 +108,6 @@ pub struct WithdrawalDetails {
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Serialize, Deserialize)]
 pub struct DisburseRequest {
-    pub disburse_at: u64,
     pub receiver: Account,
     pub neuron_id: NeuronId,
 }
@@ -148,10 +148,9 @@ impl fmt::Display for WithdrawalStatus {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct State {
-    pub inception_ts: u64,
     pub total_icp_deposited: ICP,
     pub total_circulating_nicp: nICP,
-    pub governance_fee_share: Decimal,
+    pub governance_fee_share_e8s: u64,
 
     pub transfer_id: TransferId,
     pub withdrawal_id: WithdrawalId,
@@ -169,6 +168,7 @@ pub struct State {
     pub withdrawal_to_disburse: BTreeSet<WithdrawalId>,
     pub withdrawal_finalized: BTreeMap<WithdrawalId, u64>,
     pub withdrawal_id_to_request: BTreeMap<WithdrawalId, WithdrawalRequest>,
+    pub neuron_id_to_withdrawal_id: BTreeMap<NeuronId, WithdrawalId>,
 
     // Neurons To Disburse
     pub to_disburse: BTreeMap<NeuronId, DisburseRequest>,
@@ -192,8 +192,8 @@ pub struct State {
 
     // Some canister ids.
     pub nicp_ledger_id: Principal,
-    pub sns_governance_id: Option<Principal>,
-    pub wtn_ledger_id: Option<Principal>,
+    pub wtn_governance_id: Principal,
+    pub wtn_ledger_id: Principal,
 
     // Guards
     pub principal_guards: BTreeSet<Principal>,
@@ -201,12 +201,12 @@ pub struct State {
 }
 
 impl State {
-    pub fn from_init_args(init_arg: InitArg, inception_ts: u64) -> Self {
+    pub fn from_init_args(init_arg: InitArg) -> Self {
         Self {
-            inception_ts,
             airdrop: BTreeMap::default(),
+            neuron_id_to_withdrawal_id: BTreeMap::default(),
             proposals: BTreeMap::default(),
-            governance_fee_share: dec!(0.1),
+            governance_fee_share_e8s: 10_000_000,
             total_circulating_nicp: nICP::ZERO,
             total_icp_deposited: ICP::ZERO,
             tracked_6m_stake: ICP::ZERO,
@@ -228,8 +228,8 @@ impl State {
             main_neuron_6m_staked: ICP::ZERO,
             main_neuron_8y_stake: ICP::ZERO,
             nicp_ledger_id: init_arg.nicp_ledger_id,
-            sns_governance_id: None,
-            wtn_ledger_id: None,
+            wtn_governance_id: init_arg.wtn_governance_id,
+            wtn_ledger_id: init_arg.wtn_ledger_id,
             principal_guards: BTreeSet::default(),
             active_tasks: BTreeSet::default(),
         }
@@ -239,25 +239,18 @@ impl State {
         self.withdrawal_id_to_request.get(&withdrawal_id).cloned()
     }
 
-    pub fn get_withdrawal_requests_to_dissolve(&self) -> Vec<WithdrawalRequest> {
-        let mut res: Vec<WithdrawalRequest> = vec![];
+    pub fn get_withdrawal_request_ids_to_dissolve(&self) -> Vec<NeuronId> {
+        let mut res: Vec<NeuronId> = vec![];
         for withdrawal_id in self.withdrawal_to_start_dissolving.iter() {
             if let Some(req) = self.get_withdrawal_request(*withdrawal_id) {
-                res.push(req.clone());
+                res.push(req.neuron_id.expect("bug: neuron_id should be set"));
             }
         }
         res
     }
 
     pub fn neuron_id_to_withdrawal_id(&self, neuron_id: NeuronId) -> Option<WithdrawalId> {
-        for req in self.withdrawal_id_to_request.values() {
-            if let Some(req_neuron_id) = req.neuron_id {
-                if neuron_id == req_neuron_id {
-                    return Some(req.withdrawal_id);
-                }
-            }
-        }
-        None
+        self.neuron_id_to_withdrawal_id.get(&neuron_id).copied()
     }
 
     pub fn get_withdrawal_status(&self, withdrawal_id: WithdrawalId) -> WithdrawalStatus {
@@ -323,10 +316,6 @@ impl State {
         if self.total_circulating_nicp == nICP::ZERO || self.tracked_6m_stake == ICP::ZERO {
             return Decimal::ONE;
         }
-        // For the first week the exchange rate is to 1.
-        if timestamp_nanos() < self.inception_ts + ONE_WEEK_NANOS {
-            return Decimal::ONE;
-        }
 
         Decimal::from(self.total_circulating_nicp.0) / Decimal::from(self.tracked_6m_stake.0)
     }
@@ -338,8 +327,10 @@ impl State {
     }
 
     pub fn compute_governance_share_e8s(&self, balance: u64) -> u64 {
+        let governance_fee_share =
+            Decimal::from(self.governance_fee_share_e8s) / Decimal::from(E8S);
         let mut governance_share =
-            Decimal::from(balance) / Decimal::from(E8S) * self.governance_fee_share;
+            Decimal::from(balance) / Decimal::from(E8S) * governance_fee_share;
         governance_share.rescale(8);
         governance_share.mantissa() as u64
     }
@@ -371,11 +362,8 @@ impl State {
     }
 
     pub fn record_upgrade(&mut self, upgrade_arg: UpgradeArg) {
-        if let Some(sns_governance_id) = upgrade_arg.sns_governance_id {
-            self.sns_governance_id = Some(sns_governance_id);
-        }
-        if let Some(wtn_ledger_id) = upgrade_arg.wtn_ledger_id {
-            self.wtn_ledger_id = Some(wtn_ledger_id);
+        if let Some(governance_fee_share_e8s) = upgrade_arg.governance_fee_share_e8s {
+            self.governance_fee_share_e8s = governance_fee_share_e8s;
         }
     }
 
@@ -531,14 +519,14 @@ impl State {
         self.withdrawal_id_to_request
             .entry(withdrawal_id)
             .and_modify(|n| n.neuron_id = Some(neuron_id));
-        assert!(self.withdrawal_to_start_dissolving.insert(withdrawal_id),);
+        assert!(self.withdrawal_to_start_dissolving.insert(withdrawal_id));
+        assert!(self
+            .neuron_id_to_withdrawal_id
+            .insert(neuron_id, withdrawal_id)
+            .is_none());
     }
 
-    pub fn record_started_to_dissolve_neuron(
-        &mut self,
-        withdrawal_id: WithdrawalId,
-        disburse_at: u64,
-    ) {
+    pub fn record_started_to_dissolve_neuron(&mut self, withdrawal_id: WithdrawalId) {
         let request = self
             .withdrawal_id_to_request
             .get(&withdrawal_id)
@@ -550,7 +538,6 @@ impl State {
             self.to_disburse.insert(
                 neuron_id,
                 DisburseRequest {
-                    disburse_at,
                     receiver: request.receiver,
                     neuron_id,
                 },
@@ -575,6 +562,7 @@ impl State {
             .insert(withdrawal_id, block_index)
             .is_none());
         assert!(self.to_disburse.remove(&neuron_id).is_some());
+        assert!(self.neuron_id_to_withdrawal_id.remove(&neuron_id).is_some());
     }
 
     pub fn record_disbursed_maturity_neuron(&mut self, neuron_id: NeuronId, block_index: u64) {
@@ -583,17 +571,11 @@ impl State {
             .insert(neuron_id, block_index);
     }
 
-    pub fn record_maturity_neuron(
-        &mut self,
-        neuron_id: NeuronId,
-        neuron_kind: NeuronOrigin,
-        disburse_at: u64,
-    ) {
+    pub fn record_maturity_neuron(&mut self, neuron_id: NeuronId, neuron_kind: NeuronOrigin) {
         assert_eq!(
             self.to_disburse.insert(
                 neuron_id,
                 DisburseRequest {
-                    disburse_at,
                     receiver: Account {
                         owner: ic_cdk::id(),
                         subaccount: Some(neuron_kind.to_subaccount()),
@@ -644,11 +626,6 @@ impl State {
     pub fn is_equivalent_to(&self, other: &Self) -> Result<(), String> {
         use ic_utils_ensure::ensure_eq;
 
-        ensure_eq!(
-            self.inception_ts,
-            other.inception_ts,
-            "inception_ts do not match"
-        );
         ensure_eq!(
             self.tracked_6m_stake,
             other.tracked_6m_stake,
@@ -732,9 +709,9 @@ impl State {
             "nicp_ledger_id do not match"
         );
         ensure_eq!(
-            self.sns_governance_id,
-            other.sns_governance_id,
-            "sns_governance_id do not match"
+            self.wtn_governance_id,
+            other.wtn_governance_id,
+            "wtn_governance_id do not match"
         );
         ensure_eq!(
             self.wtn_ledger_id,
@@ -743,6 +720,16 @@ impl State {
         );
         ensure_eq!(self.airdrop, other.airdrop, "airdrop do not match");
         ensure_eq!(self.proposals, other.proposals, "proposals do not match");
+        ensure_eq!(
+            self.get_icp_to_ncip_exchange_rate_e8s(),
+            other.get_icp_to_ncip_exchange_rate_e8s(),
+            "exchange rate are the same"
+        );
+        ensure_eq!(
+            self.get_icp_to_ncip_exchange_rate(),
+            other.get_icp_to_ncip_exchange_rate(),
+            "exchange rate are the same"
+        );
 
         Ok(())
     }
@@ -773,4 +760,186 @@ pub fn replace_state(state: State) {
     __STATE.with(|s| {
         *s.borrow_mut() = Some(state);
     });
+}
+
+#[cfg(test)]
+pub mod test {
+    use crate::state::{State, WithdrawalStatus, ICP_LEDGER_ID, NNS_GOVERNANCE_ID, WTN};
+    use crate::{nICP, InitArg, NeuronId, NeuronOrigin, PendingTransfer, Unit, E8S, ICP};
+    use candid::Principal;
+    use std::str::FromStr;
+
+    pub fn default_state() -> State {
+        let mut state = State::from_init_args(InitArg {
+            wtn_ledger_id: Principal::anonymous(),
+            wtn_governance_id: Principal::anonymous(),
+            nicp_ledger_id: Principal::anonymous(),
+        });
+        state.governance_fee_share_e8s = 10_000_000;
+        state
+    }
+
+    fn get_neuron_id(id: u64) -> NeuronId {
+        NeuronId { id }
+    }
+
+    #[test]
+    fn should_have_expected_principal() {
+        const NNS_GOVERNANCE_ID_STR: &str = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+        const ICP_LEDGER_ID_STR: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
+        assert_eq!(
+            ICP_LEDGER_ID,
+            Principal::from_text(ICP_LEDGER_ID_STR).unwrap()
+        );
+        assert_eq!(
+            NNS_GOVERNANCE_ID,
+            Principal::from_text(NNS_GOVERNANCE_ID_STR).unwrap()
+        );
+    }
+
+    #[test]
+    fn should_have_expected_subaccount() {
+        assert_eq!(
+            NeuronOrigin::SnsGovernanceEightYears.to_subaccount(),
+            [
+                210, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            ]
+        );
+        assert_eq!(
+            NeuronOrigin::NICPSixMonths.to_subaccount(),
+            [
+                211, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            ]
+        );
+        assert_ne!(
+            NeuronOrigin::NICPSixMonths.to_subaccount(),
+            NeuronOrigin::SnsGovernanceEightYears.to_subaccount()
+        );
+    }
+
+    #[test]
+    fn should_never_dissolve_6m_and_8y_main_neurons() {
+        let mut state = default_state();
+
+        let neuron_6m = get_neuron_id(0_u64);
+        let neuron_8y = get_neuron_id(1_u64);
+
+        state.record_6m_neuron_id(neuron_6m);
+        state.record_8y_neuron_id(neuron_8y);
+
+        let neurond_id = get_neuron_id(3_u64);
+        assert!(state.is_neuron_allowed_to_dissolve(neurond_id));
+        assert!(!state.is_neuron_allowed_to_dissolve(neuron_6m));
+        assert!(!state.is_neuron_allowed_to_dissolve(neuron_8y));
+    }
+
+    #[test]
+    fn icp_to_nicp_conversion() {
+        let mut state = default_state();
+        state.tracked_6m_stake = ICP::from_e8s(200_020_001);
+        state.total_circulating_nicp = nICP::from_e8s(99_990_000);
+        assert_eq!(
+            state.convert_icp_to_nicp(ICP::from_e8s(99_990_000)),
+            nICP::from_e8s(49_985_002)
+        );
+    }
+
+    #[test]
+    fn nicp_to_icp_conversion() {
+        let mut state = default_state();
+        state.tracked_6m_stake = ICP::from_unscaled(10);
+        state.total_circulating_nicp = nICP::from_unscaled(5);
+        assert_eq!(state.convert_nicp_to_icp(nICP::ONE), ICP::TWO);
+    }
+
+    #[test]
+    fn should_increment() {
+        let mut state = default_state();
+
+        assert_eq!(state.increment_transfer_id(), 0);
+        let res = state.increment_transfer_id();
+        assert_eq!(state.increment_transfer_id() - res, 1);
+
+        assert_eq!(state.increment_withdrawal_id(), 0);
+        let res = state.increment_withdrawal_id();
+        assert_eq!(state.increment_withdrawal_id() - res, 1);
+    }
+
+    #[test]
+    fn rewards_should_be_as_expected() {
+        let mut state = default_state();
+
+        let caller = Principal::from_str("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap();
+        state.record_icp_deposit(caller.into(), ICP::from_unscaled(80_001), 0);
+        assert_eq!(
+            state.pending_transfers.get(&0).unwrap(),
+            &PendingTransfer {
+                transfer_id: 0,
+                from_subaccount: None,
+                memo: Some(0),
+                amount: 80_001 * E8S,
+                receiver: caller.into(),
+                unit: Unit::NICP,
+            }
+        );
+        assert_eq!(
+            state.airdrop.get(&caller).unwrap(),
+            &WTN::from_unscaled(8 * 80_000 + 4)
+        );
+        state.record_claimed_airdrop(caller);
+        assert_eq!(state.airdrop.get(&caller), None);
+    }
+
+    #[test]
+    fn withdrawal_flow() {
+        let mut state = default_state();
+        let caller = Principal::from_str("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap();
+        let withdrawal_id = 0_u64;
+        let neuron_id = NeuronId { id: 0 };
+
+        state.record_icp_deposit(caller.into(), ICP::from_unscaled(10), 0_64);
+        assert_eq!(
+            state.get_withdrawal_status(withdrawal_id),
+            WithdrawalStatus::NotFound
+        );
+        state.record_nicp_withdrawal(caller.into(), nICP::from_unscaled(5), 1, 0);
+        assert_eq!(
+            state.get_withdrawal_status(withdrawal_id),
+            WithdrawalStatus::WaitingToSplitNeuron
+        );
+        state.record_neuron_split(withdrawal_id, neuron_id);
+        assert_eq!(
+            state.get_withdrawal_status(withdrawal_id),
+            WithdrawalStatus::WaitingToStartDissolving { neuron_id }
+        );
+        state.record_started_to_dissolve_neuron(withdrawal_id);
+        assert_eq!(
+            state.get_withdrawal_status(withdrawal_id),
+            WithdrawalStatus::WaitingDissolvement { neuron_id }
+        );
+        state.record_neuron_disbursed(withdrawal_id, 0);
+        assert_eq!(
+            state.get_withdrawal_status(withdrawal_id),
+            WithdrawalStatus::ConversionDone {
+                transfer_block_height: 0
+            }
+        );
+    }
+
+    #[test]
+    fn should_compute_governance_share() {
+        let state = default_state();
+
+        let res_1 = state.compute_governance_share_e8s(100 * E8S);
+        assert_eq!(res_1, 10 * E8S);
+
+        let res_2 = state.compute_governance_share_e8s(123 * E8S);
+        assert_eq!(res_2, 1_230_000_000);
+
+        let res_3 = state.compute_governance_share_e8s(880_123_000);
+        assert_eq!(res_3, 88_012_300);
+    }
 }

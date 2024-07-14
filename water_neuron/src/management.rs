@@ -14,7 +14,6 @@ use candid::{Nat, Principal};
 use ic_sns_governance::pb::v1::{
     manage_neuron::Command as SnsCommand, GetProposal, GetProposalResponse,
     ManageNeuron as ManageSnsNeuron, ManageNeuronResponse as ManageSnsNeuronResponse,
-    Proposal as SnsProposal,
 };
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
@@ -124,7 +123,7 @@ pub async fn register_vote(
     proposal_id: ProposalId,
     vote_bool: bool,
 ) -> Result<ManageNeuronResponse, String> {
-    let vote = if vote_bool { 2 } else { 1 };
+    let vote = if vote_bool { 1 } else { 2 };
 
     let arg = ManageNeuron {
         id: None,
@@ -149,18 +148,18 @@ pub async fn register_vote(
     }
 }
 
-pub async fn make_sns_proposal(
+pub async fn manage_neuron_sns(
     subaccount: Vec<u8>,
-    proposal: SnsProposal,
+    command: SnsCommand,
 ) -> Result<ManageSnsNeuronResponse, String> {
-    let sns_gov_id = read_state(|s| s.sns_governance_id.unwrap());
+    let wtn_governance_id = read_state(|s| s.wtn_governance_id);
 
     let arg = ManageSnsNeuron {
         subaccount,
-        command: Some(SnsCommand::MakeProposal(proposal)),
+        command: Some(command),
     };
     let res_gov: Result<(ManageSnsNeuronResponse,), (i32, String)> =
-        ic_cdk::api::call::call(sns_gov_id, "manage_neuron", (arg,))
+        ic_cdk::api::call::call(wtn_governance_id, "manage_neuron", (arg,))
             .await
             .map_err(|(code, msg)| (code as i32, msg));
     match res_gov {
@@ -187,6 +186,20 @@ pub async fn follow_neuron(
     };
     let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
         ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "manage_neuron", (arg,))
+            .await
+            .map_err(|(code, msg)| (code as i32, msg));
+    match res_gov {
+        Ok((res,)) => Ok(res),
+        Err((code, msg)) => Err(format!(
+            "Error while calling Governance canister ({}): {:?}",
+            code, msg
+        )),
+    }
+}
+
+pub async fn get_full_neuron(neuron_id: u64) -> Result<Result<Neuron, GovernanceError>, String> {
+    let res_gov: Result<(Result<Neuron, GovernanceError>,), (i32, String)> =
+        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "get_full_neuron", (neuron_id,))
             .await
             .map_err(|(code, msg)| (code as i32, msg));
     match res_gov {

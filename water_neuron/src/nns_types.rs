@@ -1,7 +1,13 @@
+use candid::Encode;
 use candid::{CandidType, Principal};
-use minicbor::{Decode, Encode};
+use ic_sns_governance::pb::v1::{
+    proposal::Action as ActionSns, ExecuteGenericNervousSystemFunction, Proposal as SnsProposal,
+};
+use minicbor::{Decode, Encode as CborEncode};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
+
+pub const VOTE_ON_NNS_PROPOSAL_FUNCTION_ID: u64 = 1_000;
 
 pub const TOPIC_UNSPECIFIED: i32 = 0;
 pub const TOPIC_GOVERNANCE: i32 = 4;
@@ -37,7 +43,7 @@ pub struct Neuron {
     pub neuron_fees_e8s: u64,
     pub neuron_type: Option<i32>,
     pub transfer: Option<NeuronStakeTransfer>,
-    pub created_timestamp_seconds: u8,
+    pub created_timestamp_seconds: u64,
     pub aging_since_timestamp_seconds: u64,
     pub spawn_at_timestamp_seconds: Option<u64>,
     pub followees: Vec<(i32, neuron::Followees)>,
@@ -487,45 +493,31 @@ pub struct ProposalInfo {
     pub executed_timestamp_seconds: u64,
 }
 
-use ic_sns_governance::pb::v1::{
-    proposal::Action as ActionSns, Motion as MotionSns, Proposal as SnsProposal,
-};
-
-pub fn convert_nns_proposal_to_sns_proposal(proposal_info: &ProposalInfo) -> SnsProposal {
+pub fn convert_nns_proposal_to_sns_proposal(proposal_info: &ProposalInfo) -> Option<SnsProposal> {
     match &proposal_info.proposal {
         Some(proposal) => {
             let original_title = proposal.title.clone().unwrap_or_default();
+            let proposal_id = proposal_info.id.as_ref().unwrap().id;
             let original_proposal = format!(
-                "\n\n [Original NNS proposal](https://dashboard.internetcomputer.org/proposal/{})",
-                proposal_info
-                    .id
-                    .clone()
-                    .map(|id| format!("{}", id.id))
-                    .unwrap_or("unknown".to_string())
+                "\n\n [Original NNS proposal](https://dashboard.internetcomputer.org/proposal/{proposal_id})"
             );
-            SnsProposal {
+            Some(SnsProposal {
                 title: format!(
-                    "{original_title} | Topic: {}",
+                    "{original_title} - {} - NNS Id {proposal_id}",
                     Topic::from(proposal_info.topic)
                 ),
+                // S3: Check how special characters get rendered.
                 summary: format!("{}{}", proposal.summary.clone(), original_proposal),
                 url: proposal.url.clone(),
-                action: Some(ActionSns::Motion(MotionSns {
-                    motion_text: "".to_string(),
-                })),
-            }
+                action: Some(ActionSns::ExecuteGenericNervousSystemFunction(
+                    ExecuteGenericNervousSystemFunction {
+                        function_id: VOTE_ON_NNS_PROPOSAL_FUNCTION_ID,
+                        payload: Encode!(&proposal_id).unwrap(),
+                    },
+                )),
+            })
         }
-        None => SnsProposal {
-            title: format!(
-                "Unknown proposal | Topic: {}",
-                Topic::from(proposal_info.topic)
-            ),
-            summary: "".to_string(),
-            url: "".to_string(),
-            action: Some(ActionSns::Motion(MotionSns {
-                motion_text: "".to_string(),
-            })),
-        },
+        None => None,
     }
 }
 
@@ -873,7 +865,7 @@ pub mod create_service_nervous_system {
     Eq,
     PartialOrd,
     Ord,
-    Encode,
+    CborEncode,
     Decode,
 )]
 pub struct NeuronId {
@@ -894,7 +886,17 @@ impl From<u64> for NeuronId {
 }
 
 #[derive(
-    CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Encode, Decode,
+    CandidType,
+    Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    CborEncode,
+    Decode,
 )]
 pub struct ProposalId {
     #[n(0)]

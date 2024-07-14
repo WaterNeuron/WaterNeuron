@@ -66,7 +66,7 @@ impl TaskQueue {
             .cloned()
             .unwrap_or(u64::MAX);
 
-        if execute_at > old_deadline {
+        if execute_at <= old_deadline {
             let old_task = Task {
                 execute_at: old_deadline,
                 task_type,
@@ -90,7 +90,7 @@ impl TaskQueue {
     /// Removes the first task from the queue that's ready for
     /// execution.
     pub fn pop_if_ready(&mut self, now: u64) -> Option<Task> {
-        if self.queue.first()?.execute_at > now {
+        if self.queue.first()?.execute_at <= now {
             let task = self
                 .queue
                 .pop_first()

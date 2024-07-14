@@ -105,3 +105,74 @@ impl<Unit> fmt::Display for AmountOf<Unit> {
         write!(f, "{}", DisplayAmount(self.0))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::numeric::{AmountOf, ICP};
+    use std::iter::Sum;
+    use std::marker::PhantomData;
+    use std::ops::{Add, Sub, SubAssign};
+
+    impl<Unit> Add for AmountOf<Unit> {
+        type Output = Self;
+
+        fn add(self, other: Self) -> Self {
+            AmountOf(self.0 + other.0, PhantomData)
+        }
+    }
+
+    impl<Unit> Sum for AmountOf<Unit> {
+        fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+            iter.fold(AmountOf::ZERO, |a, b| a + b)
+        }
+    }
+
+    impl<Unit> Sub for AmountOf<Unit> {
+        type Output = Self;
+
+        fn sub(self, other: Self) -> Self {
+            AmountOf(self.0 - other.0, PhantomData)
+        }
+    }
+
+    impl<Unit> SubAssign for AmountOf<Unit> {
+        fn sub_assign(&mut self, other: Self) {
+            self.0 -= other.0;
+        }
+    }
+
+    #[test]
+    fn should_compare() {
+        assert!(ICP::TWO > ICP::ONE);
+        assert!(ICP::TWO >= ICP::ONE);
+    }
+
+    #[test]
+    fn should_add() {
+        assert_eq!(ICP::ONE + ICP::ONE, ICP::TWO);
+    }
+
+    #[test]
+    fn should_subtract() {
+        assert_eq!(ICP::ONE - ICP::ONE, ICP::ZERO);
+    }
+
+    #[test]
+    fn should_display() {
+        assert_eq!(format!("{}", ICP::ONE), "1.0");
+    }
+
+    #[test]
+    fn should_add_assign() {
+        let mut a = ICP::ZERO;
+        a += ICP::ONE;
+        assert_eq!(a, ICP::ONE);
+    }
+
+    #[test]
+    fn should_sub_assign() {
+        let mut a = ICP::ONE;
+        a -= ICP::ONE;
+        assert_eq!(a, ICP::ZERO);
+    }
+}
