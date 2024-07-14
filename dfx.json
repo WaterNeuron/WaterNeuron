@@ -1,0 +1,50 @@
+{
+  "dfx": "0.16.1",
+  "canisters": {
+    "water_neuron": {
+      "candid": "water_neuron/water_neuron.did",
+      "package": "water-neuron",
+      "shrink": false,
+      "type": "rust"
+    },
+    "wtn_governance": {
+      "candid": "candid/sns_governance.did",
+      "type": "custom",
+      "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
+    },
+    "wtn_ledger": {
+      "candid": "candid/sns_ledger.did",
+      "type": "custom",
+      "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
+    },
+    "governance": {
+      "candid": "governance_full.did",
+      "type": "custom",
+      "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
+    },
+    "icp_ledger": {
+      "candid": "ledger.did",
+      "type": "custom",
+      "wasm": "water_neuron/src/tests/ledger-canister.wasm.gz"
+    },
+    "nicp_ledger": {
+      "candid": "ledger.did",
+      "shrink": false,
+      "type": "custom",
+      "wasm": "water_neuron/src/state_machine/canisters/ic-icrc1-ledger.wasm.gz"
+    },
+    "nicp_index": {
+      "candid": "candid/sns_index.did",
+      "shrink": false,
+      "type": "custom",
+      "wasm": "water_neuron/src/state_machine/canisters/ic-icrc1-ledger.wasm.gz"
+    },
+  }
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "version": 1
+}
