@@ -6,15 +6,8 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-      ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
+  outputs = { self, nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
 
@@ -25,12 +18,20 @@
 
           # nix
           nixfmt-rfc-style
+
+          # rust
+          rustc
+          cargo
+          rustfmt
+          clippy
         ];
 
       in
       {
         devShell = pkgs.mkShell {
+          buildInputs = pathPackages;
           shellHook = ''
+            export PATH=$PATH:${pkgs.lib.makeBinPath pathPackages}
             alias bb='bazelisk '
 
             echo "welcome to your nix shell"
