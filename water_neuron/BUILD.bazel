@@ -1,0 +1,57 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+load("//bazel:canisters.bzl", "rust_canister")
+
+DEPENDENCIES = [
+    "@crate_index//:candid",
+    "@crate_index//:ciborium",
+    "@crate_index//:hex",
+    "@crate_index//:ic0",
+    "@crate_index//:ic-canister-log",
+    "@crate_index//:ic-cdk",
+    "@crate_index//:ic-canisters-http-types",
+    "@crate_index//:icp-ledger",
+    "@crate_index//:icrc-ledger-types",
+    "@crate_index//:icrc-ledger-client-cdk",
+    "@crate_index//:ic-sns-governance",
+    "@crate_index//:ic-metrics-encoder",
+    "@crate_index//:ic-stable-structures",
+    "@crate_index//:ic-utils-ensure",
+    "@crate_index//:minicbor",
+    "@crate_index//:rust_decimal",
+    "@crate_index//:scopeguard",
+    "@crate_index//:serde",
+    "@crate_index//:serde_bytes",
+    "@crate_index//:serde_cbor",
+    "@crate_index//:serde_json",
+    "@crate_index//:sha2",
+    "@crate_index//:strum",
+]
+
+PROC_MACRO_DEPENDENCIES = [
+    "@crate_index//:async-trait",
+    "@crate_index//:ic-cdk-macros",
+    "@crate_index//:minicbor-derive",
+    "@crate_index//:rust_decimal_macros",
+    "@crate_index//:strum_macros",
+]
+
+rust_library(
+    name = "waterneuron-lib",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    crate_name = "water_neuron",
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    visibility = ["//visibility:public"],
+    deps = DEPENDENCIES,
+)
+
+rust_canister(
+    name = "waterneuron",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    visibility = ["//visibility:public"],
+    deps = DEPENDENCIES + [":waterneuron-lib"],
+)

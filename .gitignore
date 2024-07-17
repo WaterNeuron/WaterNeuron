@@ -4,3 +4,6 @@ candid/
 
 # nix
 .direnv/
+
+# bazel
+bazel-*
