@@ -17,6 +17,7 @@ RUN apt -yq update && \
         tree \
         cmake \
         wabt \
+        build-essential \
         pkg-config \
         libssl-dev \
         libunwind-dev \
@@ -60,7 +61,7 @@ RUN curl --fail https://sh.rustup.rs -sSf \
     rustup component add clippy
 
 # Install ripgrep
-RUN cargo install ripgrep
+RUN cargo install ripgrep ic-wasm
 
 # Copy fish config
 COPY --chown=ubuntu:ubuntu .devcontainer/config.fish /home/ubuntu/.config/fish/config.fish
