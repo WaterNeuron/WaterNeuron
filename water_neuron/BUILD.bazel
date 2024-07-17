@@ -93,6 +93,7 @@ rust_test(
         "WATER_NEURON_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister)",
     },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    tags = ["requires-network"],
     visibility = ["//visibility:public"],
     deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
 )

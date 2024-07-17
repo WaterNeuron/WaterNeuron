@@ -151,7 +151,7 @@ ic_canister(
 
 ic_canister(
     name = "ledger-canister",
-    sha256 = "54aa8fd9172e7e59a39e55c70b3c8a159cf3d8f4c1b2b1284aa3b80cf82ff207",
+    sha256 = "72f82ae3587cd44592e2f8723d93ffbf1fddad7e3d141f609364b78517fe2e63",
     version = IC_VERSION,
     wasm_file = "ledger-canister.wasm.gz",
 )
