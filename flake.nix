@@ -24,6 +24,9 @@
           cargo
           rustfmt
           clippy
+
+          # linker
+          llvmPackages.lld
         ];
 
       in

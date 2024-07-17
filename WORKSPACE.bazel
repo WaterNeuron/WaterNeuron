@@ -80,3 +80,10 @@ crates_repository(
 load("@crate_index//:defs.bzl", "crate_repositories")
 
 crate_repositories()
+
+http_file(
+    name = "ic_icrc1_ledger_wasm",
+    downloaded_file_path = "wasm/ic_icrc1_ledger.wasm.gz",
+    sha256 = "<calculated_sha256_hash>",  # Replace with the actual SHA256 hash
+    urls = ["https://download.dfinity.systems/ic/922a89e6b521529fac3d131c3922cd13011dc600/canisters/ic-icrc1-ledger.wasm.gz"],
+)
