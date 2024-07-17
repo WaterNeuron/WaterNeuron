@@ -1,4 +1,4 @@
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 load("//bazel:canisters.bzl", "rust_canister")
 
 DEPENDENCIES = [
@@ -35,6 +35,26 @@ PROC_MACRO_DEPENDENCIES = [
     "@crate_index//:strum_macros",
 ]
 
+DEV_DEPENDENCIES = [
+    "@crate_index//:assert_matches",
+    "@crate_index//:candid_parser",
+    "@crate_index//:cycles-minting-canister",
+    "@crate_index//:ic-icrc1-ledger",
+    "@crate_index//:ic-nns-constants",
+    "@crate_index//:ic-state-machine-tests",
+    "@crate_index//:ic-nns-governance",
+    "@crate_index//:ic-sns-init",
+    "@crate_index//:ic-sns-root",
+    "@crate_index//:ic-sns-swap",
+    "@crate_index//:lazy_static",
+    "@crate_index//:mockall",
+    "@crate_index//:num-bigint",
+    "@crate_index//:num-traits",
+    "@crate_index//:proptest",
+    "@crate_index//:prost",
+    "@crate_index//:tokio",
+]
+
 rust_library(
     name = "waterneuron-lib",
     srcs = glob([
@@ -44,6 +64,17 @@ rust_library(
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     visibility = ["//visibility:public"],
     deps = DEPENDENCIES,
+)
+
+rust_test(
+    name = "waterneuron-tests",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    crate_name = "water_neuron",
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    visibility = ["//visibility:public"],
+    deps = DEPENDENCIES + DEV_DEPENDENCIES + [":waterneuron-lib"],
 )
 
 rust_canister(
