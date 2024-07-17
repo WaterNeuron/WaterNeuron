@@ -1,15 +1,29 @@
 {
-    "name": "My Dev Container",
-    "dockerFile": "../Dockerfile",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "tamasfe.even-better-toml",
-                "rust-lang.rust-analyzer"
-            ]
+    "name": "Existing Dockerfile",
+    "privileged": true,
+    "build": {
+        "context": "..",
+        "dockerfile": "../Dockerfile",
+        "args": {
+            "USERNAME": "ubuntu",
+            "USER_UID": "1000",
+            "USER_GID": "1000"
         }
     },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/ubuntu/waterneuron,type=bind",
+    "workspaceFolder": "/home/ubuntu/waterneuron",
+    "updateRemoteUserUID": true,
     "remoteUser": "ubuntu",
-    "forwardPorts": [],
-    "postCreateCommand": "echo 'Dev container is ready!'"
+    "postCreateCommand": "sudo chown -R ubuntu:ubuntu /home/ubuntu/waterneuron",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "fish"
+            },
+            "extensions": [
+                "rust-lang.rust-analyzer",
+                "tamasfe.even-better-toml"
+            ]
+        }
+    }
 }

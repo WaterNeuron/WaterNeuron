@@ -12,6 +12,9 @@ RUN apt -yq update && \
         gcc \
         lld \
         fish \
+        sudo \
+        wget \
+        tree \
         pkg-config \
         libssl-dev \
         libunwind-dev \
@@ -32,6 +35,9 @@ ARG bazelisk_sha=d28b588ac0916abd6bf02defb5433f6eddf7cba35ffa808eabb65a44aab226f
 RUN curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-linux-amd64 -o /usr/bin/bazel && \
     echo "$bazelisk_sha /usr/bin/bazel" | sha256sum --check && \
     chmod 777 /usr/bin/bazel
+
+# No password sudo
+RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 USER ubuntu
 

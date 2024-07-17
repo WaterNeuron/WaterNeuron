@@ -10,3 +10,4 @@ Liquid staking protocol on the Internet Computer
 Recommend extensions:
 - mkhl.direnv
 - philipbe.theme-gray-matter
+- ms-vscode-remote.remote-containers

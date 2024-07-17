@@ -19,6 +19,23 @@ load("@rules_rust//crate_universe:defs.bzl", "crate", "crates_repository")
 crates_repository(
     name = "crate_index",
     cargo_lockfile = "//:Cargo.lock",
+    annotations = {
+        "ic-icrc1-ledger": [crate.annotation(
+            build_script_env = {
+                "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @icrc1_ledger//:ic-icrc1-ledger.wasm.gz)",
+            },
+            build_script_data = [
+                "@icrc1_ledger//:ic-icrc1-ledger.wasm.gz",
+            ],
+            build_script_rustc_env = {
+                "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @icrc1_ledger//:ic-icrc1-ledger.wasm.gz)",
+            },
+            data = [
+                "@icrc1_ledger//:ic-icrc1-ledger.wasm.gz",
+            ],
+
+        )]
+    },
     isolated = True,
     lockfile = "//:Cargo.Bazel.lock",
     packages = {
@@ -81,9 +98,6 @@ load("@crate_index//:defs.bzl", "crate_repositories")
 
 crate_repositories()
 
-http_file(
-    name = "ic_icrc1_ledger_wasm",
-    downloaded_file_path = "wasm/ic_icrc1_ledger.wasm.gz",
-    sha256 = "<calculated_sha256_hash>",  # Replace with the actual SHA256 hash
-    urls = ["https://download.dfinity.systems/ic/922a89e6b521529fac3d131c3922cd13011dc600/canisters/ic-icrc1-ledger.wasm.gz"],
-)
+load("//bazel:icrc1_ledger.bzl", "icrc1_ledger")
+
+icrc1_ledger(name = "icrc1_ledger")

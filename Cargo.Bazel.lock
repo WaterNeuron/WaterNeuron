@@ -1,5 +1,5 @@
 {
-  "checksum": "7bf91214669554b93256fc444798b16ec45f6535127111e9dfea88b731415637",
+  "checksum": "f7f2aeef36a3b49dcb91ee371beec8279e44d8f96336280a97099f60acb6b0e5",
   "crates": {
     "ahash 0.7.8": {
       "name": "ahash",
@@ -7978,6 +7978,12 @@
           ],
           "selects": {}
         },
+        "data": {
+          "common": [
+            "@icrc1_ledger//:ic-icrc1-ledger.wasm.gz"
+          ],
+          "selects": {}
+        },
         "deps": {
           "common": [
             {
@@ -8080,9 +8086,27 @@
         "version": "0.9.0"
       },
       "build_script_attrs": {
+        "data": {
+          "common": [
+            "@icrc1_ledger//:ic-icrc1-ledger.wasm.gz"
+          ],
+          "selects": {}
+        },
         "data_glob": [
           "**"
-        ]
+        ],
+        "build_script_env": {
+          "common": {
+            "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @icrc1_ledger//:ic-icrc1-ledger.wasm.gz)"
+          },
+          "selects": {}
+        },
+        "rustc_env": {
+          "common": {
+            "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @icrc1_ledger//:ic-icrc1-ledger.wasm.gz)"
+          },
+          "selects": {}
+        }
       },
       "license": null,
       "license_ids": [],
