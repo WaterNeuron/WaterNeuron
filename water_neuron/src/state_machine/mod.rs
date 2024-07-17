@@ -72,6 +72,10 @@ fn water_neuron_wasm() -> Vec<u8> {
 }
 
 fn ledger_wasm() -> Vec<u8> {
+    // fetch the wasm from the env variable LEDGER_CANISTER_WASM_PATH
+    let wasm_path = std::env::var("LEDGER_CANISTER_WASM_PATH").unwrap();
+    dbg!(&wasm_path);
+
     get_wasm("./src/state_machine/canisters/ic-icrc1-ledger.wasm.gz")
 }
 
