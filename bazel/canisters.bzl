@@ -44,8 +44,20 @@ def rust_canister(name, **kwargs):
 
     wasm_name = "_wasm_" + name.replace(".", "_")
     kwargs.setdefault("visibility", ["//visibility:public"])
-    kwargs.setdefault("rustc_flags", ["-C", "opt-level=z", "-C", "debuginfo=0", "-C", "lto"])
-    kwargs.setdefault("edition", "2021")
+    kwargs.setdefault("rustc_flags", [
+            "-C",
+            "link-args=-z stack-size=3145728",
+            "-C",
+            "linker-plugin-lto",
+            "-C",
+            "opt-level=3",
+            "-C",
+            "debug-assertions=no",
+            "-C",
+            "debuginfo=0",
+            "-C",
+            "lto",
+    ])
 
     rust_binary(
         name = wasm_name,
