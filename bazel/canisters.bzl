@@ -57,6 +57,8 @@ def rust_canister(name, **kwargs):
             "debuginfo=0",
             "-C",
             "lto",
+            "-C",
+            "embed-bitcode=yes"
     ])
 
     rust_binary(

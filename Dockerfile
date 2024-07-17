@@ -15,6 +15,8 @@ RUN apt -yq update && \
         sudo \
         wget \
         tree \
+        cmake \
+        wabt \
         pkg-config \
         libssl-dev \
         libunwind-dev \
@@ -29,12 +31,17 @@ RUN apt -yq update && \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
-
 # Add bazel
 ARG bazelisk_sha=d28b588ac0916abd6bf02defb5433f6eddf7cba35ffa808eabb65a44aab226f7
 RUN curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-linux-amd64 -o /usr/bin/bazel && \
     echo "$bazelisk_sha /usr/bin/bazel" | sha256sum --check && \
     chmod 777 /usr/bin/bazel
+
+# Add buildifier
+ARG buildifier_sha=be63db12899f48600bad94051123b1fd7b5251e7661b9168582ce52396132e92
+RUN curl -fsSL https://github.com/bazelbuild/buildtools/releases/download/v6.4.0/buildifier-linux-amd64 -o /usr/bin/buildifier && \
+    echo "$buildifier_sha /usr/bin/buildifier" | sha256sum --check && \
+    chmod 777 /usr/bin/buildifier
 
 # No password sudo
 RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
