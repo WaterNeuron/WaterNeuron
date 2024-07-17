@@ -1,0 +1,15 @@
+{
+    "name": "My Dev Container",
+    "dockerFile": "../Dockerfile",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "tamasfe.even-better-toml",
+                "rust-lang.rust-analyzer"
+            ]
+        }
+    },
+    "remoteUser": "ubuntu",
+    "forwardPorts": [],
+    "postCreateCommand": "echo 'Dev container is ready!'"
+}
