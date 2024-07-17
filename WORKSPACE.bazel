@@ -197,3 +197,8 @@ ic_canister(
     version = "80e0363393ea26a36b77e8c75f7f183cb521f67f",
     wasm_file = "sns-wasm-canister.wasm.gz",
 )
+
+# shfmt binary for fast shell linting
+load("//bazel:shfmt.bzl", "shfmt")
+
+shfmt(name = "shfmt")
