@@ -21,16 +21,16 @@ crates_repository(
     annotations = {
         "ic-icrc1-ledger": [crate.annotation(
             build_script_data = [
-                "@icrc1_ledger//:ic-icrc1-ledger.wasm.gz",
+                "@ic_icrc1_ledger//:ic-icrc1-ledger.wasm.gz",
             ],
             build_script_env = {
-                "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @icrc1_ledger//:ic-icrc1-ledger.wasm.gz)",
+                "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @ic_icrc1_ledger//:ic-icrc1-ledger.wasm.gz)",
             },
             build_script_rustc_env = {
-                "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @icrc1_ledger//:ic-icrc1-ledger.wasm.gz)",
+                "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @ic_icrc1_ledger//:ic-icrc1-ledger.wasm.gz)",
             },
             data = [
-                "@icrc1_ledger//:ic-icrc1-ledger.wasm.gz",
+                "@ic_icrc1_ledger//:ic-icrc1-ledger.wasm.gz",
             ],
         )],
     },
@@ -138,6 +138,11 @@ load("@crate_index//:defs.bzl", "crate_repositories")
 
 crate_repositories()
 
-load("//bazel:icrc1_ledger.bzl", "icrc1_ledger")
+load("//bazel:ic_canister.bzl", "ic_canister")
 
-icrc1_ledger(name = "icrc1_ledger")
+ic_canister(
+    name = "ic_icrc1_ledger",
+    sha256 = "54aa8fd9172e7e59a39e55c70b3c8a159cf3d8f4c1b2b1284aa3b80cf82ff207",
+    version = "d87954601e4b22972899e9957e800406a0a6b929",
+    wasm_file = "ic-icrc1-ledger.wasm.gz",
+)

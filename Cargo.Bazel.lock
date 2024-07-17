@@ -1,5 +1,5 @@
 {
-  "checksum": "f9431f34514efd1b7ac1917a87f77c2e2dc3b48fd8d96506b9e3180f298d43ff",
+  "checksum": "897b95bae2f7b5dfc019c3c61c698965c99a99ef7eba891b324c05a5c25cd4a7",
   "crates": {
     "addr2line 0.22.0": {
       "name": "addr2line",
@@ -19423,7 +19423,7 @@
         },
         "data": {
           "common": [
-            "@icrc1_ledger//:ic-icrc1-ledger.wasm.gz"
+            "@ic_icrc1_ledger//:ic-icrc1-ledger.wasm.gz"
           ],
           "selects": {}
         },
@@ -19531,7 +19531,7 @@
       "build_script_attrs": {
         "data": {
           "common": [
-            "@icrc1_ledger//:ic-icrc1-ledger.wasm.gz"
+            "@ic_icrc1_ledger//:ic-icrc1-ledger.wasm.gz"
           ],
           "selects": {}
         },
@@ -19540,13 +19540,13 @@
         ],
         "build_script_env": {
           "common": {
-            "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @icrc1_ledger//:ic-icrc1-ledger.wasm.gz)"
+            "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @ic_icrc1_ledger//:ic-icrc1-ledger.wasm.gz)"
           },
           "selects": {}
         },
         "rustc_env": {
           "common": {
-            "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @icrc1_ledger//:ic-icrc1-ledger.wasm.gz)"
+            "IC_ICRC1_ARCHIVE_WASM_PATH": "$(execpath @ic_icrc1_ledger//:ic-icrc1-ledger.wasm.gz)"
           },
           "selects": {}
         }

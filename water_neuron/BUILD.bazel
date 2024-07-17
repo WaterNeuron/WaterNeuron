@@ -56,7 +56,7 @@ DEV_DEPENDENCIES = [
 ]
 
 rust_library(
-    name = "waterneuron-lib",
+    name = "lib",
     srcs = glob([
         "src/**/*.rs",
     ]),
@@ -67,22 +67,22 @@ rust_library(
 )
 
 rust_test(
-    name = "waterneuron-tests",
+    name = "tests",
     srcs = glob([
         "src/**/*.rs",
     ]),
     crate_name = "water_neuron",
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     visibility = ["//visibility:public"],
-    deps = DEPENDENCIES + DEV_DEPENDENCIES + [":waterneuron-lib"],
+    deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
 )
 
 rust_canister(
-    name = "waterneuron",
+    name = "canister",
     srcs = glob([
         "src/**/*.rs",
     ]),
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     visibility = ["//visibility:public"],
-    deps = DEPENDENCIES + [":waterneuron-lib"],
+    deps = DEPENDENCIES + [":lib"],
 )
