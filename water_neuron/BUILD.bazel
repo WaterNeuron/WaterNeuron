@@ -1,6 +1,8 @@
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 load("//bazel:canisters.bzl", "rust_canister")
 
+package(default_visibility = ["//visibility:public"])
+
 DEPENDENCIES = [
     "@crate_index//:candid",
     "@crate_index//:ciborium",
@@ -62,7 +64,6 @@ rust_library(
     ]),
     crate_name = "water_neuron",
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
-    visibility = ["//visibility:public"],
     deps = DEPENDENCIES,
 )
 
@@ -94,7 +95,6 @@ rust_test(
     },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     tags = ["requires-network"],
-    visibility = ["//visibility:public"],
     deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
 )
 
@@ -104,6 +104,5 @@ rust_canister(
         "src/**/*.rs",
     ]),
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
-    visibility = ["//visibility:public"],
     deps = DEPENDENCIES + [":lib"],
 )

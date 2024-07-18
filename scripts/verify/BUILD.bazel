@@ -1,0 +1,27 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+DEPENDENCIES = [
+    "@crate_index//:log",
+    "@crate_index//:env_logger",
+    "@crate_index//:clap",
+    "@crate_index//:ic-agent",
+    "@crate_index//:candid",
+    "@crate_index//:serde",
+    "@crate_index//:tokio",
+    "@crate_index//:serde_bytes",
+    "@crate_index//:ic-cdk",
+]
+
+rust_binary(
+    name = "verify",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    data = [
+        "//water_neuron:canister",
+    ],
+    env = {
+        "WATER_NEURON_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister)",
+    },
+    deps = DEPENDENCIES,
+)
