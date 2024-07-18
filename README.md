@@ -19,3 +19,4 @@ Recommend extensions:
 -   dfx release script
 -   upload to docker image
 -   automatically update docker
+-   fetch candid files
