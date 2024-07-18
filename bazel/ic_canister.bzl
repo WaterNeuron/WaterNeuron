@@ -21,7 +21,7 @@ def _ic_canister_impl(repository_ctx):
     )
 
     build_file = "BUILD.bazel"
-    repository_ctx.file(build_file, CANISTER_BUILD.format(wasm_file = wasm_file), executable = False)
+    repository_ctx.file(build_file, CANISTER_BUILD.format(wasm_file = wasm_file), executable = True)
 
 ic_canister = repository_rule(
     implementation = _ic_canister_impl,

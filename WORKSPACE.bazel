@@ -145,6 +145,8 @@ crates_repository(
         "env_logger": crate.spec(version = "^0.11.3"),
         "ic-agent": crate.spec(version = "^0.36.0"),
         "log": crate.spec(version = "^0.4.14"),
+        "thiserror": crate.spec(version = "^1.0.63"),
+        "regex": crate.spec(version = "^1.10.5"),
     },
 )
 
@@ -152,6 +154,7 @@ load("@crate_index//:defs.bzl", "crate_repositories")
 
 crate_repositories()
 
+# load("//bazel:ic_candid.bzl", "ic_candidfile")
 load("//bazel:ic_canister.bzl", "ic_canister")
 
 # https://github.com/dfinity/ic/commit/0abc8efa13a533576dbd9b652e37e4a817e6051c
@@ -163,20 +166,18 @@ ic_canister(
     wasm_file = "ledger-canister.wasm.gz",
 )
 
+# ic_candidfile(
+#     name = "ledger-canister",
+#     commit = "0abc8efa13a533576dbd9b652e37e4a817e6051c",
+#     file_path = "path/to/my_file.did",
+#     sha256 = "expected_sha256_hash",
+# )
+
 ic_canister(
     name = "cycles-minting-canister",
     sha256 = "d33b381e3de4cb3a35493ba0398b3c7f7b7165306400b25fe9129b9f28d08774",
     version = "0abc8efa13a533576dbd9b652e37e4a817e6051c",
     wasm_file = "cycles-minting-canister.wasm.gz",
-)
-
-# https://github.com/dfinity/ic/commit/f58b13bc425784cd399070028ff8b3f3dca8c869
-# 8th March 2024
-ic_canister(
-    name = "ic-icrc1-ledger",
-    sha256 = "b60487873e58beda2fe7a02cfdf3c741bc48a30d3485aeec8a69a991d7807d4b",
-    version = "f58b13bc425784cd399070028ff8b3f3dca8c869",
-    wasm_file = "ic-icrc1-ledger.wasm.gz",
 )
 
 # https://github.com/dfinity/ic/commit/80e0363393ea26a36b77e8c75f7f183cb521f67f
@@ -218,6 +219,15 @@ ic_canister(
     wasm_file = "sns-root-canister.wasm.gz",
 )
 
+# https://github.com/dfinity/ic/commit/a3831c87440df4821b435050c8a8fcb3745d86f6
+# 10th July 2024
+ic_canister(
+    name = "ic-icrc1-ledger",
+    sha256 = "4264ce2952c4e9ff802d81a11519d5e3ffdaed4215d5831a6634e59efd72f7d8",
+    version = "a3831c87440df4821b435050c8a8fcb3745d86f6",
+    wasm_file = "ic-icrc1-ledger.wasm.gz",
+)
+
 # shfmt binary for fast shell linting
 load("//bazel:shfmt.bzl", "shfmt")
 
@@ -227,3 +237,8 @@ shfmt(name = "shfmt")
 load("@rules_rust//tools/rust_analyzer:deps.bzl", "rust_analyzer_dependencies")
 
 rust_analyzer_dependencies()
+
+# candid
+load("//bazel:candid.bzl", "candid")
+
+candid(name = "candid")

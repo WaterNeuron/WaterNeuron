@@ -1,5 +1,5 @@
 {
-  "checksum": "3a496b50e33660257ce13b25680a6f55356d07065bd24778ec2f10b6ad4f9422",
+  "checksum": "1f19bc7367ceb2dab3cca19afb4b8830c78458e786d425d9ce8a87b27b59491b",
   "crates": {
     "addr2line 0.22.0": {
       "name": "addr2line",
@@ -1141,7 +1141,7 @@
               "target": "rusticata_macros"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -3925,7 +3925,7 @@
               "target": "once_cell"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -3994,7 +3994,7 @@
               "target": "once_cell"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -4172,7 +4172,7 @@
               "target": "serde_bytes"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -4350,7 +4350,7 @@
               "target": "pretty"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -9058,6 +9058,10 @@
               "target": "prost"
             },
             {
+              "id": "regex 1.10.5",
+              "target": "regex"
+            },
+            {
               "id": "rust_decimal 1.35.0",
               "target": "rust_decimal"
             },
@@ -9088,6 +9092,10 @@
             {
               "id": "strum 0.26.2",
               "target": "strum"
+            },
+            {
+              "id": "thiserror 1.0.63",
+              "target": "thiserror"
             },
             {
               "id": "tokio 1.38.1",
@@ -9536,7 +9544,7 @@
               "target": "sha2"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -9943,7 +9951,7 @@
               "target": "log"
             },
             {
-              "id": "regex 1.10.4",
+              "id": "regex 1.10.5",
               "target": "regex"
             }
           ],
@@ -14482,7 +14490,7 @@
               "target": "simple_asn1"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -15150,7 +15158,7 @@
               "target": "rayon"
             },
             {
-              "id": "regex 1.10.4",
+              "id": "regex 1.10.5",
               "target": "regex"
             },
             {
@@ -15425,7 +15433,7 @@
               "target": "scoped_threadpool"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -17909,7 +17917,7 @@
               "target": "tempfile"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -18878,7 +18886,7 @@
               "target": "strum"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -20110,7 +20118,7 @@
               "target": "serde"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -20203,7 +20211,7 @@
               "target": "serde_bytes"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -21290,7 +21298,7 @@
               "target": "tempfile"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -21889,7 +21897,7 @@
               "target": "serde"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -21950,7 +21958,7 @@
         "deps": {
           "common": [
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -22123,7 +22131,7 @@
               "target": "phantom_newtype"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -24692,7 +24700,7 @@
               "target": "serde_cbor"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -24876,7 +24884,7 @@
               "target": "ic_types"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -27309,7 +27317,7 @@
                 "target": "cvt"
               },
               {
-                "id": "thiserror 1.0.61",
+                "id": "thiserror 1.0.63",
                 "target": "thiserror"
               }
             ]
@@ -28198,7 +28206,7 @@
               "target": "sha2"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -28353,7 +28361,7 @@
               "target": "strum"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -28724,7 +28732,7 @@
               "target": "ic_types"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -29459,7 +29467,7 @@
               "target": "sha2"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -30313,7 +30321,7 @@
               "target": "serde"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -30800,7 +30808,7 @@
               "target": "pico_args"
             },
             {
-              "id": "regex 1.10.4",
+              "id": "regex 1.10.5",
               "target": "regex"
             },
             {
@@ -34317,7 +34325,7 @@
               "target": "pin_project_lite"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -34414,7 +34422,7 @@
               "target": "rand"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -35162,7 +35170,7 @@
               "target": "memchr"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -36101,7 +36109,7 @@
               "target": "predicates_core"
             },
             {
-              "id": "regex 1.10.4",
+              "id": "regex 1.10.5",
               "target": "regex"
             }
           ],
@@ -37239,7 +37247,7 @@
               "target": "protobuf"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -37564,7 +37572,7 @@
               "target": "prost_types"
             },
             {
-              "id": "regex 1.10.4",
+              "id": "regex 1.10.5",
               "target": "regex"
             },
             {
@@ -38030,7 +38038,7 @@
               "target": "rustc_hash"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -38102,7 +38110,7 @@
               "target": "slab"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -38924,7 +38932,7 @@
               "target": "libredox"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             }
           ],
@@ -39010,14 +39018,14 @@
       ],
       "license_file": "LICENSE"
     },
-    "regex 1.10.4": {
+    "regex 1.10.5": {
       "name": "regex",
-      "version": "1.10.4",
+      "version": "1.10.5",
       "package_url": "https://github.com/rust-lang/regex",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/regex/1.10.4/download",
-          "sha256": "c117dbdfde9c8308975b6a18d71f3f385c89461f7b3fb054288ecf2a2058ba4c"
+          "url": "https://static.crates.io/crates/regex/1.10.5/download",
+          "sha256": "b91213439dad192326a0d7c6ee3955910425f441d7038e0d6933b0aec5c4517f"
         }
       },
       "targets": [
@@ -39083,7 +39091,7 @@
           "selects": {}
         },
         "edition": "2021",
-        "version": "1.10.4"
+        "version": "1.10.5"
       },
       "license": "MIT OR Apache-2.0",
       "license_ids": [
@@ -44385,7 +44393,7 @@
               "target": "num_traits"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -46724,7 +46732,7 @@
               "target": "static_assertions"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -47092,14 +47100,14 @@
       ],
       "license_file": "LICENSE"
     },
-    "thiserror 1.0.61": {
+    "thiserror 1.0.63": {
       "name": "thiserror",
-      "version": "1.0.61",
+      "version": "1.0.63",
       "package_url": "https://github.com/dtolnay/thiserror",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/thiserror/1.0.61/download",
-          "sha256": "c546c80d6be4bc6a00c0f01730c08df82eaa7a7a61f11d656526506112cc1709"
+          "url": "https://static.crates.io/crates/thiserror/1.0.63/download",
+          "sha256": "c0342370b38b6a11b6cc11d6a805569958d54cfa061a29969c3b5ce2ea405724"
         }
       },
       "targets": [
@@ -47136,7 +47144,7 @@
         "deps": {
           "common": [
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "build_script_build"
             }
           ],
@@ -47146,13 +47154,13 @@
         "proc_macro_deps": {
           "common": [
             {
-              "id": "thiserror-impl 1.0.61",
+              "id": "thiserror-impl 1.0.63",
               "target": "thiserror_impl"
             }
           ],
           "selects": {}
         },
-        "version": "1.0.61"
+        "version": "1.0.63"
       },
       "build_script_attrs": {
         "data_glob": [
@@ -47166,14 +47174,14 @@
       ],
       "license_file": "LICENSE-APACHE"
     },
-    "thiserror-impl 1.0.61": {
+    "thiserror-impl 1.0.63": {
       "name": "thiserror-impl",
-      "version": "1.0.61",
+      "version": "1.0.63",
       "package_url": "https://github.com/dtolnay/thiserror",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/thiserror-impl/1.0.61/download",
-          "sha256": "46c3384250002a6d5af4d114f2845d37b57521033f30d5c3f46c4d70e1197533"
+          "url": "https://static.crates.io/crates/thiserror-impl/1.0.63/download",
+          "sha256": "a4558b58466b9ad7ca0f102865eccc95938dca1a74a856f2b57b6629050da261"
         }
       },
       "targets": [
@@ -47213,7 +47221,7 @@
           "selects": {}
         },
         "edition": "2021",
-        "version": "1.0.61"
+        "version": "1.0.63"
       },
       "license": "MIT OR Apache-2.0",
       "license_ids": [
@@ -51788,7 +51796,7 @@
               "target": "target_lexicon"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -51963,7 +51971,7 @@
               "target": "target_lexicon"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -52374,7 +52382,7 @@
               "target": "serde"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -54788,7 +54796,7 @@
               "target": "rusticata_macros"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -54880,7 +54888,7 @@
               "target": "rusticata_macros"
             },
             {
-              "id": "thiserror 1.0.61",
+              "id": "thiserror 1.0.63",
               "target": "thiserror"
             },
             {
@@ -56095,6 +56103,7 @@
     "num-traits 0.2.19",
     "proptest 1.5.0",
     "prost 0.12.6",
+    "regex 1.10.5",
     "rust_decimal 1.35.0",
     "rust_decimal_macros 1.34.2",
     "scopeguard 1.2.0",
@@ -56105,6 +56114,7 @@
     "sha2 0.10.8",
     "strum 0.26.2",
     "strum_macros 0.26.4",
+    "thiserror 1.0.63",
     "tokio 1.38.1"
   ],
   "direct_dev_deps": []

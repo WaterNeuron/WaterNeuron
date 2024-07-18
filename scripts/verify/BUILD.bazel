@@ -12,6 +12,8 @@ DEPENDENCIES = [
     "@crate_index//:ic-cdk",
     "@crate_index//:hex",
     "@crate_index//:sha2",
+    "@crate_index//:thiserror",
+    "@crate_index//:regex",
 ]
 
 rust_binary(
@@ -20,10 +22,10 @@ rust_binary(
         "src/**/*.rs",
     ]),
     data = [
-        "//water_neuron:canister",
+        "@ic-icrc1-ledger//:ic-icrc1-ledger.wasm.gz",
     ],
     env = {
-        "WATER_NEURON_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister)",
+        "WASM_PATH": "$(rootpath @ic-icrc1-ledger//:ic-icrc1-ledger.wasm.gz)",
     },
     deps = DEPENDENCIES,
 )
