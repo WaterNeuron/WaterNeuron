@@ -61,10 +61,13 @@ RUN curl --fail https://sh.rustup.rs -sSf \
     rustup component add clippy
 
 # Install ripgrep
-RUN cargo install ripgrep ic-wasm
+RUN cargo install ripgrep ic-wasm tokei git-delta bat
 
 # Copy fish config
 COPY --chown=ubuntu:ubuntu .devcontainer/config.fish /home/ubuntu/.config/fish/config.fish
+
+# Copy git config
+COPY --chown=ubuntu:ubuntu .devcontainer/.gitconfig /home/ubuntu/.gitconfig
 
 # Install vim-plug
 RUN curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
