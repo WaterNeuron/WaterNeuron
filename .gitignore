@@ -8,3 +8,5 @@ candid/
 # bazel
 bazel-*
 tmp/
+
+rust-project.json

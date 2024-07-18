@@ -15,14 +15,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let canister_id = "jfnic-kaaaa-aaaaq-aadla-cai";
 
-    let arg = Encode!(&types::ProposalId { id: 5 })?;
+    let arg = types::GetProposal {
+        proposal_id: Some(types::ProposalId { id: 5 }),
+    };
+
+    let arg_raw = Encode!(&arg)?;
 
     let response = agent.query(&Principal::from_text(canister_id).unwrap(), "get_proposal")
-        .with_arg(arg)
+        .with_arg(arg_raw)
         .call()
         .await?;
 
     let result = Decode!(response.as_slice(), Option<types::GetProposalResponse>)?;
+
+    // get new_canister_wasm  from result
+    let new_canister_wasm = result.unwrap().proposal.unwrap().new_canister_wasm;
 
     println!("Proposal: {:?}", result);
 

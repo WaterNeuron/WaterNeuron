@@ -13,7 +13,7 @@ DEPENDENCIES = [
 ]
 
 rust_binary(
-    name = "verify",
+    name = "bin",
     srcs = glob([
         "src/**/*.rs",
     ]),

@@ -39,7 +39,7 @@ sh_binary(
 )
 
 sh_binary(
-    name = "verify",
+    name = "script-verify",
     srcs = ["verify.sh"],
     data = [
         "//water_neuron:canister",
