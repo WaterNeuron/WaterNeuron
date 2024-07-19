@@ -2,12 +2,13 @@ use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use clap::{Parser, ValueEnum};
 use ic_agent::AgentError;
 use ic_agent::{identity::AnonymousIdentity, Agent};
-use log::{error, info};
+use log::{debug, error, info};
 use regex::Regex;
 use sha2::Digest;
 use sha2::Sha256;
 use std::io::Read;
 use std::os::unix::process;
+use std::path::Path;
 use std::process::Command;
 use std::str::FromStr;
 use std::string::FromUtf8Error;
@@ -132,17 +133,34 @@ async fn main() {
     let upgrade_args = args.upgrade_args;
     let canister = args.canister;
     let git_commit = args.git_commit;
+    let target_canister = args.target_canister;
 
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
     }
     env_logger::init();
 
+    // fetch the current time
+    let now = std::time::SystemTime::now();
+
     // TODO check all the env variables used in CanisterType exist
     // if not, return error
 
-    match run(proposal_id, wasm_hash, upgrade_args, canister, git_commit).await {
-        Ok(_) => {}
+    match run(
+        proposal_id,
+        wasm_hash,
+        upgrade_args,
+        canister,
+        git_commit,
+        target_canister,
+    )
+    .await
+    {
+        Ok(_) => {
+            info!("Verification successful");
+            let elapsed = now.elapsed().unwrap();
+            info!("Elapsed time: {:?}", elapsed);
+        }
         Err(err) => {
             error!("Error: {:?}", err);
             std::process::exit(1);
@@ -152,44 +170,87 @@ async fn main() {
 
 async fn run(
     proposal_id: u64,
-    wasm_hash: String,
-    upgrade_args: Vec<String>,
+    input_wasm_hash: String,
+    input_upgrade_args: Vec<String>,
     canister: CanisterType,
     git_commit: String,
+    target_canister: String,
 ) -> Result<()> {
-    let (wasm_sha256_hash, canister_upgrade_arg_sha256_hash) = get_shasum(proposal_id).await?;
+    let (proposal_wasm_hash, proposal_upgrade_arg_hash, proposal_canister_id) =
+        parse_proposal(proposal_id).await?;
 
+    // check if the canister id in the proposal matches the target canister
+    if proposal_canister_id != target_canister {
+        return Err(CustomError::Generic(
+            "Canister ID in the proposal does not match the target canister".to_string(),
+        ));
+    } else {
+        info!("Canister ID in the proposal matches the target canister");
+    }
+
+    // check the hash of the wasm and the upgrade args
+    check_hash(
+        &canister,
+        &input_wasm_hash,
+        &proposal_wasm_hash,
+        &input_upgrade_args,
+        &proposal_upgrade_arg_hash,
+    )?;
+
+    // check with ic-wasm the git-commit is indeed the correct one
+    check_git_commit(canister, &git_commit)?;
+
+    // TODO check the candid file is the same as the one attached in the wasm
+
+    Ok(())
+}
+
+fn check_hash(
+    canister: &CanisterType,
+    input_wasm_hash: &str,
+    proposal_wasm_hash: &str,
+    input_upgrade_args: &Vec<String>,
+    proposal_upgrade_arg_hash: &str,
+) -> Result<()> {
+    // Compute the SHA256 hash of the local Wasm file
     let wasm_path = std::env::var(canister.get_wasm_env())
         .map_err(|_| CustomError::Generic(format!("{} not set", canister.get_wasm_env())))?;
 
     let wasm_bytes = std::fs::read(&wasm_path)?;
 
-    let wasm_sha256_hash_local = sha2::Sha256::digest(&wasm_bytes)
+    let local_wasm_hash = Sha256::digest(&wasm_bytes)
         .iter()
         .map(|b| format!("{:02x}", b))
         .collect::<String>();
 
-    info!("Local Wasm SHA256 Hash: {}", wasm_sha256_hash_local);
+    info!("Local Wasm SHA256 Hash: {}", local_wasm_hash);
 
-    if wasm_sha256_hash_local != wasm_sha256_hash {
+    if local_wasm_hash != proposal_wasm_hash {
         return Err(CustomError::Generic(format!(
             "Local Wasm SHA256 hash does not match the proposal Wasm SHA256 hash: {} != {}",
-            wasm_sha256_hash_local, wasm_sha256_hash
+            local_wasm_hash, proposal_wasm_hash
         )));
     } else {
-        info!("Local Wasm SHA256 hash matches the proposal Wasm SHA256 hash");
+        info!(
+            "Local Wasm SHA256 hash matches the proposal Wasm SHA256 hash: {} == {}",
+            local_wasm_hash, proposal_wasm_hash
+        );
     }
 
-    // check the wasm hash is the same as the one in the proposal
-    if wasm_hash != wasm_sha256_hash {
-        return Err(CustomError::Generic(
-            "Wasm hash does not match the proposal Wasm hash: {wasm_hash} != {wasm_sha256_hash}"
-                .to_string(),
-        ));
+    // Check the wasm hash is the same as the one in the input
+    if input_wasm_hash != proposal_wasm_hash {
+        return Err(CustomError::Generic(format!(
+            "Input WASM hash does not match proposal WASM hash: {} != {}",
+            input_wasm_hash, proposal_wasm_hash
+        )));
     } else {
-        info!("Wasm hash matches the proposal Wasm hash");
+        info!(
+            "Wasm hash matches the proposal Wasm hash: {} == {}",
+            input_wasm_hash, proposal_wasm_hash
+        );
     }
 
+    // Compute the SHA256 hash of the encoded upgrade args
     let candid_file_path = std::env::var(canister.get_candid_env())
         .map_err(|_| CustomError::Generic(format!("{} not set", canister.get_candid_env())))?;
 
@@ -202,7 +263,7 @@ async fn run(
         .arg("-d")
         .arg(candid_file_path)
         .arg("-t")
-        .args(upgrade_args)
+        .args(input_upgrade_args)
         .output()?;
 
     let stdout = encoded_candid_arg.stdout;
@@ -221,23 +282,24 @@ async fn run(
     info!("Computed hash: {}", sha256_encoded_candid_arg);
 
     info!(
-        "SHA256 hash of the encoded upgrade args: {}",
+        "SHA256 hash of the encoded upgrade args given in input: {}",
         sha256_encoded_candid_arg
     );
 
     // compare them with the sha256 hash in the proposal
-    if sha256_encoded_candid_arg != canister_upgrade_arg_sha256_hash {
+    if sha256_encoded_candid_arg != proposal_upgrade_arg_hash {
         return Err(CustomError::Generic(
-            "Encoded upgrade args hash does not match the proposal encoded upgrade args hash"
-                .to_string(),
+            format!(
+                "Encoded upgrade args hash does not match the proposal encoded upgrade args hash: {} != {}",
+                sha256_encoded_candid_arg, proposal_upgrade_arg_hash
+            )
         ));
     } else {
-        info!("Encoded upgrade args hash matches the proposal encoded upgrade args hash");
+        info!(
+            "Encoded upgrade args hash matches the proposal encoded upgrade args hash: {} == {}",
+            sha256_encoded_candid_arg, proposal_upgrade_arg_hash
+        );
     }
-
-    // check the upgrade hash is the same as the one in the proposal
-
-    // check with ic-wasm the git-commit is indeed the correct one
 
     Ok(())
 }
@@ -271,7 +333,7 @@ async fn fetch_proposal(proposal_id: u64) -> Result<Option<GetProposalResponse>>
     )?)
 }
 
-async fn get_shasum(proposal_id: u64) -> Result<(String, String)> {
+async fn parse_proposal(proposal_id: u64) -> Result<(String, String, String)> {
     // get new_canister_wasm  from result
     let new_canister_wasm = fetch_proposal(proposal_id)
         .await?
@@ -308,9 +370,9 @@ async fn get_shasum(proposal_id: u64) -> Result<(String, String)> {
         _ => Err(CustomError::Generic("Not a proposal result".to_string()))?,
     };
 
-    info!("Canister ID: {}", canister_id);
-    info!("Wasm: {}", hex::encode(&wasm));
-    info!(
+    debug!("Canister ID: {}", canister_id);
+    debug!("Wasm: {}", hex::encode(&wasm));
+    debug!(
         "Canister Upgrade Arg: {}",
         hex::encode(&canister_upgrade_arg)
     );
@@ -336,7 +398,12 @@ async fn get_shasum(proposal_id: u64) -> Result<(String, String)> {
         canister_upgrade_arg_sha256_hash
     );
 
-    Ok((wasm_sha256_hash, canister_upgrade_arg_sha256_hash))
+    Ok((
+        wasm_sha256_hash,
+        canister_upgrade_arg_sha256_hash,
+        // TODO should keep canister_id as a Principal
+        canister_id.to_string(),
+    ))
 }
 
 fn extract_sha256_hash(wasm_utf8: &str) -> Option<String> {
@@ -349,4 +416,35 @@ fn extract_sha256_hash(wasm_utf8: &str) -> Option<String> {
                 .to_lowercase()
         })
     })
+}
+
+// We should really be using the ic-wasm crate but it's not the best
+fn check_git_commit(canister: CanisterType, expected_commit: &str) -> Result<()> {
+    let wasm_path = std::env::var(canister.get_wasm_env())
+        .map_err(|_| CustomError::Generic(format!("{} not set", canister.get_wasm_env())))?;
+
+    // TODO `ic-wasm` should be in an env var
+    let output = Command::new("ic-wasm")
+        .arg(wasm_path)
+        .arg("metadata")
+        .arg("git_commit_id")
+        .output()?;
+
+    // check the output and compare it with the expected commit
+    let stdout = String::from_utf8(output.stdout)?;
+    let git_commit = stdout.trim();
+
+    if git_commit != expected_commit {
+        return Err(CustomError::Generic(format!(
+            "Git commit does not match the expected commit: {} != {}",
+            git_commit, expected_commit
+        )));
+    } else {
+        info!(
+            "Git commit matches the expected commit: {} == {}",
+            git_commit, expected_commit
+        );
+    }
+
+    Ok(())
 }
