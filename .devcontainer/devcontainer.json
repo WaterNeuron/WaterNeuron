@@ -14,7 +14,7 @@
     "workspaceFolder": "/home/ubuntu/waterneuron",
     "updateRemoteUserUID": true,
     "remoteUser": "ubuntu",
-    "postCreateCommand": "sudo chown -R ubuntu:ubuntu /home/ubuntu/waterneuron",
+    //"postCreateCommand": "sudo chown -R ubuntu:ubuntu /home/ubuntu/waterneuron",
     "customizations": {
         "vscode": {
             "settings": {

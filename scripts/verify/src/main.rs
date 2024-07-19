@@ -42,19 +42,45 @@ pub enum CustomError {
     Generic(String),
 }
 
+enum CanisterType {
+    IcIcrc1Ledger,
+    GovernanceCanister,
+    SnsRootCanister,
+    SnsWasmCanister,
+    SnsSwapCanister,
+    SnsGovernanceCanister,
+    CyclesMintingCanister,
+    LedgerCanister,
+    IndexCanister,
+}
+
 /// Proposal verifier
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Name of the person to greet
+    /// Proposal ID
     #[arg(short, long)]
     proposal_id: u64,
+    /// WASH hash
+    #[arg(short, long)]
+    wash_hash: String,
+    /// Canister upgrade arg hash
+    #[arg(short, long)]
+    canister_upgrade_args: String,
+    /// Canister did file
+    #[arg(short, long)]
+    canister: CanisterType,
+    /// Git commit
+    #[arg(short, long)]
+    git_commit: String,
 }
 
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
     let proposal_id = args.proposal_id;
+    let wash_hash = args.wash_hash;
+    let canister_upgrade_arg_hash = args.canister_upgrade_arg_hash;
 
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
@@ -186,6 +212,14 @@ async fn run(proposal_id: u64) -> Result<()> {
     } else {
         info!("Local Wasm SHA256 hash matches the proposal Wasm SHA256 hash");
     }
+
+    // check the wasm hash is the same as the one in the proposal
+
+    // compute the didc hash of the args given
+
+    // check the upgrade hash is the same as the one in the proposal
+
+    // check with ic-wasm the git-commit is indeed the correct one
 
     Ok(())
 }

@@ -154,10 +154,10 @@ load("@crate_index//:defs.bzl", "crate_repositories")
 
 crate_repositories()
 
-# load("//bazel:ic_candid.bzl", "ic_candidfile")
+load("//bazel:ic_candid.bzl", "ic_candidfile")
 load("//bazel:ic_canister.bzl", "ic_canister")
 
-# https://github.com/dfinity/ic/commit/0abc8efa13a533576dbd9b652e37e4a817e6051c
+# https://sourcegraph.com/github.com/dfinity/ic@0abc8efa13a533576dbd9b652e37e4a817e6051c
 # 29th Feb 2024
 ic_canister(
     name = "ledger-canister",
@@ -166,12 +166,12 @@ ic_canister(
     wasm_file = "ledger-canister.wasm.gz",
 )
 
-# ic_candidfile(
-#     name = "ledger-canister",
-#     commit = "0abc8efa13a533576dbd9b652e37e4a817e6051c",
-#     file_path = "path/to/my_file.did",
-#     sha256 = "expected_sha256_hash",
-# )
+ic_candidfile(
+    name = "ledger-canister",
+    commit = "0abc8efa13a533576dbd9b652e37e4a817e6051c",
+    file_path = "rs/rosetta-api/icp_leger/ledger.did",
+    sha256 = "1646d6cbd1df7fea7659664dacc7248842dd0f762da783fefa3f6e3344ef461c",
+)
 
 ic_canister(
     name = "cycles-minting-canister",
@@ -180,13 +180,27 @@ ic_canister(
     wasm_file = "cycles-minting-canister.wasm.gz",
 )
 
-# https://github.com/dfinity/ic/commit/80e0363393ea26a36b77e8c75f7f183cb521f67f
+ic_candidfile(
+    name = "cycles-minting-canister",
+    commit = "0abc8efa13a533576dbd9b652e37e4a817e6051c",
+    file_path = "rs/nns/cmc/cmc.did",
+    sha256 = "1646d6cbd1df7fea7659664dacc7248842dd0f762da7b3fefa3f6e3344ef461c",
+)
+
+# https://sourcegraph.com/github.com/dfinity/ic@80e0363393ea26a36b77e8c75f7f183cb521f67f
 # 25th April 2024
 ic_canister(
     name = "sns-governance-canister",
     sha256 = "e6b285a50237a46d7cf72eb27ae4840222b98ecc02c20954a7946d039cab59f0",
     version = "80e0363393ea26a36b77e8c75f7f183cb521f67f",
     wasm_file = "sns-governance-canister.wasm.gz",
+)
+
+ic_candidfile(
+    name = "sns-governance-canister",
+    commit = "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+    file_path = "rs/sns/governance/canister/governance.did",
+    sha256 = "1da82879071e5bd21ab8b363081072fcc87ebd90659fe3cdc9a0128110da222b",
 )
 
 ic_canister(
@@ -196,6 +210,13 @@ ic_canister(
     wasm_file = "sns-swap-canister.wasm.gz",
 )
 
+ic_candidfile(
+    name = "sns-swap-canister",
+    commit = "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+    file_path = "rs/sns/swap/canister/swap.did",
+    sha256 = "2bf54844fdc8f2fea524c1de4361ae2b34c68d319086f0d1a8e773400837caa0",
+)
+
 ic_canister(
     name = "sns-wasm-canister",
     sha256 = "6a666f46f0234e60d951ab17781324fefdc13b128f6b3138b1ade92887db1351",
@@ -203,13 +224,11 @@ ic_canister(
     wasm_file = "sns-wasm-canister.wasm.gz",
 )
 
-# https://github.com/dfinity/ic/commit/ad5629caa17ac8a4545bc2e3cf0ecc990c9f681e
-# 28th June 2024
-ic_canister(
-    name = "governance-canister",
-    sha256 = "8f76b2de37197b3ff0ae188f1ef99ddd5bd75cb8f83fb87c2889822ece0b5576",
-    version = "ad5629caa17ac8a4545bc2e3cf0ecc990c9f681e",
-    wasm_file = "governance-canister.wasm.gz",
+ic_candidfile(
+    name = "sns-wasm-canister",
+    commit = "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+    file_path = "rs/nns/sns-wasm/canister/sns-wasm.did",
+    sha256 = "9e9b3de46d12b35d7ffc1b639a424a6da7c72f80ad0dd222850f991e25dbb6f2",
 )
 
 ic_canister(
@@ -219,13 +238,57 @@ ic_canister(
     wasm_file = "sns-root-canister.wasm.gz",
 )
 
-# https://github.com/dfinity/ic/commit/a3831c87440df4821b435050c8a8fcb3745d86f6
+ic_candidfile(
+    name = "sns-root-canister",
+    commit = "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+    file_path = "rs/sns/root/canister/root.did",
+    sha256 = "5a8f0fd58d8f4f35fa374f94e1be8eca99b71ef2a776477abbc7adb99a24c38f",
+)
+
+# https://sourcegraph.com/github.com/dfinity/ic@ad5629caa17ac8a4545bc2e3cf0ecc990c9f681e
+# 28th June 2024
+ic_canister(
+    name = "governance-canister",
+    sha256 = "8f76b2de37197b3ff0ae188f1ef99ddd5bd75cb8f83fb87c2889822ece0b5576",
+    version = "ad5629caa17ac8a4545bc2e3cf0ecc990c9f681e",
+    wasm_file = "governance-canister.wasm.gz",
+)
+
+ic_candidfile(
+    name = "governance-canister",
+    commit = "ad5629caa17ac8a4545bc2e3cf0ecc990c9f681e",
+    file_path = "rs/nns/governance/canister/governance.did",
+    sha256 = "747c786feafd0f26e70073cb8fa72fdd8d976c64ec6a1e4d07797d2053d2d186",
+)
+
+# https://sourcegraph.com/github.com/dfinity/ic@a3831c87440df4821b435050c8a8fcb3745d86f6
 # 10th July 2024
 ic_canister(
     name = "ic-icrc1-ledger",
     sha256 = "4264ce2952c4e9ff802d81a11519d5e3ffdaed4215d5831a6634e59efd72f7d8",
     version = "a3831c87440df4821b435050c8a8fcb3745d86f6",
     wasm_file = "ic-icrc1-ledger.wasm.gz",
+)
+
+ic_candidfile(
+    name = "ic-icrc1-ledger",
+    commit = "a3831c87440df4821b435050c8a8fcb3745d86f6",
+    file_path = "rs/rosetta-api/icrc1/ledger/ledger.did",
+    sha256 = "4cfa71941afd39ee4f5af0e151585388a798ca4dc4ec2d41b876810f2a780008",
+)
+
+ic_canister(
+    name = "ic-icrc1-index-ng",
+    sha256 = "cac207cf438df8c9fba46d4445c097f05fd8228a1eeacfe0536b7e9ddefc5f1c",
+    version = "a3831c87440df4821b435050c8a8fcb3745d86f6",
+    wasm_file = "ic-icrc1-index-ng.wasm.gz",
+)
+
+ic_candidfile(
+    name = "ic-icrc1-index-ng",
+    commit = "a3831c87440df4821b435050c8a8fcb3745d86f6",
+    file_path = "rs/rosetta-api/icrc1/index-ng/index-ng.did",
+    sha256 = "8795307a19db7ac1d702e4275a2efe217bbdaee537cbd4d5eb5ba1bc7ff590ac",
 )
 
 # shfmt binary for fast shell linting

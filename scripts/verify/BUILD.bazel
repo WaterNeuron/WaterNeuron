@@ -22,10 +22,12 @@ rust_binary(
         "src/**/*.rs",
     ]),
     data = [
+        "@candid//:didc",
         "@ic-icrc1-ledger//:ic-icrc1-ledger.wasm.gz",
     ],
     env = {
-        "WASM_PATH": "$(rootpath @ic-icrc1-ledger//:ic-icrc1-ledger.wasm.gz)",
+        "IC_ICRC1_LEDGER_WASM_PATH": "$(rootpath @ic-icrc1-ledger//:ic-icrc1-ledger.wasm.gz)",
+        "CANDID_DIDC_PATH": "$(rootpath @candid//:didc)",
     },
     deps = DEPENDENCIES,
 )
