@@ -104,6 +104,7 @@ rust_canister(
         "src/**/*.rs",
     ]),
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    service_file = "water_neuron.did",
     deps = DEPENDENCIES + [":lib"],
 )
 

@@ -305,3 +305,10 @@ rust_analyzer_dependencies()
 load("//bazel:candid.bzl", "candid")
 
 candid(name = "candid")
+
+# version
+load("//bazel:version.bzl", "git_version")
+
+git_version(
+    name = "git_commit_id",
+)
