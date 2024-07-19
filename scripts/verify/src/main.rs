@@ -42,6 +42,7 @@ pub enum CustomError {
     Generic(String),
 }
 
+#[derive(Debug, Clone)]
 enum CanisterType {
     IcIcrc1Ledger,
     GovernanceCanister,
@@ -52,6 +53,7 @@ enum CanisterType {
     CyclesMintingCanister,
     LedgerCanister,
     IndexCanister,
+    WaterNeuronCanister,
 }
 
 /// Proposal verifier
@@ -73,6 +75,40 @@ struct Args {
     /// Git commit
     #[arg(short, long)]
     git_commit: String,
+}
+
+async fn run(proposal_id: u64) -> Result<()> {
+    let (wasm_sha256_hash, canister_upgrade_arg_sha256_hash) = get_shasum(proposal_id).await?;
+
+    let wasm_path = std::env::var("WASM_PATH")
+        .map_err(|_| CustomError::Generic("WASM_PATH not set".to_string()))?;
+
+    let wasm_bytes = std::fs::read(&wasm_path)?;
+
+    let wasm_sha256_hash_local = sha2::Sha256::digest(&wasm_bytes)
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect::<String>();
+
+    info!("Local Wasm SHA256 Hash: {}", wasm_sha256_hash_local);
+
+    if wasm_sha256_hash_local != wasm_sha256_hash {
+        return Err(CustomError::Generic(
+            "Local Wasm SHA256 hash does not match the proposal Wasm SHA256 hash".to_string(),
+        ));
+    } else {
+        info!("Local Wasm SHA256 hash matches the proposal Wasm SHA256 hash");
+    }
+
+    // check the wasm hash is the same as the one in the proposal
+
+    // compute the didc hash of the args given
+
+    // check the upgrade hash is the same as the one in the proposal
+
+    // check with ic-wasm the git-commit is indeed the correct one
+
+    Ok(())
 }
 
 #[tokio::main]
@@ -188,40 +224,6 @@ async fn get_shasum(proposal_id: u64) -> Result<(String, String)> {
     );
 
     Ok((wasm_sha256_hash, canister_upgrade_arg_sha256_hash))
-}
-
-async fn run(proposal_id: u64) -> Result<()> {
-    let (wasm_sha256_hash, canister_upgrade_arg_sha256_hash) = get_shasum(proposal_id).await?;
-
-    let wasm_path = std::env::var("WASM_PATH")
-        .map_err(|_| CustomError::Generic("WASM_PATH not set".to_string()))?;
-
-    let wasm_bytes = std::fs::read(&wasm_path)?;
-
-    let wasm_sha256_hash_local = sha2::Sha256::digest(&wasm_bytes)
-        .iter()
-        .map(|b| format!("{:02x}", b))
-        .collect::<String>();
-
-    info!("Local Wasm SHA256 Hash: {}", wasm_sha256_hash_local);
-
-    if wasm_sha256_hash_local != wasm_sha256_hash {
-        return Err(CustomError::Generic(
-            "Local Wasm SHA256 hash does not match the proposal Wasm SHA256 hash".to_string(),
-        ));
-    } else {
-        info!("Local Wasm SHA256 hash matches the proposal Wasm SHA256 hash");
-    }
-
-    // check the wasm hash is the same as the one in the proposal
-
-    // compute the didc hash of the args given
-
-    // check the upgrade hash is the same as the one in the proposal
-
-    // check with ic-wasm the git-commit is indeed the correct one
-
-    Ok(())
 }
 
 fn extract_sha256_hash(wasm_utf8: &str) -> Option<String> {

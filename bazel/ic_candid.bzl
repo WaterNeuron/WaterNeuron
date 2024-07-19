@@ -2,7 +2,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 CANDID_BUILD = """
 package(default_visibility = ["//visibility:public"])
-exports_files(["{file_name}"])
+filegroup(
+    name = "candid",
+    srcs = ["{file_name}"],
+)
 """
 
 GITHUB_RAW_URL_TEMPLATE = "https://raw.githubusercontent.com/dfinity/ic/{commit}/{file_path}"

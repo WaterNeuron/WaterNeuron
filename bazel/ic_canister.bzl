@@ -1,6 +1,10 @@
 CANISTER_BUILD = """
 package(default_visibility = ["//visibility:public"])
-exports_files(["{wasm_file}"])
+filegroup(
+    name = "wasm",
+    srcs = ["{wasm_file}"],
+)
+
 """
 
 CANISTER_URL_TEMPLATE = "https://download.dfinity.systems/ic/{version}/canisters/{wasm_file}"
