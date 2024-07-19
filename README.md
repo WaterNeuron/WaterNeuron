@@ -21,10 +21,9 @@ ubuntu@arrakis:~/waterneuron$ bazel query --output=location @ledger-canister//:l
 ```
 
 ## TODO
+-   build with candid file attached, git commit, and compressed
+-   verify script
 -   releases
 -   ci
--   verify script
--   dfx release script
 -   upload to docker image
 -   automatically update docker
--   fetch candid files

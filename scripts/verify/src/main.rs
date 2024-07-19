@@ -2,9 +2,12 @@ use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use clap::{Parser, ValueEnum};
 use ic_agent::AgentError;
 use ic_agent::{identity::AnonymousIdentity, Agent};
-use log::info;
+use log::{error, info};
 use regex::Regex;
 use sha2::Digest;
+use std::io::Read;
+use std::os::unix::process;
+use std::process::Command;
 use std::str::FromStr;
 use thiserror::Error;
 use types::GetProposalResponse;
@@ -12,6 +15,7 @@ use types::GetProposalResponse;
 mod types;
 
 const WATERNEURON_GOVERNANCE_CANISTER: &'static str = "jfnic-kaaaa-aaaaq-aadla-cai";
+const CANDID_DIDC_PATH: &'static str = "CANDID_DIDC_PATH";
 
 type Result<T> = std::result::Result<T, CustomError>;
 
@@ -56,6 +60,38 @@ enum CanisterType {
     WaterNeuronCanister,
 }
 
+impl CanisterType {
+    fn get_wasm_env(&self) -> &'static str {
+        match self {
+            Self::IcIcrc1Ledger => "IC_ICRC1_LEDGER_WASM_PATH",
+            Self::LedgerCanister => "LEDGER_CANISTER_WASM_PATH",
+            Self::CyclesMintingCanister => "CYCLES_MINTING_CANISTER_WASM_PATH",
+            Self::SnsGovernanceCanister => "SNS_GOVERNANCE_CANISTER_WASM_PATH",
+            Self::SnsSwapCanister => "SNS_SWAP_CANISTER_WASM_PATH",
+            Self::SnsWasmCanister => "SNS_WASM_CANISTER_WASM_PATH",
+            Self::SnsRootCanister => "SNS_ROOT_CANISTER_WASM_PATH",
+            Self::GovernanceCanister => "GOVERNANCE_CANISTER_WASM_PATH",
+            Self::IndexCanister => "IC_ICRC1_INDEX_WASM_PATH",
+            Self::WaterNeuronCanister => "WATERNEURON_CANISTER_WASM_PATH",
+        }
+    }
+
+    fn get_candid_env(&self) -> &'static str {
+        match self {
+            Self::IcIcrc1Ledger => "IC_ICRC1_LEDGER_CANDID_PATH",
+            Self::LedgerCanister => "LEDGER_CANISTER_CANDID_PATH",
+            Self::CyclesMintingCanister => "CYCLES_MINTING_CANISTER_CANDID_PATH",
+            Self::SnsGovernanceCanister => "SNS_GOVERNANCE_CANISTER_CANDID_PATH",
+            Self::SnsSwapCanister => "SNS_SWAP_CANISTER_CANDID_PATH",
+            Self::SnsWasmCanister => "SNS_WASM_CANISTER_CANDID_PATH",
+            Self::SnsRootCanister => "SNS_ROOT_CANISTER_CANDID_PATH",
+            Self::GovernanceCanister => "GOVERNANCE_CANISTER_CANDID_PATH",
+            Self::IndexCanister => "IC_ICRC1_INDEX_CANDID_PATH",
+            Self::WaterNeuronCanister => "WATERNEURON_CANISTER_CANDID_PATH",
+        }
+    }
+}
+
 /// Proposal verifier
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -67,8 +103,8 @@ struct Args {
     #[arg(short, long)]
     wasm_hash: String,
     /// Canister upgrade arg
-    #[arg(short, long)]
-    upgrade_args: String,
+    #[arg(short, long, num_args = 0..)]
+    upgrade_args: Vec<String>,
     /// Canister did file
     #[arg(short, long)]
     canister: CanisterType,
@@ -94,10 +130,13 @@ async fn main() {
     }
     env_logger::init();
 
+    // TODO check all the env variables used in CanisterType exist
+    // if not, return error
+
     match run(proposal_id, wasm_hash, upgrade_args, canister, git_commit).await {
         Ok(_) => {}
         Err(err) => {
-            eprintln!("Error: {:?}", err);
+            error!("Error: {:?}", err);
             std::process::exit(1);
         }
     }
@@ -106,14 +145,14 @@ async fn main() {
 async fn run(
     proposal_id: u64,
     wasm_hash: String,
-    upgrade_args: String,
+    upgrade_args: Vec<String>,
     canister: CanisterType,
     git_commit: String,
 ) -> Result<()> {
     let (wasm_sha256_hash, canister_upgrade_arg_sha256_hash) = get_shasum(proposal_id).await?;
 
-    let wasm_path = std::env::var("WASM_PATH")
-        .map_err(|_| CustomError::Generic("WASM_PATH not set".to_string()))?;
+    let wasm_path = std::env::var(canister.get_wasm_env())
+        .map_err(|_| CustomError::Generic(format!("{} not set", canister.get_wasm_env())))?;
 
     let wasm_bytes = std::fs::read(&wasm_path)?;
 
@@ -125,16 +164,73 @@ async fn run(
     info!("Local Wasm SHA256 Hash: {}", wasm_sha256_hash_local);
 
     if wasm_sha256_hash_local != wasm_sha256_hash {
-        return Err(CustomError::Generic(
-            "Local Wasm SHA256 hash does not match the proposal Wasm SHA256 hash".to_string(),
-        ));
+        return Err(CustomError::Generic(format!(
+            "Local Wasm SHA256 hash does not match the proposal Wasm SHA256 hash: {} != {}",
+            wasm_sha256_hash_local, wasm_sha256_hash
+        )));
     } else {
         info!("Local Wasm SHA256 hash matches the proposal Wasm SHA256 hash");
     }
 
     // check the wasm hash is the same as the one in the proposal
+    if wasm_hash != wasm_sha256_hash {
+        return Err(CustomError::Generic(
+            "Wasm hash does not match the proposal Wasm hash: {wasm_hash} != {wasm_sha256_hash}"
+                .to_string(),
+        ));
+    } else {
+        info!("Wasm hash matches the proposal Wasm hash");
+    }
 
-    // compute the didc hash of the args given
+    let candid_file_path = std::env::var(canister.get_candid_env())
+        .map_err(|_| CustomError::Generic(format!("{} not set", canister.get_candid_env())))?;
+
+    let candid_binary = std::env::var(CANDID_DIDC_PATH)
+        .map_err(|_| CustomError::Generic(format!("{} not set", CANDID_DIDC_PATH)))?;
+
+    // split the upgrade args into a vector between ' '
+    let encoded_candid_arg = Command::new(candid_binary)
+        .arg("encode")
+        .arg("-d")
+        .arg(candid_file_path)
+        .arg("-t")
+        .args(upgrade_args)
+        .spawn()?
+        .stdout
+        .ok_or(CustomError::Generic(
+            "No output from the candid encode command".to_string(),
+        ))?;
+
+    dbg!(&encoded_candid_arg);
+
+    // display the output
+    //info!(
+    //    "Encoded upgrade args: {}",
+    //    encoded_candid_arg.bytes().collect::<Result<Vec<u8>>()?
+    //);
+
+    // let bytes: Vec<u8> = encoded_candid_arg.bytes().collect::<Result<Vec<u8>>>()?;
+
+    // take the new output and compute the sha256 hash
+    let sha256_encoded_candid_arg = sha2::Sha256::digest("".as_bytes())
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect::<String>();
+
+    info!(
+        "SHA256 hash of the encoded upgrade args: {}",
+        sha256_encoded_candid_arg
+    );
+
+    // compare them with the sha256 hash in the proposal
+    if sha256_encoded_candid_arg != canister_upgrade_arg_sha256_hash {
+        return Err(CustomError::Generic(
+            "Encoded upgrade args hash does not match the proposal encoded upgrade args hash"
+                .to_string(),
+        ));
+    } else {
+        info!("Encoded upgrade args hash matches the proposal encoded upgrade args hash");
+    }
 
     // check the upgrade hash is the same as the one in the proposal
 
@@ -152,7 +248,7 @@ async fn fetch_proposal(proposal_id: u64) -> Result<Option<GetProposalResponse>>
     agent.fetch_root_key().await?;
 
     let arg = types::GetProposal {
-        proposal_id: Some(types::ProposalId { id: 6 }),
+        proposal_id: Some(types::ProposalId { id: proposal_id }),
     };
 
     let arg_raw = Encode!(&arg)?;
@@ -210,8 +306,11 @@ async fn get_shasum(proposal_id: u64) -> Result<(String, String)> {
     };
 
     info!("Canister ID: {}", canister_id);
-    info!("Wasm: {:?}", wasm);
-    info!("Canister Upgrade Arg: {:?}", canister_upgrade_arg);
+    info!("Wasm: {}", hex::encode(&wasm));
+    info!(
+        "Canister Upgrade Arg: {}",
+        hex::encode(&canister_upgrade_arg)
+    );
 
     let wasm_utf8 = std::str::from_utf8(&wasm)?;
     info!("Wasm (UTF-8): {}", wasm_utf8);

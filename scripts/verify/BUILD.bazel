@@ -57,7 +57,6 @@ rust_binary(
         "SNS_GOVERNANCE_CANISTER_CANDID_PATH": "$(rootpath @sns-governance-candid//:candid)",
         "SNS_SWAP_CANISTER_WASM_PATH": "$(rootpath @sns-swap-canister//:wasm)",
         "SNS_SWAP_CANISTER_CANDID_PATH": "$(rootpath @sns-swap-candid//:candid)",
-        "SNS_SWAP_CANDID_PATH": "$(rootpath @sns-swap-candid//:candid)",
         "SNS_WASM_CANISTER_PATH": "$(rootpath @sns-wasm-canister//:wasm)",
         "SNS_WASM_CANISTER_CANDID_PATH": "$(rootpath @sns-wasm-candid//:candid)",
         "SNS_ROOT_CANISTER_WASM_PATH": "$(rootpath @sns-root-canister//:wasm)",

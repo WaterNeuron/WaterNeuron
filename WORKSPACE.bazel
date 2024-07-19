@@ -161,7 +161,7 @@ load("//bazel:ic_canister.bzl", "ic_canister")
 # 29th Feb 2024
 ic_canister(
     name = "ledger-canister",
-    sha256 = "e52fdbcf4b42218dbc62a042908207cc44a1e0014895c6e11122c79fe82c41be",
+    sha256 = "e31a3b38bbb3704876d8825bb826101d6f1f1843ad99c21a0d563e80bdd6e2f6",
     version = "de29a1a55b589428d173b31cdb8cec0923245657",
     wasm_file = "ledger-canister.wasm.gz",
 )

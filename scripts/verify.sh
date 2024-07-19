@@ -25,8 +25,8 @@ set -euxo pipefail
 
 # make sure we have the right number of args
 if [ "$#" -ne 1 ]; then
-  echo "Usage: bazel run //scripts:verify -- <canister_hash>"
-  exit 1
+    echo "Usage: bazel run //scripts:verify -- <canister_hash>"
+    exit 1
 fi
 
 CANISTER_PATH="$(readlink "$canister_path")"
@@ -36,9 +36,8 @@ SHA_256_SUM=$(sha256sum "$CANISTER_PATH" | cut -d ' ' -f 1)
 ARG_HASH_CANISTER=$1
 
 if [ "$ARG_HASH_CANISTER" != "$SHA_256_SUM" ]; then
-  echo "Hash mismatch: $ARG_HASH_CANISTER != $SHA_256_SUM"
-  exit 1
+    echo "Hash mismatch: $ARG_HASH_CANISTER != $SHA_256_SUM"
+    exit 1
 else
-  echo "Hash match: $ARG_HASH_CANISTER == $SHA_256_SUM"
+    echo "Hash match: $ARG_HASH_CANISTER == $SHA_256_SUM"
 fi
-
