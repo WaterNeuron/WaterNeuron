@@ -1,5 +1,5 @@
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use ic_agent::AgentError;
 use ic_agent::{identity::AnonymousIdentity, Agent};
 use log::info;
@@ -42,7 +42,7 @@ pub enum CustomError {
     Generic(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(ValueEnum, Debug, Clone)]
 enum CanisterType {
     IcIcrc1Ledger,
     GovernanceCanister,
@@ -65,19 +65,51 @@ struct Args {
     proposal_id: u64,
     /// WASH hash
     #[arg(short, long)]
-    wash_hash: String,
-    /// Canister upgrade arg hash
+    wasm_hash: String,
+    /// Canister upgrade arg
     #[arg(short, long)]
-    canister_upgrade_args: String,
+    upgrade_args: String,
     /// Canister did file
     #[arg(short, long)]
     canister: CanisterType,
     /// Git commit
     #[arg(short, long)]
     git_commit: String,
+    //// Target canister
+    #[arg(short, long)]
+    target_canister: String,
 }
 
-async fn run(proposal_id: u64) -> Result<()> {
+#[tokio::main]
+async fn main() {
+    let args = Args::parse();
+    let proposal_id = args.proposal_id;
+    let wasm_hash = args.wasm_hash;
+    let upgrade_args = args.upgrade_args;
+    let canister = args.canister;
+    let git_commit = args.git_commit;
+
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+
+    match run(proposal_id, wasm_hash, upgrade_args, canister, git_commit).await {
+        Ok(_) => {}
+        Err(err) => {
+            eprintln!("Error: {:?}", err);
+            std::process::exit(1);
+        }
+    }
+}
+
+async fn run(
+    proposal_id: u64,
+    wasm_hash: String,
+    upgrade_args: String,
+    canister: CanisterType,
+    git_commit: String,
+) -> Result<()> {
     let (wasm_sha256_hash, canister_upgrade_arg_sha256_hash) = get_shasum(proposal_id).await?;
 
     let wasm_path = std::env::var("WASM_PATH")
@@ -109,27 +141,6 @@ async fn run(proposal_id: u64) -> Result<()> {
     // check with ic-wasm the git-commit is indeed the correct one
 
     Ok(())
-}
-
-#[tokio::main]
-async fn main() {
-    let args = Args::parse();
-    let proposal_id = args.proposal_id;
-    let wash_hash = args.wash_hash;
-    let canister_upgrade_arg_hash = args.canister_upgrade_arg_hash;
-
-    if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "info");
-    }
-    env_logger::init();
-
-    match run(proposal_id).await {
-        Ok(_) => {}
-        Err(err) => {
-            eprintln!("Error: {:?}", err);
-            std::process::exit(1);
-        }
-    }
 }
 
 async fn fetch_proposal(proposal_id: u64) -> Result<Option<GetProposalResponse>> {

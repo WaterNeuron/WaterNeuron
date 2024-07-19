@@ -20,3 +20,8 @@ alias(
     name = "shfmt-lint",
     actual = "//scripts:shfmt-lint",
 )
+
+alias(
+    name = "verify",
+    actual = "//scripts/verify:bin",
+)
