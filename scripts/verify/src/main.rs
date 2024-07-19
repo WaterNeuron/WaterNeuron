@@ -5,10 +5,12 @@ use ic_agent::{identity::AnonymousIdentity, Agent};
 use log::{error, info};
 use regex::Regex;
 use sha2::Digest;
+use sha2::Sha256;
 use std::io::Read;
 use std::os::unix::process;
 use std::process::Command;
 use std::str::FromStr;
+use std::string::FromUtf8Error;
 use thiserror::Error;
 use types::GetProposalResponse;
 
@@ -41,6 +43,12 @@ pub enum CustomError {
 
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+
+    #[error("Hex error: {0}")]
+    HexError(#[from] hex::FromHexError),
+
+    #[error("UTF-8 conversion error: {0}")]
+    FromUtf8Error(#[from] FromUtf8Error),
 
     #[error("Generic error: {0}")]
     Generic(String),
@@ -195,27 +203,22 @@ async fn run(
         .arg(candid_file_path)
         .arg("-t")
         .args(upgrade_args)
-        .spawn()?
-        .stdout
-        .ok_or(CustomError::Generic(
-            "No output from the candid encode command".to_string(),
-        ))?;
+        .output()?;
 
-    dbg!(&encoded_candid_arg);
+    let stdout = encoded_candid_arg.stdout;
+    debug!("Raw stdout: {:?}", stdout);
 
-    // display the output
-    //info!(
-    //    "Encoded upgrade args: {}",
-    //    encoded_candid_arg.bytes().collect::<Result<Vec<u8>>()?
-    //);
+    let encoded_candid_str = String::from_utf8(stdout)?;
+    debug!("Encoded Candid string: {}", encoded_candid_str);
 
-    // let bytes: Vec<u8> = encoded_candid_arg.bytes().collect::<Result<Vec<u8>>>()?;
+    let cleaned_candid_str = encoded_candid_str.replace(|c: char| c.is_whitespace(), "");
+    debug!("Cleaned Candid string: {}", cleaned_candid_str);
 
-    // take the new output and compute the sha256 hash
-    let sha256_encoded_candid_arg = sha2::Sha256::digest("".as_bytes())
-        .iter()
-        .map(|b| format!("{:02x}", b))
-        .collect::<String>();
+    let bytes = hex::decode(&cleaned_candid_str)?;
+    debug!("Decoded bytes: {:?}", bytes);
+
+    let sha256_encoded_candid_arg = format!("{:x}", Sha256::digest(&bytes));
+    info!("Computed hash: {}", sha256_encoded_candid_arg);
 
     info!(
         "SHA256 hash of the encoded upgrade args: {}",
