@@ -25,7 +25,6 @@ def _wasm_binary_impl(ctx):
         outputs = [out],
         inputs = ctx.files.binary,
     )
-
     return [DefaultInfo(files = depset([out]), runfiles = ctx.runfiles([out]))]
 
 wasm_rust_binary_rule = rule(
@@ -39,10 +38,12 @@ def rust_canister(name, service_file, **kwargs):
     """Defines a rust program that builds into a WebAssembly module.
     Args:
         name: the name of the target that produces a Wasm module.
-        **kwargs: additional arguments to pass a rust_binary rule.
+        service_file: the Candid service definition file.
+        **kwargs: additional arguments to pass to the rust_binary rule.
     """
 
     wasm_name = "_wasm_" + name.replace(".", "_")
+
     kwargs.setdefault("visibility", ["//visibility:public"])
     kwargs.setdefault("rustc_flags", [
         "-C",
@@ -71,3 +72,37 @@ def rust_canister(name, service_file, **kwargs):
         name = name,
         binary = ":" + wasm_name,
     )
+
+    # add candid file
+    native.genrule(
+        name = name + "_with_candid",
+        srcs = [name, service_file],
+        outs = [name + "_with_candid.wasm"],
+        cmd = "ic-wasm $(location :{name}) -o $(location {name}_with_candid.wasm) metadata candid:service -f $(location {service}) -v public".format(
+            name = name,
+            service = service_file,
+        ),
+        visibility = ["//visibility:public"],
+    )
+
+    # add git
+    native.genrule(
+        name = name + "_with_git",
+        srcs = [name + "_with_candid", "//bazel:git_commit_id"],
+        outs = [name + "_with_git.wasm"],
+        cmd = "ic-wasm $(location :{name}_with_candid) -o $(location {name}_with_git.wasm) metadata git_commit_id -f $(location {git}) -v public".format(
+            name = name,
+            git = "//bazel:git_commit_id",
+        ),
+        visibility = ["//visibility:public"],
+    )
+
+    native.filegroup(
+        name = name + "_canister",
+        srcs = [":" + name + "_with_candid", ":" + name + "_with_git"],
+        visibility = ["//visibility:public"],
+    )
+
+    # shrink
+
+    # gunzip
