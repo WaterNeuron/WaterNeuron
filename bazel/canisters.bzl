@@ -97,12 +97,21 @@ def rust_canister(name, service_file, **kwargs):
         visibility = ["//visibility:public"],
     )
 
-    native.filegroup(
-        name = name + "_canister",
-        srcs = [":" + name + "_with_candid", ":" + name + "_with_git"],
+    # shrink
+    native.genrule(
+        name = name + "_shrink",
+        srcs = [name + "_with_git"],
+        outs = [name + "_shrink.wasm"],
+        cmd = "ic-wasm $(location :{name}_with_git) -o $(location {name}_shrink.wasm) shrink".format(
+            name = name,
+        ),
         visibility = ["//visibility:public"],
     )
 
-    # shrink
-
     # gunzip
+
+    native.filegroup(
+        name = name + "_canister",
+        srcs = [":" + name + "_with_candid", ":" + name + "_with_git", ":" + name + "_shrink"],
+        visibility = ["//visibility:public"],
+    )
