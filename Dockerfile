@@ -64,16 +64,6 @@ RUN curl --fail https://sh.rustup.rs -sSf \
 RUN cargo install ripgrep ic-wasm tokei git-delta bat
 
 # Copy fish config
-COPY --chown=ubuntu:ubuntu .devcontainer/config.fish /home/ubuntu/.config/fish/config.fish
-
-# Copy git config
-# COPY --chown=ubuntu:ubuntu .devcontainer/.gitconfig /home/ubuntu/.gitconfig
-
-# Install vim-plug
-RUN curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-
-# Copy vim config
-COPY --chown=ubuntu:ubuntu .devcontainer/.vimrc /home/ubuntu/.vimrc
+COPY --chown=ubuntu:ubuntu scripts/config.fish /home/ubuntu/.config/fish/config.fish
 
 CMD ["/usr/bin/fish"]
