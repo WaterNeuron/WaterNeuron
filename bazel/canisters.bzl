@@ -88,13 +88,14 @@ def rust_canister(name, service_file, **kwargs):
     # add git
     native.genrule(
         name = name + "_with_git",
-        srcs = [name + "_with_candid", "//bazel:git_commit_id"],
+        srcs = [name + "_with_candid"],
         outs = [name + "_with_git.wasm"],
         cmd = "ic-wasm $(location :{name}_with_candid) -o $(location {name}_with_git.wasm) metadata git_commit_id -f $(location {git}) -v public".format(
             name = name,
             git = "//bazel:git_commit_id",
         ),
         visibility = ["//visibility:public"],
+        tools = ["//bazel:git_commit_id"],
     )
 
     # shrink
@@ -109,9 +110,16 @@ def rust_canister(name, service_file, **kwargs):
     )
 
     # gunzip
+    native.genrule(
+        name = name + "_gz",
+        srcs = [name + "_shrink"],
+        outs = [name + "_shrink.wasm.gz"],
+        cmd = "gzip $(location :{name}_shrink)".format(name = name),
+        visibility = ["//visibility:public"],
+    )
 
     native.filegroup(
         name = name + "_canister",
-        srcs = [":" + name + "_with_candid", ":" + name + "_with_git", ":" + name + "_shrink"],
+        srcs = [":" + name + "_with_candid", ":" + name + "_with_git", ":" + name + "_shrink", ":" + name + "_gz"],
         visibility = ["//visibility:public"],
     )
