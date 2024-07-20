@@ -1,5 +1,5 @@
 {
-  "checksum": "3219827c28ac97f1fcc56d8e5963460d0b3d3bae0a354c1b08df8cf0899d005f",
+  "checksum": "7383583fc032447389a14a72bb7e11d6146d5304d16a36e41247dcb606ac4b31",
   "crates": {
     "addr2line 0.22.0": {
       "name": "addr2line",
@@ -2496,7 +2496,7 @@
         "deps": {
           "common": [
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             }
           ],
@@ -3209,7 +3209,7 @@
               "target": "build_info_common"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             }
           ],
@@ -3297,7 +3297,7 @@
               "target": "glob"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -3309,7 +3309,7 @@
               "target": "rustc_version"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -3479,7 +3479,7 @@
               "target": "quote"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -4168,7 +4168,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -4239,7 +4239,7 @@
         "deps": {
           "common": [
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -4481,7 +4481,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             }
           ],
@@ -7684,7 +7684,7 @@
               "target": "icrc_ledger_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -8556,7 +8556,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -8620,7 +8620,7 @@
               "target": "ic_metrics_encoder"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -8998,7 +8998,7 @@
               "target": "ic_sns_swap"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -9010,7 +9010,7 @@
               "target": "ic_utils_ensure"
             },
             {
-              "id": "ic0 0.21.1",
+              "id": "ic0 0.23.0",
               "target": "ic0"
             },
             {
@@ -9026,7 +9026,7 @@
               "target": "icrc_ledger_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -9034,7 +9034,7 @@
               "target": "log"
             },
             {
-              "id": "minicbor 0.24.0",
+              "id": "minicbor 0.24.2",
               "target": "minicbor"
             },
             {
@@ -9074,7 +9074,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -9082,7 +9082,7 @@
               "target": "serde_cbor"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -9090,7 +9090,7 @@
               "target": "sha2"
             },
             {
-              "id": "strum 0.26.2",
+              "id": "strum 0.26.3",
               "target": "strum"
             },
             {
@@ -10269,7 +10269,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             }
           ],
@@ -14474,7 +14474,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -14681,7 +14681,7 @@
               "target": "ic_protobuf"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -14749,7 +14749,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -14819,7 +14819,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -15126,7 +15126,7 @@
               "target": "ic_wasm_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -15166,11 +15166,11 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -15252,7 +15252,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -15352,7 +15352,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -15490,7 +15490,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -15558,7 +15558,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -15764,7 +15764,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -15907,7 +15907,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -16019,7 +16019,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -16720,7 +16720,7 @@
               "target": "k256"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -16788,7 +16788,7 @@
         "deps": {
           "common": [
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -17224,7 +17224,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -17316,7 +17316,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -17512,7 +17512,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -17664,7 +17664,7 @@
               "target": "itertools"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -17889,7 +17889,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -18512,7 +18512,7 @@
               "target": "ic_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -18532,7 +18532,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -18685,7 +18685,7 @@
               "target": "k256"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -18701,7 +18701,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -20207,7 +20207,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -20755,7 +20755,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -21034,7 +21034,7 @@
               "target": "ic_wasm_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -21070,7 +21070,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -21290,7 +21290,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -21404,7 +21404,7 @@
               "target": "ic_metrics_encoder"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -21424,7 +21424,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             }
           ],
@@ -21581,7 +21581,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -21673,7 +21673,7 @@
               "target": "ic_ledger_core"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -22255,7 +22255,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -22429,7 +22429,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -22651,7 +22651,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -23195,7 +23195,7 @@
               "target": "ic_nns_constants"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -23211,7 +23211,7 @@
               "target": "json5"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -23243,7 +23243,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             }
           ],
@@ -23365,7 +23365,7 @@
               "target": "ic_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -23425,7 +23425,7 @@
               "target": "ic_base_types"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -23629,7 +23629,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -23793,7 +23793,7 @@
               "target": "ic_nervous_system_common"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -23805,7 +23805,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             }
           ],
@@ -23902,7 +23902,7 @@
               "target": "ic_registry_transport"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -23910,7 +23910,7 @@
               "target": "ic_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -24162,7 +24162,7 @@
               "target": "ic_sns_wasm"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -24178,7 +24178,7 @@
               "target": "itertools"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -24226,7 +24226,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -24468,7 +24468,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -25337,7 +25337,7 @@
               "target": "itertools"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -25586,7 +25586,7 @@
               "target": "icrc_ledger_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -25987,7 +25987,7 @@
               "target": "isocountry"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -26298,7 +26298,7 @@
               "target": "build_script_build"
             },
             {
-              "id": "ic-stable-structures 0.6.4",
+              "id": "ic-stable-structures 0.6.5",
               "target": "ic_stable_structures"
             },
             {
@@ -26314,7 +26314,7 @@
               "target": "itertools"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -26569,7 +26569,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             }
           ],
@@ -26591,14 +26591,14 @@
       "license_ids": [],
       "license_file": null
     },
-    "ic-stable-structures 0.6.4": {
+    "ic-stable-structures 0.6.5": {
       "name": "ic-stable-structures",
-      "version": "0.6.4",
+      "version": "0.6.5",
       "package_url": "https://github.com/dfinity/stable-structures",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/ic-stable-structures/0.6.4/download",
-          "sha256": "07e2282054c8ddf0cb2a7abf5c174c373917b4345c9a096ae4aa7f7185cdcdc7"
+          "url": "https://static.crates.io/crates/ic-stable-structures/0.6.5/download",
+          "sha256": "03f3044466a69802de74e710dc0300b706a05696a0531c942ca856751a13b0db"
         }
       },
       "targets": [
@@ -26630,7 +26630,7 @@
           "selects": {}
         },
         "edition": "2021",
-        "version": "0.6.4"
+        "version": "0.6.5"
       },
       "license": "Apache-2.0",
       "license_ids": [
@@ -26985,7 +26985,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -27191,7 +27191,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -27276,7 +27276,7 @@
               "target": "ic_crypto_sha2"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -27445,7 +27445,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -27506,7 +27506,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             }
           ],
@@ -27736,7 +27736,7 @@
               "target": "ic_wasm_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -27877,7 +27877,7 @@
               "target": "parking_lot"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -28198,7 +28198,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -28341,7 +28341,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -28349,7 +28349,7 @@
               "target": "serde_cbor"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -28781,7 +28781,7 @@
               "target": "bls12_381"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -29320,6 +29320,44 @@
       ],
       "license_file": "LICENSE"
     },
+    "ic0 0.23.0": {
+      "name": "ic0",
+      "version": "0.23.0",
+      "package_url": "https://github.com/dfinity/cdk-rs",
+      "repository": {
+        "Http": {
+          "url": "https://static.crates.io/crates/ic0/0.23.0/download",
+          "sha256": "8de254dd67bbd58073e23dc1c8553ba12fa1dc610a19de94ad2bbcd0460c067f"
+        }
+      },
+      "targets": [
+        {
+          "Library": {
+            "crate_name": "ic0",
+            "crate_root": "src/lib.rs",
+            "srcs": {
+              "allow_empty": false,
+              "include": [
+                "**/*.rs"
+              ]
+            }
+          }
+        }
+      ],
+      "library_target_name": "ic0",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "edition": "2021",
+        "version": "0.23.0"
+      },
+      "license": "Apache-2.0",
+      "license_ids": [
+        "Apache-2.0"
+      ],
+      "license_file": "LICENSE"
+    },
     "ic_bls12_381 0.8.0": {
       "name": "ic_bls12_381",
       "version": "0.8.0",
@@ -29569,7 +29607,7 @@
               "target": "icrc_ledger_types"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -29589,7 +29627,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -29820,7 +29858,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_bytes 0.11.14",
+              "id": "serde_bytes 0.11.15",
               "target": "serde_bytes"
             },
             {
@@ -30906,14 +30944,14 @@
       ],
       "license_file": "LICENSE-APACHE"
     },
-    "lazy_static 1.4.0": {
+    "lazy_static 1.5.0": {
       "name": "lazy_static",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "package_url": "https://github.com/rust-lang-nursery/lazy-static.rs",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/lazy_static/1.4.0/download",
-          "sha256": "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+          "url": "https://static.crates.io/crates/lazy_static/1.5.0/download",
+          "sha256": "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
         }
       },
       "targets": [
@@ -30945,16 +30983,16 @@
         "deps": {
           "common": [
             {
-              "id": "spin 0.5.2",
+              "id": "spin 0.9.8",
               "target": "spin"
             }
           ],
           "selects": {}
         },
         "edition": "2015",
-        "version": "1.4.0"
+        "version": "1.5.0"
       },
-      "license": "MIT/Apache-2.0",
+      "license": "MIT OR Apache-2.0",
       "license_ids": [
         "Apache-2.0",
         "MIT"
@@ -32256,7 +32294,7 @@
               "target": "ic_sys"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -32358,14 +32396,14 @@
       ],
       "license_file": "LICENSE-APACHE"
     },
-    "minicbor 0.24.0": {
+    "minicbor 0.24.2": {
       "name": "minicbor",
-      "version": "0.24.0",
+      "version": "0.24.2",
       "package_url": "https://gitlab.com/twittner/minicbor",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/minicbor/0.24.0/download",
-          "sha256": "7a1359d4b3ec786cdc1e44382c8c0e10965d95a173059590f62314c73be72969"
+          "url": "https://static.crates.io/crates/minicbor/0.24.2/download",
+          "sha256": "5f8e213c36148d828083ae01948eed271d03f95f7e72571fa242d78184029af2"
         }
       },
       "targets": [
@@ -32410,7 +32448,7 @@
         "deps": {
           "common": [
             {
-              "id": "minicbor 0.24.0",
+              "id": "minicbor 0.24.2",
               "target": "build_script_build"
             }
           ],
@@ -32426,7 +32464,7 @@
           ],
           "selects": {}
         },
-        "version": "0.24.0"
+        "version": "0.24.2"
       },
       "build_script_attrs": {
         "data_glob": [
@@ -32717,7 +32755,7 @@
               "target": "fragile"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -32794,7 +32832,7 @@
               "target": "fragile"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -33432,7 +33470,7 @@
               "target": "byteorder"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -37004,7 +37042,7 @@
               "target": "hex"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -37076,7 +37114,7 @@
               "target": "hex"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -37223,7 +37261,7 @@
               "target": "fnv"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -37380,7 +37418,7 @@
               "target": "bitflags"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -39446,7 +39484,7 @@
               "target": "ipnet"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -39638,7 +39676,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -43396,14 +43434,14 @@
       ],
       "license_file": "LICENSE-APACHE"
     },
-    "serde_bytes 0.11.14": {
+    "serde_bytes 0.11.15": {
       "name": "serde_bytes",
-      "version": "0.11.14",
+      "version": "0.11.15",
       "package_url": "https://github.com/serde-rs/bytes",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/serde_bytes/0.11.14/download",
-          "sha256": "8b8497c313fd43ab992087548117643f6fcd935cbf36f176ffda0aacf9591734"
+          "url": "https://static.crates.io/crates/serde_bytes/0.11.15/download",
+          "sha256": "387cc504cb06bb40a96c8e04e951fe01854cf6bc921053c954e4a606d9675c6a"
         }
       },
       "targets": [
@@ -43442,7 +43480,7 @@
           "selects": {}
         },
         "edition": "2018",
-        "version": "0.11.14"
+        "version": "0.11.15"
       },
       "license": "MIT OR Apache-2.0",
       "license_ids": [
@@ -43572,14 +43610,14 @@
       ],
       "license_file": "LICENSE-APACHE"
     },
-    "serde_json 1.0.117": {
+    "serde_json 1.0.120": {
       "name": "serde_json",
-      "version": "1.0.117",
+      "version": "1.0.120",
       "package_url": "https://github.com/serde-rs/json",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/serde_json/1.0.117/download",
-          "sha256": "455182ea6142b14f93f4bc5320a2b31c1f266b66a4a5c858b013302a5d8cbfc3"
+          "url": "https://static.crates.io/crates/serde_json/1.0.120/download",
+          "sha256": "4e0d21c9a8cae1235ad58a00c11cb40d4b1e5c784f1ef2c537876ed6ffd8b7c5"
         }
       },
       "targets": [
@@ -43636,14 +43674,14 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "build_script_build"
             }
           ],
           "selects": {}
         },
         "edition": "2021",
-        "version": "1.0.117"
+        "version": "1.0.120"
       },
       "build_script_attrs": {
         "data_glob": [
@@ -44190,7 +44228,7 @@
         "deps": {
           "common": [
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             }
           ],
@@ -44795,7 +44833,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -44856,7 +44894,7 @@
               "target": "arc_swap"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -45809,14 +45847,14 @@
       ],
       "license_file": "LICENSE"
     },
-    "strum 0.26.2": {
+    "strum 0.26.3": {
       "name": "strum",
-      "version": "0.26.2",
+      "version": "0.26.3",
       "package_url": "https://github.com/Peternator7/strum",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/strum/0.26.2/download",
-          "sha256": "5d8cec3501a5194c432b2b7976db6b7d10ec95c253208b45f83f7136aa985e29"
+          "url": "https://static.crates.io/crates/strum/0.26.3/download",
+          "sha256": "8fec0f0aef304996cf250b31b5a10dee7980c85da9d759361292b8bca5a18f06"
         }
       },
       "targets": [
@@ -45846,7 +45884,7 @@
           "selects": {}
         },
         "edition": "2018",
-        "version": "0.26.2"
+        "version": "0.26.3"
       },
       "license": "MIT",
       "license_ids": [
@@ -48601,7 +48639,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             }
           ],
@@ -50193,7 +50231,7 @@
               "target": "candid"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -51610,7 +51648,7 @@
               "target": "serde"
             },
             {
-              "id": "serde_json 1.0.117",
+              "id": "serde_json 1.0.120",
               "target": "serde_json"
             },
             {
@@ -54780,7 +54818,7 @@
               "target": "der_parser"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -54868,7 +54906,7 @@
               "target": "der_parser"
             },
             {
-              "id": "lazy_static 1.4.0",
+              "id": "lazy_static 1.5.0",
               "target": "lazy_static"
             },
             {
@@ -56087,16 +56125,16 @@
     "ic-sns-init 0.9.0",
     "ic-sns-root 0.9.0",
     "ic-sns-swap 0.9.0",
-    "ic-stable-structures 0.6.4",
+    "ic-stable-structures 0.6.5",
     "ic-state-machine-tests 0.9.0",
     "ic-utils-ensure 0.9.0",
-    "ic0 0.21.1",
+    "ic0 0.23.0",
     "icp-ledger 0.9.0",
     "icrc-ledger-client-cdk 0.1.2",
     "icrc-ledger-types 0.1.5",
-    "lazy_static 1.4.0",
+    "lazy_static 1.5.0",
     "log 0.4.22",
-    "minicbor 0.24.0",
+    "minicbor 0.24.2",
     "minicbor-derive 0.15.0",
     "mockall 0.12.1",
     "num-bigint 0.4.5",
@@ -56108,11 +56146,11 @@
     "rust_decimal_macros 1.34.2",
     "scopeguard 1.2.0",
     "serde 1.0.203",
-    "serde_bytes 0.11.14",
+    "serde_bytes 0.11.15",
     "serde_cbor 0.11.2",
-    "serde_json 1.0.117",
+    "serde_json 1.0.120",
     "sha2 0.10.8",
-    "strum 0.26.2",
+    "strum 0.26.3",
     "strum_macros 0.26.4",
     "thiserror 1.0.63",
     "tokio 1.38.1"

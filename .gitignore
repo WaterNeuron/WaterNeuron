@@ -10,3 +10,4 @@ bazel-*
 tmp/
 
 rust-project.json
+proptest-regressions
