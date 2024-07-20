@@ -29,6 +29,32 @@ fn reject_anonymous_call() {
     }
 }
 
+fn is_whitelisted() {
+    if read_state(|s| !s.is_whitelisted(ic_cdk::caller())) {
+        ic_cdk::trap("call rejected: not whitelisted");
+    }
+}
+
+#[update(hidden = true)]
+fn whitelist(p: Principal) {
+    assert_eq!(
+        ic_cdk::caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+
+    mutate_state(|s| s.whitelist.insert(p));
+}
+
+#[update(hidden = true)]
+fn unwhitelist(p: Principal) {
+    assert_eq!(
+        ic_cdk::caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+    
+    mutate_state(|s| s.whitelist.remove(&p));
+}
+
 #[init]
 fn init(args: LiquidArg) {
     let ts = water_neuron::timestamp_nanos();
@@ -216,6 +242,7 @@ async fn approve_proposal_validate(id: u64) -> Result<String, String> {
 #[update]
 async fn claim_airdrop() -> Result<u64, ConversionError> {
     reject_anonymous_call();
+    is_whitelisted();
 
     let rewards = read_state(|s| compute_rewards(s.total_icp_deposited, ICP::ONE));
     if rewards != WTN::ZERO {
@@ -320,12 +347,16 @@ fn get_transfer_statuses(ids: Vec<u64>) -> Vec<TransferStatus> {
 #[update]
 async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, ConversionError> {
     reject_anonymous_call();
+    is_whitelisted();
+
     check_postcondition(water_neuron::conversion::nicp_to_icp(arg).await)
 }
 
 #[update]
 async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionError> {
     reject_anonymous_call();
+    is_whitelisted();
+
     check_postcondition(water_neuron::conversion::icp_to_nicp(arg).await)
 }
 

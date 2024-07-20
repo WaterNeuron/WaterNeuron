@@ -200,6 +200,9 @@ pub struct State {
     // Guards
     pub principal_guards: BTreeSet<Principal>,
     pub active_tasks: BTreeSet<TaskType>,
+
+    // whitelist
+    pub whitelist: BTreeSet<Principal>,
 }
 
 impl State {
@@ -235,6 +238,7 @@ impl State {
             wtn_ledger_id: init_arg.wtn_ledger_id,
             principal_guards: BTreeSet::default(),
             active_tasks: BTreeSet::default(),
+            whitelist: BTreeSet::default(),
         }
     }
 
@@ -632,6 +636,10 @@ impl State {
         }
     }
 
+    pub fn is_whitelisted(&self, p: Principal) -> bool {
+        self.whitelist.contains(&p)
+    }
+
     pub fn is_equivalent_to(&self, other: &Self) -> Result<(), String> {
         use ic_utils_ensure::ensure_eq;
 
@@ -950,5 +958,16 @@ pub mod test {
 
         let res_3 = state.compute_governance_share_e8s(880_123_000);
         assert_eq!(res_3, 88_012_300);
+    }
+
+    #[test]
+    fn is_whitelisted() {
+        let mut state = default_state();
+
+        let caller = Principal::from_str("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap();
+        assert!(!state.is_whitelisted(caller));
+
+        state.whitelist.insert(caller);
+        assert!(state.is_whitelisted(caller));
     }
 }
