@@ -38,8 +38,8 @@
       "shrink": false,
       "type": "custom",
       "wasm": "water_neuron/src/state_machine/canisters/ic-icrc1-ledger.wasm.gz"
-    },
-  }
+    }
+  },
   "defaults": {
     "build": {
       "args": "",
