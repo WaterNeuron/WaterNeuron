@@ -4,6 +4,7 @@ workspace(
 
 IC_VERSION = "7eace38b7580dc35af53b9180ea40480af4977dc"
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
 
 rules_rust_dependencies()
@@ -311,4 +312,35 @@ load("//bazel:version.bzl", "git_version")
 
 git_version(
     name = "git_commit_id",
+)
+
+http_archive(
+    name = "pigz",
+    build_file_content = """
+cc_library(
+    name = "zopfli",
+    hdrs = glob(["zopfli/src/zopfli/*.h"]),
+    srcs = glob(["zopfli/src/zopfli/*.c"]),
+)
+
+cc_binary(
+    name = "pigz",
+    srcs = [
+        "pigz.c",
+        "try.c",
+        "try.h",
+        "yarn.c",
+        "yarn.h",
+    ],
+    linkopts = [
+        "-lm",
+        "-lpthread",
+        "-lz",
+    ],
+    deps = [":zopfli"],
+    visibility = ["//visibility:public"],
+)""",
+    sha256 = "688fe1d805b33a4ae8cbf86ba56aa1a5d647e959219c7d3aeb7d041c228af1ef",
+    strip_prefix = "pigz-2.8",
+    url = "https://github.com/madler/pigz/archive/refs/tags/v2.8.zip",
 )
