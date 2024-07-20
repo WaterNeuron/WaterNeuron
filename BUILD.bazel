@@ -1,0 +1,27 @@
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "clippy.toml",
+    "rustfmt.toml",
+    "WORKSPACE.bazel",
+])
+
+alias(
+    name = "rustfmt",
+    actual = "@rules_rust//:rustfmt",
+)
+
+alias(
+    name = "shfmt-format",
+    actual = "//scripts:shfmt-format",
+)
+
+alias(
+    name = "shfmt-lint",
+    actual = "//scripts:shfmt-lint",
+)
+
+alias(
+    name = "verify",
+    actual = "//scripts/verify:bin",
+)
