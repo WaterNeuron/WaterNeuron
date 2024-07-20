@@ -58,8 +58,6 @@ def rust_canister(name, service_file, **kwargs):
         "debuginfo=0",
         "-C",
         "lto",
-        "-C",
-        "embed-bitcode=yes",
     ])
 
     rust_binary(
@@ -114,7 +112,7 @@ def rust_canister(name, service_file, **kwargs):
         name = name + "_gz",
         srcs = [name + "_shrink"],
         outs = [name + "_shrink.wasm.gz"],
-        cmd = "gzip --force $(location :{name}_shrink)".format(name = name),
+        cmd = "gzip -n --force $(location :{name}_shrink)".format(name = name),
         visibility = ["//visibility:public"],
     )
 
