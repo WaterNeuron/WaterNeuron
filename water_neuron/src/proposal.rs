@@ -2,13 +2,12 @@ use crate::management::{get_sns_proposal, manage_neuron_sns};
 use crate::nns_types::convert_nns_proposal_to_sns_proposal;
 use crate::{
     compute_neuron_staking_subaccount_bytes, get_pending_proposals, mutate_state, process_event,
-    read_state, schedule_after, self_canister_id, timestamp_nanos, EventType, TaskType, INFO,
-    ONE_HOUR_SECONDS, RETRY_DELAY, SEC_NANOS,
+    read_state, register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType,
+    ProposalId, TaskType, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
 };
 use ic_canister_log::log;
 use ic_sns_governance::pb::v1::manage_neuron::Command as CommandSns;
 use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandSnsResponse;
-use std::time::Duration;
 
 pub async fn mirror_proposals() -> Result<(), String> {
     let subaccount = compute_neuron_staking_subaccount_bytes(self_canister_id(), 0).to_vec();
@@ -100,7 +99,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
     Ok(())
 }
 
-pub async fn schedule_voting_with_sns() {
+pub async fn vote_on_nns_proposals() {
     let wtn_governance_id = read_state(|s| s.wtn_governance_id);
 
     match get_pending_proposals().await {
@@ -136,11 +135,7 @@ pub async fn schedule_voting_with_sns() {
                                 {
                                     if let Some(tally) = proposal_data.latest_tally {
                                         let vote_outcome = tally.yes > tally.no;
-                                        // S4: Should there be a lower threshold for the amount of votes in order to vote "Yes" ?
-                                        schedule_after(
-                                            Duration::from_secs(diff_secs),
-                                            TaskType::VoteOnProposal { id: proposal_id.id, vote: vote_outcome },
-                                        );
+                                        vote_on_proposal(proposal_id, vote_outcome).await;
                                         continue;
                                     }
                                 }
@@ -152,14 +147,8 @@ pub async fn schedule_voting_with_sns() {
                         }
                     }
                     // We didn't manage to fetch the SNS proposal's outcome
-                    // we vote not by default.
-                    schedule_after(
-                        Duration::from_secs(diff_secs),
-                        TaskType::VoteOnProposal {
-                            id: proposal_id.id,
-                            vote: false,
-                        },
-                    );
+                    // we vote no by default.
+                    vote_on_proposal(proposal_id, false).await;
                 }
             }
         }
@@ -168,7 +157,37 @@ pub async fn schedule_voting_with_sns() {
                 INFO,
                 "[schedule_voting] Failed to get pending proposals with error: {error}"
             );
-            schedule_after(RETRY_DELAY, TaskType::ScheduleVoting);
+            schedule_after(RETRY_DELAY_VOTING, TaskType::ProcessVoting);
+        }
+    }
+}
+
+async fn vote_on_proposal(proposal_id: ProposalId, vote: bool) {
+    if read_state(|s| s.voted_proposals.get(&proposal_id).is_some()) {
+        return;
+    }
+
+    let neuron_6m = match read_state(|s| s.neuron_id_6m) {
+        Some(neuron_6m_id) => neuron_6m_id,
+        None => return,
+    };
+
+    match register_vote(neuron_6m, proposal_id.clone(), vote).await {
+        Ok(response) => {
+            log!(
+            INFO,
+            "[VoteOnProposal] Successfully voted {vote} on proposal {} with response {response:?}",
+            proposal_id.id
+        );
+            mutate_state(|s| s.voted_proposals.insert(proposal_id));
+        }
+        Err(error) => {
+            log!(
+                INFO,
+                "[VoteOnProposal] Failed to vote on proposal {} with error: {error}",
+                proposal_id.id
+            );
+            schedule_after(RETRY_DELAY_VOTING, TaskType::ProcessVoting);
         }
     }
 }

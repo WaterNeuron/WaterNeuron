@@ -19,7 +19,7 @@ use water_neuron::state::{
 use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
-    CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg, Unit,
+    CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg, Unit, UpgradeArg,
     WithdrawalSuccess,
 };
 
@@ -49,9 +49,23 @@ pub fn post_upgrade(args: LiquidArg) {
         LiquidArg::Upgrade(upgrade_arg) => {
             let start = ic_cdk::api::instruction_counter();
 
+            fn validate_upgrade_args(args: UpgradeArg) -> Result<(), String> {
+                if let Some(governance_fee_share_percent) = args.governance_fee_share_percent {
+                    if governance_fee_share_percent > 100 {
+                        return Err(
+                            "governance_fee_share_percent has to be between 0 and 100".to_string()
+                        );
+                    }
+                }
+                Ok(())
+            }
+
             replace_state(replay_events());
 
             if let Some(args) = upgrade_arg {
+                if let Err(e) = validate_upgrade_args(args.clone()) {
+                    ic_cdk::trap(&e);
+                }
                 mutate_state(|s| process_event(s, EventType::Upgrade(args)));
             }
 
@@ -74,7 +88,7 @@ fn setup_timer() {
     schedule_now(TaskType::MaybeInitializeMainNeurons);
     schedule_now(TaskType::ProcessLogic);
     schedule_now(TaskType::SpawnNeurons);
-    schedule_now(TaskType::ScheduleVoting);
+    schedule_now(TaskType::ProcessVoting);
     schedule_now(TaskType::MaybeDistributeICP);
     schedule_now(TaskType::ProcessPendingTransfers);
 }
@@ -155,6 +169,16 @@ async fn get_full_neuron(neuron_id: u64) -> Result<Result<Neuron, GovernanceErro
 }
 
 #[update(hidden = true)]
+async fn schedule_task(task: TaskType) {
+    assert_eq!(
+        ic_cdk::caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+
+    schedule_now(task);
+}
+
+#[update(hidden = true)]
 async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
     assert_eq!(ic_cdk::caller(), read_state(|s| s.wtn_governance_id));
 
@@ -196,6 +220,10 @@ async fn claim_airdrop() -> Result<u64, ConversionError> {
     let rewards = read_state(|s| compute_rewards(s.total_icp_deposited, ICP::ONE));
     if rewards != WTN::ZERO {
         ic_cdk::trap("all rewards must be allocated before being claimable");
+    }
+
+    if read_state(|s| s.tracked_6m_stake) < ICP::from_unscaled(21_000_000) {
+        ic_cdk::trap("21M ICP must be staked to unlock the airdrop");
     }
 
     let caller = ic_cdk::caller();
@@ -263,7 +291,7 @@ fn get_info() -> CanisterInfo {
         nicp_supply: s.total_circulating_nicp,
         minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
         minimum_withdraw_amount: MINIMUM_WITHDRAWAL_AMOUNT,
-        governance_fee_share_e8s: s.governance_fee_share_e8s,
+        governance_fee_share_percent: s.governance_fee_share_percent,
     })
 }
 
@@ -440,7 +468,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
             nicp_supply: s.total_circulating_nicp,
             minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
             minimum_withdraw_amount: MINIMUM_WITHDRAWAL_AMOUNT,
-            governance_fee_share_e8s: s.governance_fee_share_e8s,
+            governance_fee_share_percent: s.governance_fee_share_percent,
         }))
         .unwrap_or_default()
         .into_bytes();

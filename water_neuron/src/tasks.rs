@@ -1,4 +1,5 @@
 use crate::timestamp_nanos;
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
@@ -9,16 +10,17 @@ thread_local! {
     static LAST_GLOBAL_TIMER: Cell<u64> = Cell::default();
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, CandidType,
+)]
 pub enum TaskType {
     MaybeInitializeMainNeurons,
     ProcessPendingTransfers,
     ProcessLogic,
     MaybeDistributeICP,
     SpawnNeurons,
-    ScheduleVoting,
+    ProcessVoting,
     RefreshShortTerm,
-    VoteOnProposal { id: u64, vote: bool },
 }
 
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]

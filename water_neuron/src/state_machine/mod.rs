@@ -580,7 +580,7 @@ impl WaterNeuron {
         let mut initial_balances = HashMap::new();
         initial_balances.insert(
             AccountIdentifier::new(minter.into(), None),
-            Tokens::from_e8s(20_000_000 * E8S),
+            Tokens::from_e8s(22_000_000 * E8S),
         );
 
         let icp_ledger_id = env
@@ -1341,16 +1341,16 @@ fn e2e_basic() {
         water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
         Nat::from(info.tracked_6m_stake.0)
     );
-    assert_eq!(info.exchange_rate, 5_797);
+    assert_eq!(info.exchange_rate, 5_270);
 
-    assert_eq!(info.governance_fee_share_e8s, 10_000_000);
+    assert_eq!(info.governance_fee_share_percent, 10);
 
     assert_matches!(
         water_neuron.env.upgrade_canister(
             water_neuron.water_neuron_id,
             water_neuron_wasm(),
             Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
-                governance_fee_share_e8s: Some(20_000_000),
+                governance_fee_share_percent: Some(20),
             })))
             .unwrap(),
         ),
@@ -1360,8 +1360,8 @@ fn e2e_basic() {
     water_neuron.advance_time_and_tick(60);
     let info = water_neuron.get_info();
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
-    assert_eq!(info.exchange_rate, 5_797);
-    assert_eq!(info.governance_fee_share_e8s, 20_000_000);
+    assert_eq!(info.exchange_rate, 5_270);
+    assert_eq!(info.governance_fee_share_percent, 20);
 }
 
 #[test]
@@ -1505,7 +1505,7 @@ fn should_mirror_proposal() {
             water_neuron.water_neuron_id,
             water_neuron_wasm(),
             Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
-                governance_fee_share_e8s: None,
+                governance_fee_share_percent: None,
             })))
             .unwrap(),
         ),
@@ -1655,7 +1655,7 @@ fn should_distribute_icp_to_sns_neurons() {
     );
 
     assert!(water_neuron
-        .icp_to_nicp(water_neuron.minter.into(), 12_000_000 * E8S)
+        .icp_to_nicp(water_neuron.minter.into(), 21_000_000 * E8S)
         .is_ok());
 
     assert_eq!(water_neuron.claim_airdrop(caller.0), Ok(1));
@@ -1670,7 +1670,7 @@ fn should_distribute_icp_to_sns_neurons() {
             water_neuron.water_neuron_id,
             water_neuron_wasm(),
             Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
-                governance_fee_share_e8s: None
+                governance_fee_share_percent: None
             })))
             .unwrap(),
         ),
@@ -1745,7 +1745,7 @@ fn transfer_ids_are_as_expected() {
             water_neuron.water_neuron_id,
             water_neuron_wasm(),
             Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
-                governance_fee_share_e8s: None
+                governance_fee_share_percent: None
             })))
             .unwrap(),
         ),
@@ -1837,7 +1837,7 @@ fn should_compute_exchange_rate() {
             water_neuron.water_neuron_id,
             water_neuron_wasm(),
             Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
-                governance_fee_share_e8s: None
+                governance_fee_share_percent: None
             })))
             .unwrap(),
         ),
@@ -1928,7 +1928,7 @@ fn should_mirror_all_proposals() {
             water_neuron.water_neuron_id,
             water_neuron_wasm(),
             Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
-                governance_fee_share_e8s: None,
+                governance_fee_share_percent: None,
             })))
             .unwrap(),
         ),

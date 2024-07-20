@@ -1,3 +1,4 @@
 target/
 .dfx
 candid/
+proptest-regressions

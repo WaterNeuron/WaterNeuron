@@ -12,7 +12,7 @@ use ic_sns_governance::pb::v1::{
 };
 use std::collections::{BTreeMap, BTreeSet};
 
-const WTN_MAX_DISSOLVE_DELAY_SECONDS: u64 = 94_672_800;
+pub const WTN_MAX_DISSOLVE_DELAY_SECONDS: u64 = 94_672_800;
 const WTN_MAX_NEURON_AGE_FOR_AGE_BONUS: u64 = 94_672_800;
 const WTN_MAX_DISSOLVE_DELAY_BONUS_PERCENTAGE: u64 = 50;
 const WTN_MAX_AGE_BONUS_PERCENTAGE: u64 = 25;
@@ -73,26 +73,35 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
 ) -> Result<usize, String> {
     let mut stakers_count: usize = 0;
 
-    if icp_amount_to_distribute > MINIMUM_ICP_DISTRIBUTION {
+    if icp_amount_to_distribute >= MINIMUM_ICP_DISTRIBUTION {
         let sns_neurons = fetch_sns_neurons(runtime).await?;
         let total_voting_power: u64 = sns_neurons.values().sum();
 
         log!(INFO, "[maybe_fetch_neurons_and_distribute] fetched {} neurons for a total voting power of {total_voting_power}", sns_neurons.len());
 
+        if total_voting_power == 0 {
+            return Err("total_voting_power cannot be 0".to_string());
+        }
+
         for (owner, stake) in sns_neurons {
             let share = stake as f64 / total_voting_power as f64;
             let share_amount = icp_amount_to_distribute as f64 * share;
+            let share_amount_icp = ICP::from_e8s(share_amount as u64);
             if share_amount as u64 > DEFAULT_LEDGER_FEE {
                 mutate_state(|s| {
                     process_event(
                         s,
                         EventType::DistributeICPtoSNS {
-                            amount: ICP::from_e8s(share_amount as u64),
+                            amount: share_amount_icp,
                             receiver: owner,
                         },
                     );
                 });
                 stakers_count += 1;
+                log!(
+                    INFO,
+                    "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner}",
+                );
             }
         }
     }
@@ -156,6 +165,12 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
                             .entry(owner)
                             .and_modify(|e| *e += stake)
                             .or_insert(stake);
+                    } else {
+                        log!(
+                            INFO,
+                            "[fetch_sns_neurons] failed to get neuron owner of neuron with id: {:?}",
+                            neuron.id
+                        );
                     }
                 }
                 error_count = 0;
@@ -186,8 +201,6 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
             "[fetch_sns_neurons] Found {neuron_count} unique neurons.",
         );
     }
-
-    result.remove(&crate::self_canister_id());
 
     Ok(result)
 }
