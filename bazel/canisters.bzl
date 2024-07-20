@@ -114,7 +114,7 @@ def rust_canister(name, service_file, **kwargs):
         name = name + "_gz",
         srcs = [name + "_shrink"],
         outs = [name + "_shrink.wasm.gz"],
-        cmd = "gzip $(location :{name}_shrink)".format(name = name),
+        cmd = "gzip --force $(location :{name}_shrink)".format(name = name),
         visibility = ["//visibility:public"],
     )
 

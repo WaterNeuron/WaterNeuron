@@ -1,4 +1,4 @@
-use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
+use candid::{self, Decode, Encode, Principal};
 use clap::{Parser, ValueEnum};
 use ic_agent::AgentError;
 use ic_agent::{identity::AnonymousIdentity, Agent};
@@ -6,11 +6,7 @@ use log::{debug, error, info};
 use regex::Regex;
 use sha2::Digest;
 use sha2::Sha256;
-use std::io::Read;
-use std::os::unix::process;
-use std::path::Path;
 use std::process::Command;
-use std::str::FromStr;
 use std::string::FromUtf8Error;
 use thiserror::Error;
 use types::GetProposalResponse;
