@@ -37,15 +37,3 @@ sh_binary(
     ],
     visibility = ["//visibility:public"],
 )
-
-sh_binary(
-    name = "script-verify",
-    srcs = ["verify.sh"],
-    data = [
-        "//water_neuron:canister",
-    ],
-    env = {
-        "canister_path": "$(rootpath //water_neuron:canister)",
-    },
-    visibility = ["//visibility:public"],
-)

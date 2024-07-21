@@ -8,7 +8,7 @@ genrule(
         WORKSPACE="$(rootpath //:WORKSPACE.bazel)"
         REPO_PATH="$$(dirname "$$(readlink "$$WORKSPACE")")"
         cd "$$REPO_PATH"
-        git rev-parse HEAD > $@
+        git rev-parse HEAD >  $(RULEDIR)/git_commit_id.txt
     """,
     tags = [
         "external",

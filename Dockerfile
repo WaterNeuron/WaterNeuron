@@ -47,6 +47,8 @@ RUN curl -fsSL https://github.com/bazelbuild/buildtools/releases/download/v6.4.0
 # No password sudo
 RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+RUN mkdir /waterneuron
+
 USER ubuntu
 
 # Set PATH
@@ -64,6 +66,13 @@ RUN curl --fail https://sh.rustup.rs -sSf \
 RUN cargo install ripgrep ic-wasm tokei git-delta bat
 
 # Copy fish config
-COPY --chown=ubuntu:ubuntu scripts/config.fish /home/ubuntu/.config/fish/config.fish
+COPY --chown=ubuntu:ubuntu scripts/data/config.fish /home/ubuntu/.config/fish/config.fish
+
+# Copy .vimrc
+COPY --chown=ubuntu:ubuntu scripts/data/.vimrc /home/ubuntu/.vimrc
+
+# Install Plug 
+RUN curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 CMD ["/usr/bin/fish"]
