@@ -8,4 +8,5 @@ podman run -it --rm -w /waterneuron \
     --userns=keep-id \
     --mount type=bind,source="${HOME}",target="${HOME}" \
     --mount type=bind,source="$(pwd)",target="/waterneuron" \
-    "$PODMAN_HASH"
+    "$PODMAN_HASH" \
+    /usr/bin/bash -c "bazel build ... && sha256sum bazel-bin/water_neuron/canister_shrink.wasm.gz"
