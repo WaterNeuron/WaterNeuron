@@ -5,6 +5,23 @@ Liquid staking protocol on the Internet Computer
 
 -   Pre-requisites: `podman`, `git`
 
+```bash
+podman build -f Dockerfile
+```
+
+When the building step in finished, replace the hash in the following command with the one of your build.
+
+```bash
+podman run -it --rm -v "$(pwd):/home/ubuntu/waterneuron" -w /home/ubuntu/waterneuron 101bf4ca3db
+```
+
+```bash
+sudo chown ubuntu:ubuntu -R .
+bazel build //bazel:git_commit_id
+bazel build //water_neuron:canister_gz
+sha256sum   bazel-bin/water_neuron/canister_shrink.wasm.gz
+```
+
 ## VSCode
 
 Recommend extensions:
