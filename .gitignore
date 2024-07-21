@@ -11,3 +11,6 @@ tmp/
 
 rust-project.json
 proptest-regressions
+
+artifacts/
+
