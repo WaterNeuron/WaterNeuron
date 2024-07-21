@@ -4,7 +4,7 @@ set -euxo pipefail
 
 
 MODE="dev"
-ARTIFACTS_DIR="${HOME}/podman_artifacts"
+ARTIFACTS_DIR="$(pwd)/artifacts"
 
 mkdir -p "$ARTIFACTS_DIR"
 

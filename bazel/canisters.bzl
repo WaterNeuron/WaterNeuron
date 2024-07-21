@@ -92,7 +92,6 @@ def rust_canister(name, service_file, **kwargs):
             name = name,
         ),
         visibility = ["//visibility:public"],
-        stamp = 1,
     )
 
     # shrink
