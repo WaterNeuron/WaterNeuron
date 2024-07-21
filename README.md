@@ -6,13 +6,13 @@ Liquid staking protocol on the Internet Computer
 -   Pre-requisites: `podman`, `git`
 
 ```bash
-PODMAN_HASH=$(podman build -f Dockerfile)
+PODMAN_HASH=$(podman build -q -f Dockerfile)
 ```
 
 When the building step in finished, replace the hash in the following command with the one of your build.
 
 ```bash
-podman run -it --rm -v "$(pwd):/home/ubuntu/waterneuron" -w /home/ubuntu/waterneuron PODMAN_HASH
+podman run -it --rm -v "$(pwd):/home/ubuntu/waterneuron" -w /home/ubuntu/waterneuron "$PODMAN_HASH"
 ```
 
 ```bash
