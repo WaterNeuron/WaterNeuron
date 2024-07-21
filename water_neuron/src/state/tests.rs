@@ -45,10 +45,10 @@ prop_compose! {
 
 prop_compose! {
     fn arb_upgrade_arg()(
-        governance_fee_share_e8s in proptest::option::of(any::<u64>()),
+        governance_fee_share_percent in proptest::option::of(any::<u64>()),
     ) -> UpgradeArg {
         UpgradeArg {
-            governance_fee_share_e8s
+            governance_fee_share_percent
         }
     }
 }

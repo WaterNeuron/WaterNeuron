@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 pub mod audit;
@@ -58,7 +59,7 @@ fn u64_to_u8_array32(x: u64) -> [u8; 32] {
 
 impl NeuronOrigin {
     pub fn to_subaccount(self) -> [u8; 32] {
-        // Use and offset to avoid colision.
+        // Use an offset to avoid colision.
         const OFFSET: u64 = 1234;
         u64_to_u8_array32(OFFSET + self as u64)
     }
@@ -150,7 +151,7 @@ impl fmt::Display for WithdrawalStatus {
 pub struct State {
     pub total_icp_deposited: ICP,
     pub total_circulating_nicp: nICP,
-    pub governance_fee_share_e8s: u64,
+    pub governance_fee_share_percent: u64,
 
     pub transfer_id: TransferId,
     pub withdrawal_id: WithdrawalId,
@@ -158,6 +159,7 @@ pub struct State {
     // NNS Proposal Id to SNS Proposals ID
     // and deadline_timestamp_seconds of the NNS proposal
     pub proposals: BTreeMap<ProposalId, ProposalId>,
+    pub voted_proposals: BTreeSet<ProposalId>,
 
     // Airdrop Map
     pub airdrop: BTreeMap<Principal, WTN>,
@@ -198,6 +200,9 @@ pub struct State {
     // Guards
     pub principal_guards: BTreeSet<Principal>,
     pub active_tasks: BTreeSet<TaskType>,
+
+    // whitelist
+    pub whitelist: BTreeSet<Principal>,
 }
 
 impl State {
@@ -206,7 +211,7 @@ impl State {
             airdrop: BTreeMap::default(),
             neuron_id_to_withdrawal_id: BTreeMap::default(),
             proposals: BTreeMap::default(),
-            governance_fee_share_e8s: 10_000_000,
+            governance_fee_share_percent: 10,
             total_circulating_nicp: nICP::ZERO,
             total_icp_deposited: ICP::ZERO,
             tracked_6m_stake: ICP::ZERO,
@@ -221,6 +226,7 @@ impl State {
             principal_to_withdrawal: BTreeMap::default(),
             transfer_id: 0,
             withdrawal_id: 0,
+            voted_proposals: BTreeSet::default(),
             pending_transfers: BTreeMap::default(),
             transfer_executed: BTreeMap::default(),
             neuron_id_6m: None,
@@ -232,6 +238,7 @@ impl State {
             wtn_ledger_id: init_arg.wtn_ledger_id,
             principal_guards: BTreeSet::default(),
             active_tasks: BTreeSet::default(),
+            whitelist: BTreeSet::default(),
         }
     }
 
@@ -300,10 +307,17 @@ impl State {
         TransferStatus::Unknown
     }
 
-    pub fn is_processing_icp_transfer(&self) -> bool {
+    pub fn is_processing_icp_transfer_from_neuron(&self) -> bool {
+        self.pending_transfers.values().any(|transfer| {
+            NeuronOrigin::iter()
+                .any(|origin| transfer.from_subaccount == Some(origin.to_subaccount()))
+        })
+    }
+
+    pub fn is_processing_icp_transfer_from_sns_subaccount(&self) -> bool {
         self.pending_transfers
             .values()
-            .any(|transfer| transfer.unit == Unit::ICP)
+            .any(|transfer| transfer.from_subaccount == Some(SNS_GOVERNANCE_SUBACCOUNT))
     }
 
     /// We should never the 6 months and 8 years main neurons.
@@ -327,12 +341,10 @@ impl State {
     }
 
     pub fn compute_governance_share_e8s(&self, balance: u64) -> u64 {
-        let governance_fee_share =
-            Decimal::from(self.governance_fee_share_e8s) / Decimal::from(E8S);
-        let mut governance_share =
-            Decimal::from(balance) / Decimal::from(E8S) * governance_fee_share;
-        governance_share.rescale(8);
-        governance_share.mantissa() as u64
+        balance
+            .checked_mul(self.governance_fee_share_percent)
+            .unwrap()
+            / 100
     }
 
     pub fn convert_icp_to_nicp(&self, amount: ICP) -> nICP {
@@ -362,8 +374,8 @@ impl State {
     }
 
     pub fn record_upgrade(&mut self, upgrade_arg: UpgradeArg) {
-        if let Some(governance_fee_share_e8s) = upgrade_arg.governance_fee_share_e8s {
-            self.governance_fee_share_e8s = governance_fee_share_e8s;
+        if let Some(governance_fee_share_percent) = upgrade_arg.governance_fee_share_percent {
+            self.governance_fee_share_percent = governance_fee_share_percent;
         }
     }
 
@@ -451,6 +463,7 @@ impl State {
         from_subaccount: [u8; 32],
         receiver: impl Into<Account>,
         amount: ICP,
+        memo: Option<u64>,
     ) {
         let transfer_id = self.increment_transfer_id();
         let unit = Unit::ICP;
@@ -465,7 +478,7 @@ impl State {
                     amount: amount.0,
                     receiver: receiver.into(),
                     unit,
-                    memo: None
+                    memo
                 }
             ),
             None
@@ -623,6 +636,10 @@ impl State {
         }
     }
 
+    pub fn is_whitelisted(&self, p: Principal) -> bool {
+        self.whitelist.contains(&p)
+    }
+
     pub fn is_equivalent_to(&self, other: &Self) -> Result<(), String> {
         use ic_utils_ensure::ensure_eq;
 
@@ -775,7 +792,7 @@ pub mod test {
             wtn_governance_id: Principal::anonymous(),
             nicp_ledger_id: Principal::anonymous(),
         });
-        state.governance_fee_share_e8s = 10_000_000;
+        state.governance_fee_share_percent = 10;
         state
     }
 
@@ -941,5 +958,16 @@ pub mod test {
 
         let res_3 = state.compute_governance_share_e8s(880_123_000);
         assert_eq!(res_3, 88_012_300);
+    }
+
+    #[test]
+    fn is_whitelisted() {
+        let mut state = default_state();
+
+        let caller = Principal::from_str("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap();
+        assert!(!state.is_whitelisted(caller));
+
+        state.whitelist.insert(caller);
+        assert!(state.is_whitelisted(caller));
     }
 }
