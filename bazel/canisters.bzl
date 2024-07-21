@@ -88,12 +88,10 @@ def rust_canister(name, service_file, **kwargs):
         name = name + "_with_git",
         srcs = [name + "_with_candid"],
         outs = [name + "_with_git.wasm"],
-        cmd = "ic-wasm $(location :{name}_with_candid) -o $(location {name}_with_git.wasm) metadata git_commit_id -f $(location {git}) -v public".format(
+        cmd = "ic-wasm $(location :{name}_with_candid) -o $(location {name}_with_git.wasm) metadata git_commit_id -d \"$$GIT_COMMIT_ID\"  -v public".format(
             name = name,
-            git = "//bazel:git_commit_id",
         ),
         visibility = ["//visibility:public"],
-        tools = ["//bazel:git_commit_id"],
     )
 
     # shrink
