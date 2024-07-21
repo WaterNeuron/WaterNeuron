@@ -11,8 +11,8 @@ use crate::nns_types::{
     TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
 };
 use crate::numeric::{nICP, ICP};
-use crate::proposal::{mirror_proposals, schedule_voting_with_sns};
-use crate::sns_governance::{CanisterRuntime, IcCanisterRuntime};
+use crate::proposal::{mirror_proposals, vote_on_nns_proposals};
+use crate::sns_governance::{CanisterRuntime, IcCanisterRuntime, WTN_MAX_DISSOLVE_DELAY_SECONDS};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
 use crate::state::{
@@ -78,8 +78,10 @@ pub const MIN_DISSOLVE_DELAY_FOR_REWARDS: u64 = 6 * ONE_MONTH_SECONDS + ONE_DAY_
 pub const DEFAULT_LEDGER_FEE: u64 = 10_000;
 pub const NEURON_LEDGER_FEE: u64 = 1_000_000;
 const E8S: u64 = 100_000_000;
-const MINIMUM_ICP_DISTRIBUTION: u64 = 10 * E8S;
+const MINIMUM_ICP_DISTRIBUTION: u64 = 100 * E8S;
 pub const INITIAL_NEURON_STAKE: u64 = E8S + 42;
+
+pub const SNS_DISTRIBUTION_MEMO: u64 = 83_78_83;
 
 #[cfg(target_arch = "wasm32")]
 pub fn timestamp_nanos() -> u64 {
@@ -125,7 +127,7 @@ pub struct InitArg {
 #[derive(Deserialize, CandidType, Encode, Decode, PartialEq, Eq, Clone, Debug)]
 pub struct UpgradeArg {
     #[n(0)]
-    pub governance_fee_share_e8s: Option<u64>,
+    pub governance_fee_share_percent: Option<u64>,
 }
 
 #[derive(CandidType, Debug, Deserialize, PartialEq, Eq, Serialize)]
@@ -143,7 +145,7 @@ pub struct CanisterInfo {
     pub nicp_supply: nICP,
     pub minimum_deposit_amount: ICP,
     pub minimum_withdraw_amount: ICP,
-    pub governance_fee_share_e8s: u64,
+    pub governance_fee_share_percent: u64,
 }
 
 #[derive(CandidType, Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Encode, Decode)]
@@ -264,7 +266,7 @@ pub fn timer() {
                         schedule_after(RETRY_DELAY, TaskType::MaybeInitializeMainNeurons);
                     });
 
-                    let _ = configure_sns_voting_neuron().await;
+                    configure_sns_voting_neuron().await;
 
                     if let Err(e) = initialize_main_neurons().await {
                         log!(
@@ -291,7 +293,7 @@ pub fn timer() {
                     schedule_after(ONE_HOUR, TaskType::MaybeDistributeICP);
                 });
             }
-            TaskType::ScheduleVoting => {
+            TaskType::ProcessVoting => {
                 ic_cdk::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
@@ -301,40 +303,13 @@ pub fn timer() {
                     if let Err(e) = mirror_proposals().await {
                         log!(
                             INFO,
-                            "[ScheduleVoting] failed to mirror proposals with error: {e}"
+                            "[ProcessVoting] failed to mirror proposals with error: {e}"
                         );
-                        schedule_after(RETRY_DELAY, TaskType::ScheduleVoting);
+                        schedule_after(RETRY_DELAY, TaskType::ProcessVoting);
                     }
-                    schedule_voting_with_sns().await;
+                    vote_on_nns_proposals().await;
 
-                    schedule_after(Duration::from_secs(30 * 60), TaskType::ScheduleVoting);
-                });
-            }
-            TaskType::VoteOnProposal { id, vote } => {
-                ic_cdk::spawn(async move {
-                    let _guard = match TaskGuard::new(task_type) {
-                        Ok(guard) => guard,
-                        Err(_) => return,
-                    };
-
-                    let neuron_6m = match read_state(|s| s.neuron_id_6m) {
-                        Some(neuron_6m_id) => neuron_6m_id,
-                        None => return,
-                    };
-
-                    match register_vote(neuron_6m, ProposalId { id }, vote).await {
-                        Ok(response) => log!(
-                            INFO,
-                            "[VoteOnProposal] Successfully voted {vote} on proposal {id} with response {response:?}"
-                        ),
-                        Err(error) => {
-                            log!(
-                                INFO,
-                                "[VoteOnProposal] Failed to vote on proposal {id} with error: {error}"
-                            );
-                            schedule_after(RETRY_DELAY_VOTING, TaskType::VoteOnProposal { id, vote });
-                        }
-                    }
+                    schedule_after(Duration::from_secs(30 * 60), TaskType::ProcessVoting);
                 });
             }
             TaskType::ProcessPendingTransfers => {
@@ -456,7 +431,7 @@ async fn neuron_8y_follows_6m() -> Result<(), String> {
     Ok(())
 }
 
-async fn configure_sns_voting_neuron() -> Result<(), String> {
+async fn configure_sns_voting_neuron() {
     use ic_sns_governance::pb::v1::manage_neuron::configure::Operation as OperationSns;
     use ic_sns_governance::pb::v1::manage_neuron::{
         Command as CommandSns, Configure as ConfigureSns,
@@ -466,19 +441,17 @@ async fn configure_sns_voting_neuron() -> Result<(), String> {
     let arg = CommandSns::Configure(ConfigureSns {
         operation: Some(OperationSns::IncreaseDissolveDelay(
             IncreaseDissolveDelaySns {
-                additional_dissolve_delay_seconds: 94_672_800,
+                additional_dissolve_delay_seconds: WTN_MAX_DISSOLVE_DELAY_SECONDS as u32,
             },
         )),
     });
 
     let subaccount = compute_neuron_staking_subaccount_bytes(self_canister_id(), 0).to_vec();
-    let result = manage_neuron_sns(subaccount, arg).await?;
+    let result = manage_neuron_sns(subaccount, arg).await;
     log!(
         DEBUG,
         "[configure_sns_voting_neuron] manage sns neuron response {result:?}"
     );
-
-    Ok(())
 }
 
 async fn process_pending_transfer() -> u64 {
@@ -694,75 +667,92 @@ async fn process_disburse() {
             .collect::<Vec<u64>>()
     });
 
-    match list_neurons(ListNeurons {
-        neuron_ids,
-        include_neurons_readable_by_caller: false,
-    })
-    .await
-    {
-        Ok(response) => {
-            for neuron in response.full_neurons {
-                if !neuron.is_dissolved(timestamp_nanos()) {
-                    continue;
-                }
-                if let Some(neuron_id) = neuron.id {
-                    if let Some(req) = read_state(|s| s.to_disburse.get(&neuron_id).cloned()) {
-                        log!(
-                            INFO,
-                            "[process_disburse] Disbursing neuron id: {}",
-                            neuron_id.id
-                        );
-                        match disburse(neuron_id, req.receiver).await {
-                            Ok(disburse_response) => {
-                                schedule_now(TaskType::ProcessPendingTransfers);
-                                log!(
-                                    INFO,
-                                    "[process_disburse] Sucessfully disbursed at height: {}",
-                                    disburse_response.transfer_block_height
-                                );
-                                mutate_state(|s| match s.neuron_id_to_withdrawal_id(neuron_id) {
-                                    Some(withdrawal_id) => {
-                                        process_event(
-                                            s,
-                                            EventType::DisbursedUserNeuron {
-                                                withdrawal_id,
-                                                transfer_block_height: disburse_response
-                                                    .transfer_block_height,
-                                            },
-                                        );
-                                    }
-                                    None => {
-                                        process_event(
-                                            s,
-                                            EventType::DisbursedMaturityNeuron {
-                                                neuron_id,
-                                                transfer_block_height: disburse_response
-                                                    .transfer_block_height,
-                                            },
-                                        );
-                                        schedule_after(ONE_MINUTE, TaskType::MaybeDistributeICP);
-                                    }
-                                });
-                            }
-                            Err(e) => {
-                                log!(INFO, "[process_disburse] failed to disburse neurons: {e:?}")
+    // Helper function to chunk the neuron_ids
+    fn chunk_ids(ids: Vec<u64>, chunk_size: usize) -> Vec<Vec<u64>> {
+        ids.chunks(chunk_size).map(|chunk| chunk.to_vec()).collect()
+    }
+
+    let chunks = chunk_ids(neuron_ids, 100);
+
+    for chunk in chunks {
+        match list_neurons(ListNeurons {
+            neuron_ids: chunk,
+            include_neurons_readable_by_caller: false,
+        })
+        .await
+        {
+            Ok(response) => {
+                for neuron in response.full_neurons {
+                    if !neuron.is_dissolved(timestamp_nanos()) {
+                        continue;
+                    }
+                    if let Some(neuron_id) = neuron.id {
+                        if let Some(req) = read_state(|s| s.to_disburse.get(&neuron_id).cloned()) {
+                            log!(
+                                INFO,
+                                "[process_disburse] Disbursing neuron id: {}",
+                                neuron_id.id
+                            );
+                            match disburse(neuron_id, req.receiver).await {
+                                Ok(disburse_response) => {
+                                    schedule_now(TaskType::ProcessPendingTransfers);
+                                    log!(
+                                        INFO,
+                                        "[process_disburse] Sucessfully disbursed at height: {}",
+                                        disburse_response.transfer_block_height
+                                    );
+                                    mutate_state(|s| {
+                                        match s.neuron_id_to_withdrawal_id(neuron_id) {
+                                            Some(withdrawal_id) => {
+                                                process_event(
+                                                    s,
+                                                    EventType::DisbursedUserNeuron {
+                                                        withdrawal_id,
+                                                        transfer_block_height: disburse_response
+                                                            .transfer_block_height,
+                                                    },
+                                                );
+                                            }
+                                            None => {
+                                                process_event(
+                                                    s,
+                                                    EventType::DisbursedMaturityNeuron {
+                                                        neuron_id,
+                                                        transfer_block_height: disburse_response
+                                                            .transfer_block_height,
+                                                    },
+                                                );
+                                                schedule_after(
+                                                    ONE_MINUTE,
+                                                    TaskType::MaybeDistributeICP,
+                                                );
+                                            }
+                                        }
+                                    });
+                                }
+                                Err(e) => {
+                                    log!(
+                                        INFO,
+                                        "[process_disburse] failed to disburse neurons: {e:?}"
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+            Err(error) => log!(
+                INFO,
+                "[process_disburse] failed to fetch list_neurons with error: {error}"
+            ),
         }
-        Err(error) => log!(
-            INFO,
-            "[process_disburse] failed to fetch list_neurons with error: {error}"
-        ),
     }
 }
 
 /// Distribute ICP to the SNS neurons. This will fetch all the SNS neurons
 /// and distribute rewards proportionally.
 async fn distribute_icp_to_sns_neurons() {
-    if read_state(|s| s.is_processing_icp_transfer()) {
+    if read_state(|s| s.is_processing_icp_transfer_from_sns_subaccount()) {
         schedule_now(TaskType::ProcessPendingTransfers);
         log!(
             DEBUG,
@@ -771,17 +761,11 @@ async fn distribute_icp_to_sns_neurons() {
         return;
     }
 
-    match balance_of(
-        Account {
-            owner: ic_cdk::id(),
-            subaccount: Some(crate::state::SNS_GOVERNANCE_SUBACCOUNT),
-        },
-        ICP_LEDGER_ID,
-    )
-    .await
-    {
+    let sns_account = read_state(|s| s.get_sns_account());
+
+    match balance_of(sns_account, ICP_LEDGER_ID).await {
         Ok(balance) => {
-            if balance > MINIMUM_ICP_DISTRIBUTION {
+            if balance >= MINIMUM_ICP_DISTRIBUTION {
                 let runtime = IcCanisterRuntime {};
                 match crate::sns_governance::maybe_fetch_neurons_and_distribute(&runtime, balance)
                     .await
@@ -801,15 +785,18 @@ async fn distribute_icp_to_sns_neurons() {
                 log!(DEBUG, "[distribute_icp_to_sns_neurons] Not enought ICP to distribute, balance {balance} ICP min {MINIMUM_ICP_DISTRIBUTION} ICP");
             }
         }
-        Err(error) => log!(
-            DEBUG,
-            "[distribute_icp_to_sns_neurons] failed to fetch balance with error: {error}"
-        ),
+        Err(error) => {
+            log!(
+                DEBUG,
+                "[distribute_icp_to_sns_neurons] failed to fetch balance with error: {error}"
+            );
+            schedule_after(ONE_MINUTE, TaskType::MaybeDistributeICP);
+        }
     }
 }
 
 async fn dispatch_icp<R: CanisterRuntime>(runtime: &R) {
-    if !read_state(|s| !s.is_processing_icp_transfer()) {
+    if read_state(|s| s.is_processing_icp_transfer_from_neuron()) {
         schedule_now(TaskType::ProcessPendingTransfers);
         log!(DEBUG, "[dispatch_icp] Some ICP withdrawal are still queued");
         return;
@@ -1011,7 +998,7 @@ mod test {
                         && ledger_id == &ICP_LEDGER_ID
             })
             .times(2)
-            .return_const(Ok(10 * E8S));
+            .return_const(Ok(100 * E8S));
 
         dispatch_icp(&runtime).await;
 
@@ -1031,7 +1018,7 @@ mod test {
                         && ledger_id == &ICP_LEDGER_ID
             })
             .times(2)
-            .return_const(Ok(20 * E8S));
+            .return_const(Ok(200 * E8S));
 
         dispatch_icp(&runtime).await;
 
@@ -1043,7 +1030,7 @@ mod test {
                     transfer_id: 0,
                     from_subaccount: Some(NeuronOrigin::SnsGovernanceEightYears.to_subaccount()),
                     memo: None,
-                    amount: 18 * E8S,
+                    amount: 180 * E8S,
                     receiver: s.get_6m_neuron_account(),
                     unit: Unit::ICP,
                 }
@@ -1054,7 +1041,7 @@ mod test {
                     transfer_id: 1,
                     from_subaccount: Some(NeuronOrigin::SnsGovernanceEightYears.to_subaccount()),
                     memo: None,
-                    amount: 2 * E8S,
+                    amount: 20 * E8S,
                     receiver: Account {
                         owner: self_canister_id(),
                         subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT)
@@ -1068,7 +1055,7 @@ mod test {
                     transfer_id: 2,
                     from_subaccount: Some(NeuronOrigin::NICPSixMonths.to_subaccount()),
                     memo: None,
-                    amount: 18 * E8S,
+                    amount: 180 * E8S,
                     receiver: s.get_6m_neuron_account(),
                     unit: Unit::ICP,
                 }
@@ -1079,7 +1066,7 @@ mod test {
                     transfer_id: 3,
                     from_subaccount: Some(NeuronOrigin::NICPSixMonths.to_subaccount()),
                     memo: None,
-                    amount: 2 * E8S,
+                    amount: 20 * E8S,
                     receiver: Account {
                         owner: self_canister_id(),
                         subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT)

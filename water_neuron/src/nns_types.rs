@@ -7,6 +7,8 @@ use minicbor::{Decode, Encode as CborEncode};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
 
+// Custom SNS function to vote on an NNS proposal.
+// https://nns.ic0.app/proposal/?u=jmod6-4iaaa-aaaaq-aadkq-cai&proposal=3
 pub const VOTE_ON_NNS_PROPOSAL_FUNCTION_ID: u64 = 1_000;
 
 pub const TOPIC_UNSPECIFIED: i32 = 0;

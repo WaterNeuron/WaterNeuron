@@ -8,6 +8,7 @@ type CanisterInfo = record {
   neuron_8y_stake_e8s : nat64;
   neuron_8y_account : Account;
   minimum_deposit_amount : nat64;
+  governance_fee_share_percent : nat64;
   neuron_6m_stake_e8s : nat64;
   exchange_rate : nat64;
   nicp_supply : nat64;
@@ -74,7 +75,11 @@ type ExecutedTransfer = record {
 type GetEventsArg = record { start : nat64; length : nat64 };
 type GetEventsResult = record { total_event_count : nat64; events : vec Event };
 type GuardError = variant { AlreadyProcessing; TooManyConcurrentRequests };
-type InitArg = record { nicp_ledger_id : principal };
+type InitArg = record {
+  wtn_ledger_id : principal;
+  wtn_governance_id : principal;
+  nicp_ledger_id : principal;
+};
 type LiquidArg = variant { Upgrade : opt UpgradeArg; Init : InitArg };
 type NeuronId = record { id : nat64 };
 type NeuronOrigin = variant { NICPSixMonths; SnsGovernanceEightYears };
@@ -116,10 +121,7 @@ type TransferStatus = variant {
   Pending : PendingTransfer;
 };
 type Unit = variant { ICP; WTN; NICP };
-type UpgradeArg = record {
-  wtn_ledger_id : opt principal;
-  sns_governance_id : opt principal;
-};
+type UpgradeArg = record { governance_fee_share_percent : opt nat64 };
 type WithdrawalDetails = record {
   status : WithdrawalStatus;
   request : WithdrawalRequest;
@@ -148,6 +150,7 @@ service : (LiquidArg) -> {
   get_info : () -> (CanisterInfo) query;
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
   get_withdrawal_requests : (opt principal) -> (vec WithdrawalDetails) query;
+  get_wtn_proposal_id : (nat64) -> (opt nat64) query;
   icp_to_nicp : (ConversionArg) -> (Result_1);
   nicp_to_icp : (ConversionArg) -> (Result_2);
 }
