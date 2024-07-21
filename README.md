@@ -13,23 +13,28 @@ sudo apt-get install podman git
 ./scripts/build.sh --build
 ```
 
-## Dev
-
+-   To dev
 ```bash
 ./scripts/build.sh
 ```
 
-## Bazel
-### Verify
-[Proposal#7]()
+## Verify
+### [Proposal#9](https://dashboard.internetcomputer.org/sns/jmod6-4iaaa-aaaaq-aadkq-cai/proposal/9)
+
+Spin up the local container
 ```bash
-bazel run //:verify -- -p 7 -w cac207cf438df8c9fba46d4445c097f05fd8228a1eeacfe0536b7e9ddefc5f1c -c index-canister -g a3831c87440df4821b435050c8a8fcb3745d86f6 -t btxkl-saaaa-aaaar-qagvq-cai -u '(opt IndexArg)' '(opt variant{Init=record{ledger_id=principal "buwm7-7yaaa-aaaar-qagva-cai"}})'
+./scripts/build.sh
 ```
 
-### Find file location
+Verify the proposal
 ```bash
-ubuntu@arrakis:~/waterneuron$ bazel query --output=location @ledger-canister//:ledger.did
-/home/ubuntu/.cache/bazel/_bazel_ubuntu/d47e8bc570bf9aeab12a6465bf3a11fb/external/ledger-canister/ledger.did:1:1: source file @ledger-canister//:ledger.did
-```
+bazel run //scripts/verify:bin --action_env=GIT_COMMIT_ID=d81ded9adbee1475f8f63b125d23eec861c9d163 -- \ 
+    --proposal-id 9 \
+    --wasm-hash 18f89aafc01d87a5cb62be8f189e80f9810126e4603a820226436fe537039510 \
+    --git-commit d81ded9adbee1475f8f63b125d23eec861c9d163 \
+    --target-canister tsbvt-pyaaa-aaaar-qafva-cai \
+    --canister water-neuron-canister \
+    --upgrade-args '(LiquidArg)' '(variant{Init = record {wtn_ledger_id=principal "jcmow-hyaaa-aaaaq-aadlq-cai"; wtn_governance_id=principal "jfnic-kaaaa-aaaaq-aadla-cai"; nicp_ledger_id=principal "buwm7-7yaaa-aaaar-qagva-cai"}})'
 
+```
 
