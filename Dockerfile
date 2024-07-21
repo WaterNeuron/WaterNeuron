@@ -47,7 +47,7 @@ RUN curl -fsSL https://github.com/bazelbuild/buildtools/releases/download/v6.4.0
 # No password sudo
 RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-CMD mkdir /waterneuron
+RUN mkdir /waterneuron
 
 USER ubuntu
 
