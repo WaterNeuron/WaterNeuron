@@ -6,6 +6,7 @@ set -euxo pipefail
 MODE="dev"
 ARTIFACTS_DIR="$(pwd)/artifacts"
 
+rm -rf "$ARTIFACTS_DIR"
 mkdir -p "$ARTIFACTS_DIR"
 
 while [[ $# -gt 0 ]]; do
