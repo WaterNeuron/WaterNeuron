@@ -77,7 +77,7 @@ impl CanisterType {
             Self::SnsRootCanister => "SNS_ROOT_CANISTER_WASM_PATH",
             Self::GovernanceCanister => "GOVERNANCE_CANISTER_WASM_PATH",
             Self::IndexCanister => "IC_ICRC1_INDEX_WASM_PATH",
-            Self::WaterNeuronCanister => "WATERNEURON_CANISTER_WASM_PATH",
+            Self::WaterNeuronCanister => "WATER_NEURON_CANISTER_WASM_PATH",
         }
     }
 
@@ -92,7 +92,7 @@ impl CanisterType {
             Self::SnsRootCanister => "SNS_ROOT_CANISTER_CANDID_PATH",
             Self::GovernanceCanister => "GOVERNANCE_CANISTER_CANDID_PATH",
             Self::IndexCanister => "IC_ICRC1_INDEX_CANDID_PATH",
-            Self::WaterNeuronCanister => "WATERNEURON_CANISTER_CANDID_PATH",
+            Self::WaterNeuronCanister => "WATER_NEURON_CANISTER_CANDID_PATH",
         }
     }
 }
