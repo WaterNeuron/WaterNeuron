@@ -28,7 +28,7 @@ Spin up the local container
 
 Verify the proposal
 ```bash
-bazel run //scripts/verify:bin --action_env=GIT_COMMIT_ID=d81ded9adbee1475f8f63b125d23eec861c9d163 -- \ 
+bazel run //scripts/verify:bin --action_env=GIT_COMMIT_ID=d81ded9adbee1475f8f63b125d23eec861c9d163 -- \
     --proposal-id 9 \
     --wasm-hash 18f89aafc01d87a5cb62be8f189e80f9810126e4603a820226436fe537039510 \
     --git-commit d81ded9adbee1475f8f63b125d23eec861c9d163 \
