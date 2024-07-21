@@ -41,7 +41,7 @@ if [[ "$MODE" == "build" ]]; then
         -c 
         "bazel build ... --action_env=GIT_COMMIT_ID=$(git rev-parse HEAD) && \
             sha256sum bazel-bin/water_neuron/canister_shrink.wasm.gz && \
-            cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/"
+            cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/waterneuron.wasm.gz"
     )
 fi
 
