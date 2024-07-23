@@ -25,3 +25,11 @@ alias(
     name = "verify",
     actual = "//scripts/verify:bin",
 )
+
+genrule(
+    name = "version",
+    outs = ["version.txt"],
+    cmd_bash = "cat bazel-out/stable-status.txt | grep ^STABLE_GIT_COMMIT | cut -d' ' -f2 > $@",
+    stamp = 1,
+)
+
