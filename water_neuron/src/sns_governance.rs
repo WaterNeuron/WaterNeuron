@@ -83,6 +83,11 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
             return Err("total_voting_power cannot be 0".to_string());
         }
 
+        mutate_state(|s| {
+            s.latest_distribution_icp_per_vp =
+                Some((icp_amount_to_distribute / E8S) as f64 / total_voting_power as f64)
+        });
+
         for (owner, stake) in sns_neurons {
             let share = stake as f64 / total_voting_power as f64;
             let share_amount = icp_amount_to_distribute as f64 * share;
@@ -160,11 +165,8 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
                         if owner == self_canister_id() {
                             continue;
                         }
-                        let stake = get_rounded_voting_power(&neuron, now_seconds);
-                        result
-                            .entry(owner)
-                            .and_modify(|e| *e += stake)
-                            .or_insert(stake);
+                        let vp = get_rounded_voting_power(&neuron, now_seconds);
+                        result.entry(owner).and_modify(|e| *e += vp).or_insert(vp);
                     } else {
                         log!(
                             INFO,
