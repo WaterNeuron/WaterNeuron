@@ -1,0 +1,23 @@
+{
+	"governance": {
+		"ic": "rrkah-fqaaa-aaaaa-aaaaq-cai"
+	},
+	"icp_ledger": {
+		"ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
+	},
+	"nicp_ledger": {
+		"ic": "bbr5s-6qaaa-aaaar-qagwq-cai"
+	},
+	"water_neuron": {
+		"ic": "bgq3g-tiaaa-aaaar-qagwa-cai"
+	},
+	"wtn_governance": {
+		"ic": "jfnic-kaaaa-aaaaq-aadla-cai"
+	},
+	"wtn_ledger": {
+		"ic": "jcmow-hyaaa-aaaaq-aadlq-cai"
+	},
+	"dapp_frontend": {
+		"ic": "n3i53-gyaaa-aaaam-acfaq-cai"
+	}
+}

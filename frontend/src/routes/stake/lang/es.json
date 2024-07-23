@@ -1,0 +1,40 @@
+{
+	"sections": [
+		{
+			"title": "¿Qué es nICP?",
+			"content": "nICP es un token que representa ICP bloqueado en una neurona de 6 meses. Puedes beneficiarte del rendimiento generado por la neurona mientras sigues teniendo tokens líquidos."
+		},
+		{
+			"title": "¿Está descentralizado?",
+			"content": "nICP está totalmente descentralizado por diseño, las neuronas son controladas y gestionadas directamente por un canister, controlado a su vez por el NNS. No se requiere intervención humana en ninguna parte del proceso."
+		},
+		{
+			"title": "¿Cómo puede nICP tener un APY mejor que una neurona de 6 meses?",
+			"content": "Sujeto a un período de desbloqueo de seis meses, nICP puede ofrecer un APY más alto en comparación con el staking en una neurona. ¿Cómo es esto posible? nICP es gestionado por un DAO iniciado a través del SNS. Todo el ICP del SNS está en stake en una neurona de ocho años, y el 90% del rendimiento se redirige a los stakers de nICP. El 10% restante se asigna al WaterNeuron DAO."
+		},
+		{
+			"title": "¿Cómo convierto ICP a nICP?",
+			"content": "Intercambia tu ICP por tokens nICP a la tasa de cambio actual. Tu ICP se comprometerá a una neurona de seis meses donde comenzará a acumular rendimiento."
+		},
+		{
+			"title": "¿Cómo convierto nICP a ICP?",
+			"content": "Tu nICP será quemado y se creará una neurona de seis meses en modo de disolución con la cantidad correspondiente de ICP a la tasa de cambio actual. Después del período de seis meses, recibirás tu ICP tan pronto como se disuelva tu neurona."
+		},
+		{
+			"title": "¿Cuál es la tasa de cambio?",
+			"content": "En pocas palabras, es la proporción del número de nICPs emitidos respecto a la cantidad de ICP bloqueada en las neuronas de seis meses."
+		},
+		{
+			"title": "¿Qué es el WaterNeuron DAO?",
+			"content": "El WaterNeuron DAO gestiona la votación de propuestas en nombre de los poseedores de nICP. Los poseedores del token de gobernanza tienen derecho a recibir el 10% del rendimiento generado por las neuronas."
+		},
+		{
+			"title": "¿Cuáles son las tarifas?",
+			"content": "No hay tarifas por convertir ICP a nICP o viceversa. El 10% del rendimiento de ICP de las neuronas se dirige al DAO."
+		},
+		{
+			"title": "¿Cuáles son los riesgos?",
+			"content": "Como cualquier aplicación DeFi, el principal riesgo es un error en el contrato inteligente. Para mitigar esto, el WaterNeuron DAO ha establecido un programa de recompensas por errores."
+		}
+	]
+}
