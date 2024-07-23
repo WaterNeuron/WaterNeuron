@@ -86,9 +86,9 @@ def rust_canister(name, service_file, **kwargs):
     # add git
     native.genrule(
         name = name + "_with_git",
-        srcs = [name + "_with_candid"],
+        srcs = [name + "_with_candid", "//:version.txt"],
         outs = [name + "_with_git.wasm"],
-        cmd = "ic-wasm $(location :{name}_with_candid) -o $(location {name}_with_git.wasm) metadata git_commit_id -d \"$$GIT_COMMIT_ID\"  -v public".format(
+        cmd = "ic-wasm $(location :{name}_with_candid) -o $(location {name}_with_git.wasm) metadata git_commit_id -f $(location //:version.txt)  -v public".format(
             name = name,
         ),
         visibility = ["//visibility:public"],

@@ -10,12 +10,12 @@ sudo apt-get install podman git
 
 -   To test the canister hash of the current commit
 ```bash
-./scripts/build.sh --build
+./run.sh --build
 ```
 
 -   To dev
 ```bash
-./scripts/build.sh
+./run.sh
 ```
 
 ## Verify
