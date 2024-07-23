@@ -482,7 +482,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                 .build();
             }
         }
-    } else if req.path() == "api/metadata" {
+    } else if req.path() == "/api/metadata" {
         use serde_json;
 
         let bytes: Vec<u8> = serde_json::to_string(&read_state(|s| CanisterInfo {
