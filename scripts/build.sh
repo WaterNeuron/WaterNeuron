@@ -1,7 +1,6 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env bash
 
 set -euxo pipefail
-
 
 MODE="dev"
 ARTIFACTS_DIR="$(pwd)/artifacts"
@@ -22,12 +21,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-
 PODMAN_HASH=$(podman build -q -f Dockerfile)
 
 PODMAN_ARGS=(
-    -it 
-    --rm 
+    -it
+    --rm
     -w /waterneuron
     --userns=keep-id
     --mount type=bind,source=${HOME},target=${HOME}
@@ -38,8 +36,8 @@ PODMAN_ARGS=(
 
 if [[ "$MODE" == "build" ]]; then
     PODMAN_ARGS+=(
-        /usr/bin/bash 
-        -c 
+        /usr/bin/bash
+        -c
         "bazel build ... --action_env=GIT_COMMIT_ID=$(git rev-parse HEAD) && \
             sha256sum bazel-bin/water_neuron/canister_shrink.wasm.gz && \
             cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/waterneuron.wasm.gz"

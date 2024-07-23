@@ -130,8 +130,9 @@ pub struct UpgradeArg {
     pub governance_fee_share_percent: Option<u64>,
 }
 
-#[derive(CandidType, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[derive(CandidType, Debug, Deserialize, PartialEq, Serialize)]
 pub struct CanisterInfo {
+    pub latest_distribution_icp_per_vp: Option<f64>,
     pub neuron_id_6m: Option<NeuronId>,
     pub neuron_6m_stake_e8s: ICP,
     pub tracked_6m_stake: ICP,
