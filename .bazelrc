@@ -1,3 +1,5 @@
+build --workspace_status_command "scripts/workspace_status.sh"
+
 # --config=lint implies both --config=fmt and --config=clippy.
 build:lint --config=fmt
 build:lint --config=clippy
