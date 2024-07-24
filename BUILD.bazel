@@ -29,7 +29,13 @@ alias(
 genrule(
     name = "version",
     outs = ["version.txt"],
-    cmd_bash = "cat bazel-out/stable-status.txt | grep ^STABLE_GIT_COMMIT | cut -d' ' -f2 > $@",
+    cmd_bash = """
+        if [[ -n "$${STABLE_GIT_COMMIT}" ]]; then
+            echo "$${STABLE_GIT_COMMIT}" > $@
+        else
+            cat bazel-out/stable-status.txt | grep ^STABLE_GIT_COMMIT | cut -d' ' -f2 > $@
+        fi
+    """,
     stamp = 1,
 )
 
