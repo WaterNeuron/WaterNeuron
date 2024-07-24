@@ -42,7 +42,7 @@ bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=d81ded9adbee1475f8
 
 Spin up the local container
 ```bash
-./scripts/build.sh
+./run.sh --build
 ```
 
 Verify the proposal
