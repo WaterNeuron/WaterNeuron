@@ -15,7 +15,7 @@ mod types;
 
 const WATERNEURON_GOVERNANCE_CANISTER: &'static str = "jfnic-kaaaa-aaaaq-aadla-cai";
 const CANDID_DIDC_PATH: &'static str = "CANDID_DIDC_PATH";
-const LARGE_PROPOSAL_LENGTH: usize = 300;
+const REGULAR_PROPOSAL_LENGTH: usize = 64;
 
 type Result<T> = std::result::Result<T, CustomError>;
 
@@ -374,7 +374,11 @@ async fn parse_proposal(proposal_id: u64) -> Result<(String, String, String)> {
         hex::encode(&canister_upgrade_arg)
     );
 
-    let wasm_sha256_hash = if wasm.len() > LARGE_PROPOSAL_LENGTH {
+    let wasm_sha256_hash = if wasm.len() <= REGULAR_PROPOSAL_LENGTH {
+        let sha256_encoded_wasm = format!("{:x}", Sha256::digest(&wasm));
+        info!("SHA256 hash of the encoded Wasm: {}", sha256_encoded_wasm);
+        sha256_encoded_wasm
+    } else {
         let wasm_utf8 = std::str::from_utf8(&wasm)?;
         info!("Wasm (UTF-8): {}", wasm_utf8);
 
@@ -383,13 +387,17 @@ async fn parse_proposal(proposal_id: u64) -> Result<(String, String, String)> {
         ))?;
         info!("Wasm SHA256 Hash: {}", wasm_sha256_hash);
         wasm_sha256_hash
-    } else {
-        let sha256_encoded_wasm = format!("{:x}", Sha256::digest(&wasm));
-        info!("SHA256 hash of the encoded Wasm: {}", sha256_encoded_wasm);
-        sha256_encoded_wasm
     };
 
-    let canister_upgrade_arg_sha256_hash = if canister_upgrade_arg.len() > LARGE_PROPOSAL_LENGTH {
+    let canister_upgrade_arg_sha256_hash = if canister_upgrade_arg.len() <= REGULAR_PROPOSAL_LENGTH
+    {
+        let sha256_encoded_candid_arg = format!("{:x}", Sha256::digest(&canister_upgrade_arg));
+        info!(
+            "SHA256 hash of the encoded upgrade args: {}",
+            sha256_encoded_candid_arg
+        );
+        sha256_encoded_candid_arg
+    } else {
         let canister_upgrade_arg_utf8 = std::str::from_utf8(&canister_upgrade_arg)?;
         info!(
             "Canister Upgrade Arg (UTF-8): {}",
@@ -404,13 +412,6 @@ async fn parse_proposal(proposal_id: u64) -> Result<(String, String, String)> {
             canister_upgrade_arg_sha256_hash
         );
         canister_upgrade_arg_sha256_hash
-    } else {
-        let sha256_encoded_candid_arg = format!("{:x}", Sha256::digest(&canister_upgrade_arg));
-        info!(
-            "SHA256 hash of the encoded upgrade args: {}",
-            sha256_encoded_candid_arg
-        );
-        sha256_encoded_candid_arg
     };
 
     Ok((
