@@ -2,9 +2,6 @@ dfx identity use default
 
 dfx nns install
 
-cp /Users/ulyssekaz/sisyphe/wtn_svelte/wasm/governance-canister_test.wasm /Users/ulyssekaz/.cache/dfinity/versions/0.16.1/wasms/governance-canister_test.wasm
-cp /Users/ulyssekaz/sisyphe/wtn_svelte/wasm/governance-canister_test.wasm /Users/ulyssekaz/.cache/dfinity/versions/0.16.1/wasms/governance-canister.wasm
-
 dfx canister create water_neuron --specified-id n76cn-tyaaa-aaaam-acc5a-cai
 dfx canister create nicp_ledger --specified-id ny7ez-6aaaa-aaaam-acc5q-cai
 dfx canister create wtn_ledger --specified-id jcmow-hyaaa-aaaaq-aadlq-cai
