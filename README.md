@@ -23,7 +23,7 @@ sudo apt-get install podman git
 
 Spin up the local container
 ```bash
-./run.sh --build
+./run.sh
 ```
 
 Verify the proposal
@@ -42,7 +42,7 @@ bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=d81ded9adbee1475f8
 
 Spin up the local container
 ```bash
-./run.sh --build
+./run.sh
 ```
 
 Verify the proposal
