@@ -112,15 +112,10 @@ export async function plugSignIn(): Promise<AuthResult> {
 					CANISTER_ID_WTN_LEDGER,
 					CANISTER_ID_WATER_NEURON
 				];
-				const onConnectionUpdate = () => {
-					console.log(window.ic.plug.sessionManager.sessionData);
-				};
 
 				await window.ic.plug.requestConnect({
 					whitelist,
 					host: HOST,
-					onConnectionUpdate,
-					timeout: 50000
 				});
 			}
 
