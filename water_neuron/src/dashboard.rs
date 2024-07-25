@@ -300,10 +300,15 @@ fn construct_to_disburse_table() -> String {
     with_utf8_buffer(|buf| {
         read_state(|s| {
             for (neuron_id, disburse_request) in s.to_disburse.iter() {
+                let neuron_string = format!(
+                    "<a href=\"{}\" target=\"_blank\">{}</a>",
+                    neuron_id.to_dashboard_link(),
+                    neuron_id.id
+                );
                 write!(
                     buf,
-                    "<tr><td>{:?}</td><td>{}</td></tr>",
-                    neuron_id, disburse_request.receiver,
+                    "<tr><td>{neuron_string}</td><td>{}</td></tr>",
+                    disburse_request.receiver,
                 )
                 .unwrap();
             }

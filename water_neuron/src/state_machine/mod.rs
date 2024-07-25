@@ -12,7 +12,7 @@ use crate::state::{
 };
 use crate::EventType::{DisbursedMaturityNeuron, DisbursedUserNeuron};
 use crate::{
-    compute_neuron_staking_subaccount_bytes, CanisterInfo, ConversionArg, ConversionError,
+    compute_neuron_staking_subaccount_bytes, nICP, CanisterInfo, ConversionArg, ConversionError,
     DepositSuccess, InitArg, LiquidArg, NeuronId, PendingTransfer, Unit, UpgradeArg,
     WithdrawalSuccess, DEFAULT_LEDGER_FEE, E8S, ICP, MIN_DISSOLVE_DELAY_FOR_REWARDS,
     NEURON_LEDGER_FEE,
@@ -1179,6 +1179,7 @@ fn e2e_basic() {
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
         })
     );
 
@@ -1359,6 +1360,14 @@ fn e2e_basic() {
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
     assert_eq!(info.exchange_rate, 5_270);
     assert_eq!(info.governance_fee_share_percent, 20);
+
+    assert_eq!(
+        water_neuron
+            .icp_to_nicp(caller.0.into(), E8S)
+            .unwrap()
+            .nicp_amount,
+        Some(nICP::from_e8s(5_270))
+    );
 }
 
 #[test]
@@ -1414,6 +1423,7 @@ fn should_mirror_proposal() {
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_unscaled(1_000)),
         })
     );
 
@@ -1556,6 +1566,7 @@ fn should_distribute_icp_to_sns_neurons() {
         Ok(DepositSuccess {
             block_index: Nat::from(6_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
         })
     );
 
@@ -1585,6 +1596,7 @@ fn should_distribute_icp_to_sns_neurons() {
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 1,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
         })
     );
 
@@ -1721,6 +1733,7 @@ fn transfer_ids_are_as_expected() {
         Ok(DepositSuccess {
             block_index: Nat::from(6_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
         })
     );
 
@@ -1908,6 +1921,7 @@ fn should_mirror_all_proposals() {
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_unscaled(1_000)),
         })
     );
 
