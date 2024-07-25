@@ -906,7 +906,10 @@ impl WaterNeuron {
         Decode!(
             &assert_reply(
                 self.env
-                    .execute_ingress(
+                    .execute_ingress_as(
+                        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai")
+                            .unwrap()
+                            .into(),
                         self.water_neuron_id,
                         "get_full_neuron",
                         Encode!(&neuron_id).unwrap()
@@ -1300,7 +1303,8 @@ fn e2e_basic() {
             _ => panic!("unexpected response"),
         };
 
-    water_neuron.advance_time_and_tick(30 * 60);
+    water_neuron.advance_time_and_tick(15 * 60);
+    water_neuron.advance_time_and_tick(15 * 60);
     water_neuron.advance_time_and_tick(4 * 60 * 60 * 24 - 60 * 60);
     water_neuron.advance_time_and_tick(7 * 24 * 60 * 60 + 10);
     water_neuron.advance_time_and_tick(7 * 24 * 60 * 60 + 10);
@@ -1368,6 +1372,38 @@ fn e2e_basic() {
             .nicp_amount,
         Some(nICP::from_e8s(5_270))
     );
+
+    assert_eq!(
+        water_neuron
+            .nicp_to_icp(caller.0.into(), 5_2711)
+            .unwrap()
+            .icp_amount,
+        Some(ICP::from_e8s(1000165632))
+    );
+
+    assert_eq!(
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
+            .status,
+        WithdrawalStatus::WaitingToSplitNeuron
+    );
+
+    water_neuron.advance_time_and_tick(60 * 60);
+
+    let neuron_id = match water_neuron
+        .get_withdrawal_requests(caller.0)
+        .last()
+        .unwrap()
+        .status
+    {
+        WithdrawalStatus::WaitingDissolvement { neuron_id } => neuron_id,
+        _ => panic!(""),
+    };
+
+    let full_neuron = water_neuron.get_full_neuron(neuron_id.id).unwrap().unwrap();
+    assert_eq!(full_neuron.cached_neuron_stake_e8s, 1000155632);
 }
 
 #[test]

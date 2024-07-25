@@ -6,7 +6,8 @@ use crate::nns_types::manage_neuron::{
 };
 use crate::nns_types::{
     AccountIdentifier, DisburseResponse, Empty, GovernanceError, ListNeurons, ListNeuronsResponse,
-    ManageNeuron, ManageNeuronResponse, Neuron, NeuronId, ProposalId, ProposalInfo,
+    ListProposalInfo, ListProposalInfoResponse, ManageNeuron, ManageNeuronResponse, Neuron,
+    NeuronId, ProposalId,
 };
 use crate::state::{read_state, NNS_GOVERNANCE_ID};
 use crate::{compute_neuron_staking_subaccount_bytes, CommandResponse};
@@ -83,9 +84,9 @@ pub async fn list_neurons(args: ListNeurons) -> Result<ListNeuronsResponse, Stri
     }
 }
 
-pub async fn get_pending_proposals() -> Result<Vec<ProposalInfo>, String> {
-    let res_gov: Result<(Vec<ProposalInfo>,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "get_pending_proposals", ())
+pub async fn list_proposals(args: ListProposalInfo) -> Result<ListProposalInfoResponse, String> {
+    let res_gov: Result<(ListProposalInfoResponse,), (i32, String)> =
+        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "list_proposals", (args,))
             .await
             .map_err(|(code, msg)| (code as i32, msg));
     match res_gov {

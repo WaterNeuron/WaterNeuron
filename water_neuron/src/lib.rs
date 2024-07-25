@@ -3,8 +3,8 @@ use crate::guards::{GuardError, TaskGuard};
 use crate::logs::{DEBUG, INFO};
 use crate::management::{
     balance_of, disburse, follow_neuron, get_full_neuron, get_full_neuron_by_nonce,
-    get_pending_proposals, increase_dissolve_delay, list_neurons, manage_neuron_sns,
-    refresh_neuron, register_vote, spawn_all_maturity, split_neuron, start_dissolving, transfer,
+    increase_dissolve_delay, list_neurons, manage_neuron_sns, refresh_neuron, register_vote,
+    spawn_all_maturity, split_neuron, start_dissolving, transfer,
 };
 use crate::nns_types::{
     neuron::DissolveState, CommandResponse, ListNeurons, NeuronId, ProposalId, TOPIC_GOVERNANCE,
