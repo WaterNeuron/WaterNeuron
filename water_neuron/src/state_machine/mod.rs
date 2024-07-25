@@ -12,7 +12,7 @@ use crate::state::{
 };
 use crate::EventType::{DisbursedMaturityNeuron, DisbursedUserNeuron};
 use crate::{
-    compute_neuron_staking_subaccount_bytes, CanisterInfo, ConversionArg, ConversionError,
+    compute_neuron_staking_subaccount_bytes, nICP, CanisterInfo, ConversionArg, ConversionError,
     DepositSuccess, InitArg, LiquidArg, NeuronId, PendingTransfer, Unit, UpgradeArg,
     WithdrawalSuccess, DEFAULT_LEDGER_FEE, E8S, ICP, MIN_DISSOLVE_DELAY_FOR_REWARDS,
     NEURON_LEDGER_FEE,
@@ -906,7 +906,10 @@ impl WaterNeuron {
         Decode!(
             &assert_reply(
                 self.env
-                    .execute_ingress(
+                    .execute_ingress_as(
+                        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai")
+                            .unwrap()
+                            .into(),
                         self.water_neuron_id,
                         "get_full_neuron",
                         Encode!(&neuron_id).unwrap()
@@ -1179,6 +1182,7 @@ fn e2e_basic() {
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
         })
     );
 
@@ -1299,7 +1303,8 @@ fn e2e_basic() {
             _ => panic!("unexpected response"),
         };
 
-    water_neuron.advance_time_and_tick(30 * 60);
+    water_neuron.advance_time_and_tick(15 * 60);
+    water_neuron.advance_time_and_tick(15 * 60);
     water_neuron.advance_time_and_tick(4 * 60 * 60 * 24 - 60 * 60);
     water_neuron.advance_time_and_tick(7 * 24 * 60 * 60 + 10);
     water_neuron.advance_time_and_tick(7 * 24 * 60 * 60 + 10);
@@ -1359,6 +1364,46 @@ fn e2e_basic() {
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
     assert_eq!(info.exchange_rate, 5_270);
     assert_eq!(info.governance_fee_share_percent, 20);
+
+    assert_eq!(
+        water_neuron
+            .icp_to_nicp(caller.0.into(), E8S)
+            .unwrap()
+            .nicp_amount,
+        Some(nICP::from_e8s(5_270))
+    );
+
+    assert_eq!(
+        water_neuron
+            .nicp_to_icp(caller.0.into(), 5_2711)
+            .unwrap()
+            .icp_amount,
+        Some(ICP::from_e8s(1000165632))
+    );
+
+    assert_eq!(
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
+            .status,
+        WithdrawalStatus::WaitingToSplitNeuron
+    );
+
+    water_neuron.advance_time_and_tick(60 * 60);
+
+    let neuron_id = match water_neuron
+        .get_withdrawal_requests(caller.0)
+        .last()
+        .unwrap()
+        .status
+    {
+        WithdrawalStatus::WaitingDissolvement { neuron_id } => neuron_id,
+        _ => panic!(""),
+    };
+
+    let full_neuron = water_neuron.get_full_neuron(neuron_id.id).unwrap().unwrap();
+    assert_eq!(full_neuron.cached_neuron_stake_e8s, 1000155632);
 }
 
 #[test]
@@ -1414,6 +1459,7 @@ fn should_mirror_proposal() {
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_unscaled(1_000)),
         })
     );
 
@@ -1556,6 +1602,7 @@ fn should_distribute_icp_to_sns_neurons() {
         Ok(DepositSuccess {
             block_index: Nat::from(6_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
         })
     );
 
@@ -1585,6 +1632,7 @@ fn should_distribute_icp_to_sns_neurons() {
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 1,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
         })
     );
 
@@ -1721,6 +1769,7 @@ fn transfer_ids_are_as_expected() {
         Ok(DepositSuccess {
             block_index: Nat::from(6_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
         })
     );
 
@@ -1908,6 +1957,7 @@ fn should_mirror_all_proposals() {
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 0,
+            nicp_amount: Some(nICP::from_unscaled(1_000)),
         })
     );
 

@@ -3,8 +3,8 @@ use crate::guards::{GuardError, TaskGuard};
 use crate::logs::{DEBUG, INFO};
 use crate::management::{
     balance_of, disburse, follow_neuron, get_full_neuron, get_full_neuron_by_nonce,
-    get_pending_proposals, increase_dissolve_delay, list_neurons, manage_neuron_sns,
-    refresh_neuron, register_vote, spawn_all_maturity, split_neuron, start_dissolving, transfer,
+    increase_dissolve_delay, list_neurons, manage_neuron_sns, refresh_neuron, register_vote,
+    spawn_all_maturity, split_neuron, start_dissolving, transfer,
 };
 use crate::nns_types::{
     neuron::DissolveState, CommandResponse, ListNeurons, NeuronId, ProposalId, TOPIC_GOVERNANCE,
@@ -219,12 +219,14 @@ pub struct PendingWithdrawal {
 pub struct DepositSuccess {
     pub block_index: Nat,
     pub transfer_id: u64,
+    pub nicp_amount: Option<nICP>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct WithdrawalSuccess {
     pub block_index: Nat,
     pub withdrawal_id: u64,
+    pub icp_amount: Option<ICP>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -783,7 +785,7 @@ async fn distribute_icp_to_sns_neurons() {
                         Err(error) => log!(INFO, "[distribute_icp_to_sns_neurons] Failed to distribute ICP to SNS neurons {error}"),
                 }
             } else {
-                log!(DEBUG, "[distribute_icp_to_sns_neurons] Not enought ICP to distribute, balance {balance} ICP min {MINIMUM_ICP_DISTRIBUTION} ICP");
+                log!(DEBUG, "[distribute_icp_to_sns_neurons] Not enough ICP to distribute, balance {balance} ICP min {} ICP", MINIMUM_ICP_DISTRIBUTION / E8S);
             }
         }
         Err(error) => {

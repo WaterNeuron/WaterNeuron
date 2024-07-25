@@ -134,10 +134,10 @@ impl fmt::Display for WithdrawalStatus {
         match self {
             WithdrawalStatus::WaitingToSplitNeuron => write!(f, "Waiting to split neuron"),
             WithdrawalStatus::WaitingToStartDissolving { neuron_id } => {
-                write!(f, "Waiting to start dissolving {:?}", neuron_id)
+                write!(f, "Waiting to start dissolving of {}", neuron_id.id)
             }
             WithdrawalStatus::WaitingDissolvement { neuron_id } => {
-                write!(f, "Waiting dissolvement {:?}", neuron_id)
+                write!(f, "Waiting dissolvement of {}", neuron_id.id)
             }
             WithdrawalStatus::ConversionDone {
                 transfer_block_height,

@@ -56,12 +56,10 @@ pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, Conver
     {
         Ok(result) => match result {
             Ok(block_index) => {
+                let icp_due = read_state(|s| s.convert_nicp_to_icp(nicp_amount));
                 log!(
                     INFO,
-                    "[nicp_to_icp] Converted {} nICP for {} ICP by {}",
-                    nicp_amount,
-                    read_state(|s| s.convert_nicp_to_icp(nicp_amount)),
-                    receiver
+                    "[nicp_to_icp] Converted {nicp_amount} nICP for {icp_due} ICP by {receiver}",
                 );
                 schedule_now(TaskType::ProcessLogic);
                 let withdrawal_id = mutate_state(|s| {
@@ -79,6 +77,7 @@ pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, Conver
                 Ok(WithdrawalSuccess {
                     withdrawal_id,
                     block_index,
+                    icp_amount: Some(icp_due),
                 })
             }
             Err(transfer_from_error) => {
@@ -125,12 +124,10 @@ pub async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, Conversio
     {
         Ok(result) => match result {
             Ok(block_index) => {
+                let nicp_due = read_state(|s| s.convert_icp_to_nicp(amount));
                 log!(
                     INFO,
-                    "[icp_to_nicp] Converted {} ICP for {} nICP by {}",
-                    amount,
-                    read_state(|s| s.convert_icp_to_nicp(amount)),
-                    receiver
+                    "[icp_to_nicp] Converted {amount} ICP for {nicp_due} nICP by {receiver}",
                 );
                 schedule_now(TaskType::ProcessPendingTransfers);
                 schedule_now(TaskType::RefreshShortTerm);
@@ -148,6 +145,7 @@ pub async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, Conversio
                 Ok(DepositSuccess {
                     block_index,
                     transfer_id,
+                    nicp_amount: Some(nicp_due),
                 })
             }
             Err(transfer_from_error) => {
