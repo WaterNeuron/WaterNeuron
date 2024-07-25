@@ -79,6 +79,7 @@ pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, Conver
                 Ok(WithdrawalSuccess {
                     withdrawal_id,
                     block_index,
+                    icp_amount: Some(read_state(|s| s.convert_nicp_to_icp(nicp_amount))),
                 })
             }
             Err(transfer_from_error) => {
@@ -148,6 +149,7 @@ pub async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, Conversio
                 Ok(DepositSuccess {
                     block_index,
                     transfer_id,
+                    nicp_amount: Some(read_state(|s| s.convert_icp_to_nicp(amount))),
                 })
             }
             Err(transfer_from_error) => {
