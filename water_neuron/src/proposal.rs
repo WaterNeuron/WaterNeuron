@@ -11,7 +11,7 @@ use ic_canister_log::log;
 use ic_sns_governance::pb::v1::manage_neuron::Command as CommandSns;
 use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandSnsResponse;
 
-const BATCH_SIZE_LIMIT: u32 = 50;
+const BATCH_SIZE_LIMIT: u32 = 100;
 const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;
 const REWARD_STATUS_READY_TO_SETTLE: i32 = 2;
 
@@ -23,6 +23,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
         before_proposal: None,
         exclude_topic: vec![],
         include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
+        omit_large_fields: Some(true),
         ..Default::default()
     };
 
@@ -123,6 +124,7 @@ pub async fn vote_on_nns_proposals() {
         before_proposal: None,
         exclude_topic: vec![],
         include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
+        omit_large_fields: Some(true),
         ..Default::default()
     };
 

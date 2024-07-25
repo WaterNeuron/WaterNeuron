@@ -307,8 +307,8 @@ fn construct_to_disburse_table() -> String {
                 );
                 write!(
                     buf,
-                    "<tr><td>{neuron_string}</td><td>{}</td></tr>",
-                    disburse_request.receiver,
+                    "<tr><td>{}</td><td>{}</td></tr>",
+                    neuron_string, disburse_request.receiver,
                 )
                 .unwrap();
             }
