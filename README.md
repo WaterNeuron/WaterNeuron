@@ -10,12 +10,12 @@ sudo apt-get install podman git
 
 -   To test the canister hash of the current commit
 ```bash
-./scripts/build.sh --build
+./run.sh --build
 ```
 
 -   To dev
 ```bash
-./scripts/build.sh
+./run.sh
 ```
 
 ## Verify
@@ -23,12 +23,12 @@ sudo apt-get install podman git
 
 Spin up the local container
 ```bash
-./scripts/build.sh
+./run.sh
 ```
 
 Verify the proposal
 ```bash
-bazel run //scripts/verify:bin --action_env=GIT_COMMIT_ID=d81ded9adbee1475f8f63b125d23eec861c9d163 -- \
+bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=d81ded9adbee1475f8f63b125d23eec861c9d163 -- \
     --proposal-id 9 \
     --wasm-hash 18f89aafc01d87a5cb62be8f189e80f9810126e4603a820226436fe537039510 \
     --git-commit d81ded9adbee1475f8f63b125d23eec861c9d163 \
@@ -38,3 +38,20 @@ bazel run //scripts/verify:bin --action_env=GIT_COMMIT_ID=d81ded9adbee1475f8f63b
 
 ```
 
+### [Proposal#27](https://dashboard.internetcomputer.org/sns/jmod6-4iaaa-aaaaq-aadkq-cai/proposal/27)
+
+Spin up the local container
+```bash
+./run.sh
+```
+
+Verify the proposal
+```bash
+bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=a8aad61870061619b14d61f3f9f1bb279dd03047 -- \
+    --proposal-id 27 \
+    --wasm-hash e6e2b66179372f8806fc9e18f13c0b905285c0b07af455f8ecaedbd621f62d83 \
+    --git-commit a8aad61870061619b14d61f3f9f1bb279dd03047 \
+    --target-canister tsbvt-pyaaa-aaaar-qafva-cai \
+    --canister water-neuron-canister \
+    --upgrade-args '(LiquidArg)' '(variant{Upgrade})'
+```
