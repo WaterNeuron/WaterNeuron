@@ -113,8 +113,10 @@ rust_test(
     srcs = glob([
         "src/main.rs",
     ]),
-    data = [],
-    env = {},
+    data = ["//water_neuron:candid"],
+    env = {
+        "WATER_NEURON_CANDID_PATH": "$(rootpath //water_neuron:candid)",
+    },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
 )
