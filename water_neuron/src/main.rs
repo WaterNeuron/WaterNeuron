@@ -197,6 +197,7 @@ async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
                 INFO,
                 "[approve_proposal] Successfully approved proposal {id} with response {response:?}"
             );
+            mutate_state(|s| s.voted_proposals.insert(ProposalId { id }));
             Ok(response)
         }
 
