@@ -108,6 +108,17 @@ rust_canister(
     deps = DEPENDENCIES + [":lib"],
 )
 
+rust_test(
+    name = "test-main",
+    srcs = glob([
+        "src/main.rs",
+    ]),
+    data = [],
+    env = {},
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
+)
+
 filegroup(
     name = "candid",
     srcs = ["water_neuron.did"],
