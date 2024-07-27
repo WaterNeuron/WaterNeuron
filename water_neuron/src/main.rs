@@ -142,8 +142,6 @@ fn get_events(args: GetEventsArg) -> GetEventsResult {
 
 #[query]
 fn get_airdrop_allocation(p: Option<Principal>) -> WTN {
-    reject_anonymous_call();
-
     read_state(|s| {
         *s.airdrop
             .get(&p.unwrap_or(ic_cdk::caller()))

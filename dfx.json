@@ -3,9 +3,8 @@
   "canisters": {
     "water_neuron": {
       "candid": "water_neuron/water_neuron.did",
-      "package": "water-neuron",
-      "shrink": false,
-      "type": "rust"
+      "type": "custom",
+      "wasm": "artifacts/waterneuron.wasm.gz"
     },
     "wtn_governance": {
       "candid": "candid/sns_governance.did",
