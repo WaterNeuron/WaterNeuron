@@ -598,8 +598,7 @@ fn check_candid_interface_compatibility() {
     let new_interface = __export_service();
 
     // check the public interface against the actual one
-    let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
-        .join("water_neuron.did");
+    let old_interface = std::path::PathBuf::from(std::env::var("WATER_NEURON_CANDID_PATH").unwrap());
 
     check_service_equal(
         "actual ledger candid interface",
