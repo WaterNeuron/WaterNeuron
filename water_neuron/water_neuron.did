@@ -1,14 +1,15 @@
 type Account = record { owner : principal; subaccount : opt blob };
 type CanisterInfo = record {
   neuron_6m_account : Account;
+  latest_distribution_icp_per_vp : opt float64;
   neuron_id_6m : opt NeuronId;
   neuron_id_8y : opt NeuronId;
   tracked_6m_stake : nat64;
   minimum_withdraw_amount : nat64;
   neuron_8y_stake_e8s : nat64;
+  governance_fee_share_percent : nat64;
   neuron_8y_account : Account;
   minimum_deposit_amount : nat64;
-  governance_fee_share_percent : nat64;
   neuron_6m_stake_e8s : nat64;
   exchange_rate : nat64;
   nicp_supply : nat64;
@@ -23,7 +24,11 @@ type ConversionError = variant {
   TransferFromError : TransferFromError;
   GuardError : record { guard_error : GuardError };
 };
-type DepositSuccess = record { block_index : nat; transfer_id : nat64 };
+type DepositSuccess = record {
+  nicp_amount : opt nat64;
+  block_index : nat;
+  transfer_id : nat64;
+};
 type Event = record { timestamp : nat64; payload : EventType };
 type EventType = variant {
   ClaimedAirdrop : record { block_index : nat64; caller : principal };
@@ -142,10 +147,14 @@ type WithdrawalStatus = variant {
   WaitingDissolvement : record { neuron_id : NeuronId };
   WaitingToStartDissolving : record { neuron_id : NeuronId };
 };
-type WithdrawalSuccess = record { block_index : nat; withdrawal_id : nat64 };
+type WithdrawalSuccess = record {
+  block_index : nat;
+  withdrawal_id : nat64;
+  icp_amount : opt nat64;
+};
 service : (LiquidArg) -> {
   claim_airdrop : () -> (Result);
-  get_airdrop_allocation : () -> (nat64) query;
+  get_airdrop_allocation : (opt principal) -> (nat64) query;
   get_events : (GetEventsArg) -> (GetEventsResult) query;
   get_info : () -> (CanisterInfo) query;
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;

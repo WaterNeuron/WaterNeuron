@@ -163,7 +163,7 @@ impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Unit::ICP => write!(f, "ICP"),
-            Unit::NICP => write!(f, "NICP"),
+            Unit::NICP => write!(f, "nICP"),
             Unit::WTN => write!(f, "WTN"),
         }
     }
