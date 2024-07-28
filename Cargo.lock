@@ -1450,6 +1450,7 @@ dependencies = [
  "env_logger",
  "hex",
  "ic-agent",
+ "ic-base-types",
  "ic-canister-log 0.2.0",
  "ic-canisters-http-types",
  "ic-cdk 0.13.2",
