@@ -1,0 +1,93 @@
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("//bazel:canisters.bzl", "rust_canister")
+
+package(default_visibility = ["//visibility:public"])
+
+DEPENDENCIES = [
+    "@crate_index//:candid",
+    "@crate_index//:ic-base-types",
+    "@crate_index//:ic-canister-log",
+    "@crate_index//:ic-cdk",
+    "@crate_index//:icp-ledger",
+    "@crate_index//:icrc-ledger-types",
+    "@crate_index//:icrc-ledger-client-cdk",
+    "@crate_index//:serde",
+    "@crate_index//:serde_bytes",
+    "@crate_index//:serde_cbor",
+    "@crate_index//:serde_json",
+    "@crate_index//:sha2",
+]
+
+PROC_MACRO_DEPENDENCIES = []
+
+DEV_DEPENDENCIES = [
+    "@crate_index//:candid_parser",
+]
+
+rust_library(
+    name = "lib",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    crate_name = "boomerang",
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    deps = DEPENDENCIES,
+)
+
+rust_test(
+    name = "tests",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    crate_name = "boomerang",
+    data = [
+        "//boomerang:boomerang",
+        "@cycles-minting-canister//:wasm",
+        "@governance-canister//:wasm",
+        "@ic-icrc1-ledger-canister//:wasm",
+        "@ledger-canister//:wasm",
+        "@sns-governance-canister//:wasm",
+        "@sns-root-canister//:wasm",
+        "@sns-swap-canister//:wasm",
+    ],
+    env = {
+        "IC_ICRC1_LEDGER_WASM_PATH": "$(rootpath @ic-icrc1-ledger-canister//:wasm)",
+        "LEDGER_CANISTER_WASM_PATH": "$(rootpath @ledger-canister//:wasm)",
+        "CYCLES_MINTING_CANISTER_WASM_PATH": "$(rootpath @cycles-minting-canister//:wasm)",
+        "GOVERNANCE_CANISTER_WASM_PATH": "$(rootpath @governance-canister//:wasm)",
+        "SNS_ROOT_CANISTER_WASM_PATH": "$(rootpath @sns-root-canister//:wasm)",
+        "SNS_GOVERNANCE_CANISTER_WASM_PATH": "$(rootpath @sns-governance-canister//:wasm)",
+        "SNS_SWAP_CANISTER_WASM_PATH": "$(rootpath @sns-swap-canister//:wasm)",
+    },
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    tags = ["requires-network"],
+    deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
+)
+
+rust_canister(
+    name = "boomerang",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    service_file = "boomerang.did",
+    deps = DEPENDENCIES + [":lib"],
+)
+
+rust_test(
+    name = "test-main",
+    srcs = glob([
+        "src/main.rs",
+    ]),
+    data = ["//boomerang:candid"],
+    env = {
+        "BOOMERANG_CANDID_PATH": "$(rootpath //boomerang:candid)",
+    },
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
+)
+
+filegroup(
+    name = "candid",
+    srcs = ["boomerang.did"],
+)

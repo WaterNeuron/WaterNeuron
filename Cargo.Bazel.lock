@@ -1,5 +1,5 @@
 {
-  "checksum": "7383583fc032447389a14a72bb7e11d6146d5304d16a36e41247dcb606ac4b31",
+  "checksum": "9e6105db6688857b169c6f2ce581e48aeb40e078a7af17393510d5c175678e6a",
   "crates": {
     "addr2line 0.22.0": {
       "name": "addr2line",
@@ -8952,6 +8952,10 @@
             {
               "id": "ic-agent 0.36.0",
               "target": "ic_agent"
+            },
+            {
+              "id": "ic-base-types 0.9.0",
+              "target": "ic_base_types"
             },
             {
               "id": "ic-canister-log 0.2.0",
@@ -56113,6 +56117,7 @@
     "env_logger 0.11.3",
     "hex 0.4.3",
     "ic-agent 0.36.0",
+    "ic-base-types 0.9.0",
     "ic-canister-log 0.2.0",
     "ic-canisters-http-types 0.9.0",
     "ic-cdk 0.13.2",
