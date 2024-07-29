@@ -45,17 +45,19 @@ pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
             to: target.into(),
         })
         .await
-        .unwrap()
     {
-        Ok(block_index) => {
-            log!(
-                INFO,
-                "Transfered nICP for {target} at block index: {}",
-                block_index
-            );
-            Ok(block_index)
-        }
-        Err(e) => Err(BoomerangError::TransferError(e)),
+        Ok(result) => match result {
+            Ok(block_index) => {
+                log!(
+                    INFO,
+                    "Transfered nICP for {target} at block index: {}",
+                    block_index
+                );
+                Ok(block_index)
+            }
+            Err(e) => Err(BoomerangError::TransferError(e)),
+        },
+        Err((code, message)) => Err(BoomerangError::GenericError { code, message }),
     }
 }
 
@@ -105,13 +107,16 @@ pub async fn notify_icp_deposit(client_id: Principal) -> Result<DepositSuccess, 
         created_at_time: None,
     };
 
-    match client.approve(approve_args).await.unwrap() {
-        Ok(block_index) => {
-            log! {INFO, "Approved for {client_id} occured at block index: {}", block_index};
-        }
-        Err(error) => {
-            return Err(BoomerangError::ApproveError(error));
-        }
+    match client.approve(approve_args).await {
+        Ok(result) => match result {
+            Ok(block_index) => {
+                log! {INFO, "Approved for {client_id} occured at block index: {}", block_index};
+            }
+            Err(error) => {
+                return Err(BoomerangError::ApproveError(error));
+            }
+        },
+        Err((code, message)) => return Err(BoomerangError::GenericError { code, message }),
     };
 
     let amount: u64 = balance_e8s.clone().0.try_into().unwrap();

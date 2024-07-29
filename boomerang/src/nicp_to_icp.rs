@@ -25,16 +25,14 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 
     let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
-        Err((code, msg)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {msg}"
-            )));
+        Err((code, message)) => {
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
     log!(
         INFO,
-        "Fetched balance for {target}: {} ICP",
+        "Fetched balance for {target}: {} nICP",
         balance_e8s / E8S
     );
 
@@ -49,13 +47,16 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
         created_at_time: None,
     };
 
-    match client.approve(approve_args).await.unwrap() {
-        Ok(block_index) => {
-            log! {INFO, "Approved for {target} occured at block index: {}", block_index};
-        }
-        Err(error) => {
-            return Err(BoomerangError::ApproveError(error));
-        }
+    match client.approve(approve_args).await {
+        Ok(result) => match result {
+            Ok(block_index) => {
+                log! {INFO, "Approved for {target} occured at block index: {}", block_index};
+            }
+            Err(error) => {
+                return Err(BoomerangError::ApproveError(error));
+            }
+        },
+        Err((code, message)) => return Err(BoomerangError::GenericError { code, message }),
     };
 
     let transfer_amount_e8s = balance_e8s
@@ -103,18 +104,18 @@ pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> 
 
     let icp_balance_e8s: u64 = match icp_client.balance_of(target_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
-        Err((code, msg)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - msg: {msg}"
-            )));
+        Err((code, message)) => {
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
-    if icp_balance_e8s == 0 {
-        return Err(BoomerangError::IcpNotAvailable);
+    if icp_balance_e8s < TRANSFER_FEE {
+        return Err(BoomerangError::NotEnoughICP);
     }
 
-    let to_transfer_amount = icp_balance_e8s.checked_sub(TRANSFER_FEE).unwrap();
+    let to_transfer_amount = icp_balance_e8s
+        .checked_sub(TRANSFER_FEE)
+        .expect("underflow");
 
     match icp_client
         .transfer(TransferArg {
@@ -126,16 +127,17 @@ pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> 
             to: target.into(),
         })
         .await
-        .unwrap()
     {
-        Ok(block_index) => {
-            log!(
-                INFO,
-                "Transfered nICP for {target} at block index: {}",
-                block_index
-            );
-            Ok(block_index)
-        }
-        Err(e) => Err(BoomerangError::TransferError(e)),
+        Ok(result) => match result {
+            Ok(block_index) => {
+                log!(
+                    INFO,
+                    "Transfered ICP for {target} at block index: {block_index}",
+                );
+                Ok(block_index)
+            }
+            Err(e) => Err(BoomerangError::TransferError(e)),
+        },
+        Err((code, message)) => Err(BoomerangError::GenericError { message, code }),
     }
 }
