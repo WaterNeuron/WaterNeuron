@@ -1456,7 +1456,6 @@ dependencies = [
  "ic-cdk 0.13.2",
  "ic-cdk-macros 0.13.2",
  "ic-icrc1-ledger",
- "ic-management-canister-types",
  "ic-metrics-encoder",
  "ic-nns-constants",
  "ic-nns-governance",

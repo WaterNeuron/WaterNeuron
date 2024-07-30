@@ -121,10 +121,6 @@ crates_repository(
             git = "https://github.com/dfinity/ic/",
             rev = IC_VERSION,
         ),
-        "ic-management-canister-types": crate.spec(
-            git = "https://github.com/dfinity/ic/",
-            rev = IC_VERSION,
-        ),
         "lazy_static": crate.spec(version = "^1.5.0"),
         "log": crate.spec(version = "^0.4.14"),
         "minicbor": crate.spec(

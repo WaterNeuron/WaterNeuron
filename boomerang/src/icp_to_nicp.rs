@@ -19,16 +19,16 @@ pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
     let boomerang_id = self_canister_id();
     let subaccount = derive_subaccount_staking(target);
 
-    let boomerang_account = Account {
+    let target_account = Account {
         owner: boomerang_id,
         subaccount: Some(subaccount),
     };
 
-    let nicp_balance_e8s: u64 = match nicp_client.balance_of(boomerang_account).await {
+    let nicp_balance_e8s: u64 = match nicp_client.balance_of(target_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
-        Err((code, message)) => {
+        Err((code, msg)) => {
             return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
+                "code: {code} - msg: {msg}"
             )));
         }
     };
@@ -40,7 +40,7 @@ pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
             memo: None,
             amount: to_transfer_amount.into(),
             fee: Some(TRANSFER_FEE.into()),
-            from_subaccount: boomerang_account.subaccount,
+            from_subaccount: Some(subaccount),
             created_at_time: None,
             to: target.into(),
         })
@@ -61,9 +61,10 @@ pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
     }
 }
 
-pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, BoomerangError> {
+pub async fn notify_icp_deposit(client_id: Principal) -> Result<DepositSuccess, BoomerangError> {
     let boomerang_id = self_canister_id();
-    let subaccount = derive_subaccount_staking(target);
+
+    let subaccount = derive_subaccount_staking(client_id);
 
     let boomerang_account = Account {
         owner: boomerang_id,
@@ -75,19 +76,19 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
         ledger_canister_id: ICP_LEDGER_ID,
     };
 
-    let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
-        Ok(balance) => balance.0.try_into().unwrap(),
-        Err((code, message)) => {
+    let balance_e8s = match client.balance_of(boomerang_account).await {
+        Ok(balance) => balance,
+        Err((code, msg)) => {
             return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
+                "code: {code} - message: {msg}"
             )));
         }
     };
 
     log!(
         INFO,
-        "Fetched balance for {target}: {} ICP",
-        balance_e8s / E8S
+        "Fetched balance for {client_id}: {} ICP",
+        balance_e8s.clone() / Nat::from(E8S)
     );
 
     let spender = Account {
@@ -96,9 +97,9 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
     };
 
     let approve_args = ApproveArgs {
-        from_subaccount: boomerang_account.subaccount,
+        from_subaccount: Some(subaccount),
         spender,
-        amount: balance_e8s.into(),
+        amount: balance_e8s.clone(),
         expected_allowance: None,
         expires_at: None,
         fee: None,
@@ -109,24 +110,22 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
     match client.approve(approve_args).await {
         Ok(result) => match result {
             Ok(block_index) => {
-                log! {INFO, "Approved for {target} occured at block index: {}", block_index};
+                log! {INFO, "Approved for {client_id} occured at block index: {}", block_index};
             }
             Err(error) => {
                 return Err(BoomerangError::ApproveError(error));
             }
         },
-        Err((code, message)) => {
-            return Err(BoomerangError::GenericError { code, message });
-        }
+        Err((code, message)) => return Err(BoomerangError::GenericError { code, message }),
     };
 
-    let transfer_amount_e8s = balance_e8s
-        .checked_sub(2 * TRANSFER_FEE)
-        .expect("underflow");
+    let amount: u64 = balance_e8s.clone().0.try_into().unwrap();
+
+    let transfer_amount_e8s = amount.checked_sub(2 * TRANSFER_FEE).expect("underflow");
 
     let conversion_arg = ConversionArg {
         amount_e8s: transfer_amount_e8s,
-        maybe_subaccount: boomerang_account.subaccount,
+        maybe_subaccount: Some(subaccount),
     };
 
     let conversion_result: (Result<DepositSuccess, ConversionError>,) =
@@ -139,7 +138,7 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
             log!(
                 INFO,
                 "Transfered {} ICP at block index: {}",
-                balance_e8s / E8S,
+                balance_e8s.clone() / E8S,
                 success.block_index
             );
             Ok(success)
