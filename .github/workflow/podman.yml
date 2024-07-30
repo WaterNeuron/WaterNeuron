@@ -39,10 +39,16 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: .
-        push: true
+        push: ${{ github.event_name == 'push' }}
         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.dockerfile-sha.outputs.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
+
+    - name: Print event information
+      run: |
+        echo "Event name: ${{ github.event_name }}"
+        echo "Branch name: ${{ github.head_ref || github.ref_name }}"
+        echo "Target branch: ${{ github.base_ref || 'N/A' }}"
