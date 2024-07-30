@@ -8,6 +8,7 @@ DEPENDENCIES = [
     "@crate_index//:ic-base-types",
     "@crate_index//:ic-canister-log",
     "@crate_index//:ic-cdk",
+    "@crate_index//:ic-nns-governance",
     "@crate_index//:icp-ledger",
     "@crate_index//:icrc-ledger-types",
     "@crate_index//:icrc-ledger-client-cdk",
