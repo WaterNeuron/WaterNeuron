@@ -53,6 +53,7 @@ rust_test(
     srcs = glob([
         "src/**/*.rs",
     ]),
+    crate_features = ["test-env"],
     crate_name = "boomerang",
     data = [
         "//boomerang:canister",
@@ -75,7 +76,7 @@ rust_test(
         "SNS_GOVERNANCE_CANISTER_WASM_PATH": "$(rootpath @sns-governance-canister//:wasm)",
         "SNS_SWAP_CANISTER_WASM_PATH": "$(rootpath @sns-swap-canister//:wasm)",
         "BOOMERANG_CANISTER_WASM_PATH": "$(rootpath //boomerang:canister)",
-        "BOOMERANG_TEST_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister-test-env)",
+        "BOOMERANG_TEST_CANISTER_WASM_PATH": "$(rootpath //boomerang:canister-test-env)",
         "WATER_NEURON_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister)",
     },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
