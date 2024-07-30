@@ -41,15 +41,19 @@ lazy_static! {
     static ref CARGO_BUILD_RESULT: Result<(), std::io::Error> = cargo_build();
 }
 
-fn get_wasm(dir: &str) -> Vec<u8> {
-    let _ = *CARGO_BUILD_RESULT;
-    let current_dir = std::env::current_dir().unwrap();
-    let file_path = current_dir.join(dir);
-    std::fs::read(file_path).unwrap()
+fn get_wasm(env: &str) -> Vec<u8> {
+    println!("{env:?}");
+    std::fs::read(std::env::var(env).unwrap()).unwrap()
 }
 
+#[cfg(not(feature = "test-env"))]
 fn boomerang_wasm() -> Vec<u8> {
-    get_wasm("./target/wasm32-unknown-unknown/debug/boomerang.wasm")
+    get_wasm("BOOMERANG_CANISTER_WASM_PATH")
+}
+
+#[cfg(feature = "test-env")]
+fn boomerang_wasm() -> Vec<u8> {
+    get_wasm("BOOMERANG_TEST_CANISTER_WASM_PATH")
 }
 
 fn icp_ledger_wasm() -> Vec<u8> {

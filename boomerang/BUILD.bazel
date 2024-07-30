@@ -56,6 +56,7 @@ rust_test(
     crate_name = "boomerang",
     data = [
         "//boomerang:canister",
+        "//boomerang:canister-test-env",
         "//water_neuron:canister",
         "@cycles-minting-canister//:wasm",
         "@governance-canister//:wasm",
@@ -70,9 +71,11 @@ rust_test(
         "LEDGER_CANISTER_WASM_PATH": "$(rootpath @ledger-canister//:wasm)",
         "CYCLES_MINTING_CANISTER_WASM_PATH": "$(rootpath @cycles-minting-canister//:wasm)",
         "SNS_ROOT_CANISTER_WASM_PATH": "$(rootpath @sns-root-canister//:wasm)",
+        "GOVERNANCE_CANISTER_WASM_PATH": "$(rootpath @governance-canister//:wasm)",
         "SNS_GOVERNANCE_CANISTER_WASM_PATH": "$(rootpath @sns-governance-canister//:wasm)",
         "SNS_SWAP_CANISTER_WASM_PATH": "$(rootpath @sns-swap-canister//:wasm)",
         "BOOMERANG_CANISTER_WASM_PATH": "$(rootpath //boomerang:canister)",
+        "BOOMERANG_TEST_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister-test-env)",
         "WATER_NEURON_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister)",
     },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
@@ -89,6 +92,18 @@ rust_canister(
     service_file = "boomerang.did",
     deps = DEPENDENCIES + [":lib"],
 )
+
+rust_canister(
+    name = "canister-test-env",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    crate_features = ["test-env"],
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    service_file = "boomerang.did",
+    deps = DEPENDENCIES + [":lib"],
+)
+
 
 rust_test(
     name = "test-main",
