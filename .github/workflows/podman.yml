@@ -42,10 +42,19 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: .
-        push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}:${{ steps.dockerfile-sha.outputs.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+    - name: Make image public
+      run: |
+        echo "Making image public..."
+        curl -X PATCH \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/${{ github.event.repository.name }}/versions \
+          -d '{"visibility":"public"}'
+        echo "Image visibility set to public"
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
