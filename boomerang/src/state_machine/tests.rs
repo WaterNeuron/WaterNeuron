@@ -1,13 +1,14 @@
 use crate::state_machine::{
     BoomerangSetup, DEFAULT_PRINCIPAL_ID, ONE_MONTH_SECONDS, USER_PRINCIPAL_ID,
 };
-use crate::{E8S, TRANSFER_FEE};
+use crate::{E8S, TRANSFER_FEE, WATER_NEURON_ID};
 use ic_state_machine_tests::PrincipalId;
 use icp_ledger::AccountIdentifier;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[test]
 fn check_e2e() {
+    println!("{WATER_NEURON_ID}");
     let boomerang = BoomerangSetup::new();
 
     let caller = PrincipalId::new_user_test_id(USER_PRINCIPAL_ID);

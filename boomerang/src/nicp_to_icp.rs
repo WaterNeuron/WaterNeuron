@@ -39,6 +39,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
         balance_e8s / E8S
     );
 
+    println!("WaterNeuron id: {WATER_NEURON_ID}");
     let approve_args = ApproveArgs {
         from_subaccount: boomerang_account.subaccount,
         spender: WATER_NEURON_ID.into(),

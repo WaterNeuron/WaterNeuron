@@ -42,7 +42,6 @@ lazy_static! {
 }
 
 fn get_wasm(env: &str) -> Vec<u8> {
-    println!("{env:?}");
     std::fs::read(std::env::var(env).unwrap()).unwrap()
 }
 
@@ -339,6 +338,7 @@ impl BoomerangSetup {
     }
 
     pub fn notify_icp_deposit(&self, caller: Principal) -> Result<DepositSuccess, BoomerangError> {
+        println!("{}", self.boomerang_id);
         Decode!(
             &assert_reply(
                     self.env.execute_ingress_as(
