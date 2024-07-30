@@ -58,18 +58,15 @@ fn check_e2e() {
     assert!(boomerang
         .nicp_transfer(caller.0, None, balance - TRANSFER_FEE, account)
         .is_ok());
-
-        boomerang.advance_time_and_tick(60*60);
+    boomerang.advance_time_and_tick(60*60);
 
     assert!(boomerang.notify_nicp_deposit(caller.0).is_ok());
+    boomerang.advance_time_and_tick(60*60);
 
     assert!(boomerang.try_retrieve_icp(caller.0).is_err());
-
     boomerang.advance_time_and_tick(7 * ONE_MONTH_SECONDS);
     
-
     assert!(boomerang.try_retrieve_icp(caller.0).is_ok());
-
 
     let balance = boomerang.icp_balance(caller.0);
     assert_eq!(balance, 1_000 * E8S - 9 * TRANSFER_FEE);
