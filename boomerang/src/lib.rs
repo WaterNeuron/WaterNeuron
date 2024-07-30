@@ -126,5 +126,6 @@ pub enum BoomerangError {
     BalanceOfError(String),
     ConversionError(ConversionError),
     TransferError(TransferError),
-    IcpNotAvailable,
+    NotEnoughICP,
+    GenericError { message: String, code: i32 },
 }

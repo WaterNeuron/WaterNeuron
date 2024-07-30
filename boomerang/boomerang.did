@@ -11,11 +11,12 @@ type ApproveError = variant {
   InsufficientFunds : record { balance : nat };
 };
 type BoomerangError = variant {
+  GenericError : record { code : int32; message : text };
   TransferError : TransferError;
   ConversionError : ConversionError;
-  IcpNotAvailable;
   ApproveError : ApproveError;
   BalanceOfError : text;
+  NotEnoughICP;
 };
 type ConversionError = variant {
   GenericError : record { code : int32; message : text };
