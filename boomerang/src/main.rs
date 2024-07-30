@@ -26,8 +26,8 @@ async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
 }
 
 #[update]
-async fn notify_icp_deposit(client_id: Principal) -> Result<DepositSuccess, BoomerangError> {
-    boomerang::icp_to_nicp::notify_icp_deposit(client_id).await
+async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, BoomerangError> {
+    boomerang::icp_to_nicp::notify_icp_deposit(target).await
 }
 
 #[query]
