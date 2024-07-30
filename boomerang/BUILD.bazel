@@ -16,12 +16,26 @@ DEPENDENCIES = [
     "@crate_index//:serde_cbor",
     "@crate_index//:serde_json",
     "@crate_index//:sha2",
+
 ]
 
 PROC_MACRO_DEPENDENCIES = []
 
 DEV_DEPENDENCIES = [
     "@crate_index//:candid_parser",
+    "@crate_index//:num-traits",
+    "@crate_index//:lazy_static",
+    "@crate_index//:ic-icrc1-ledger",
+    "@crate_index//:ic-sns-init",
+    "@crate_index//:ic-sns-root",
+    "@crate_index//:ic-sns-swap",
+    "@crate_index//:ic-sns-governance",
+    "@crate_index//:ic-nns-constants",
+    "@crate_index//:prost",
+    "@crate_index//:ic-nns-governance",
+    "@crate_index//:ic-state-machine-tests",
+    "@crate_index//:ic-management-canister-types",
+
 ]
 
 rust_library(
@@ -41,7 +55,8 @@ rust_test(
     ]),
     crate_name = "boomerang",
     data = [
-        "//boomerang:boomerang",
+        "//boomerang:canister",
+        "//water_neuron:canister",
         "@cycles-minting-canister//:wasm",
         "@governance-canister//:wasm",
         "@ic-icrc1-ledger-canister//:wasm",
@@ -54,10 +69,11 @@ rust_test(
         "IC_ICRC1_LEDGER_WASM_PATH": "$(rootpath @ic-icrc1-ledger-canister//:wasm)",
         "LEDGER_CANISTER_WASM_PATH": "$(rootpath @ledger-canister//:wasm)",
         "CYCLES_MINTING_CANISTER_WASM_PATH": "$(rootpath @cycles-minting-canister//:wasm)",
-        "GOVERNANCE_CANISTER_WASM_PATH": "$(rootpath @governance-canister//:wasm)",
         "SNS_ROOT_CANISTER_WASM_PATH": "$(rootpath @sns-root-canister//:wasm)",
         "SNS_GOVERNANCE_CANISTER_WASM_PATH": "$(rootpath @sns-governance-canister//:wasm)",
         "SNS_SWAP_CANISTER_WASM_PATH": "$(rootpath @sns-swap-canister//:wasm)",
+        "BOOMERANG_CANISTER_WASM_PATH": "$(rootpath //boomerang:canister)",
+        "WATER_NEURON_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister)",
     },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     tags = ["requires-network"],
@@ -65,7 +81,7 @@ rust_test(
 )
 
 rust_canister(
-    name = "boomerang",
+    name = "canister",
     srcs = glob([
         "src/**/*.rs",
     ]),

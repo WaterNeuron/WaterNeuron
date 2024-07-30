@@ -1,5 +1,5 @@
 {
-  "checksum": "9e6105db6688857b169c6f2ce581e48aeb40e078a7af17393510d5c175678e6a",
+  "checksum": "cdad6f1281c795f5871f95adda3a36bdc6c5a87c6db247d810ae18fdf0fa2659",
   "crates": {
     "addr2line 0.22.0": {
       "name": "addr2line",
@@ -8972,6 +8972,10 @@
             {
               "id": "ic-icrc1-ledger 0.9.0",
               "target": "ic_icrc1_ledger"
+            },
+            {
+              "id": "ic-management-canister-types 0.9.0",
+              "target": "ic_management_canister_types"
             },
             {
               "id": "ic-metrics-encoder 1.1.1",
@@ -56123,6 +56127,7 @@
     "ic-cdk 0.13.2",
     "ic-cdk-macros 0.13.2",
     "ic-icrc1-ledger 0.9.0",
+    "ic-management-canister-types 0.9.0",
     "ic-metrics-encoder 1.1.1",
     "ic-nns-constants 0.9.0",
     "ic-nns-governance 0.9.0",
