@@ -35,6 +35,7 @@ fn check_e2e() {
 
     boomerang.advance_time_and_tick(60*60);
 
+    assert!(boomerang.notify_nicp_deposit(caller.0).is_err());
     assert!(boomerang.retrieve_nicp(caller.0).is_ok());
 
     let balance: u64 = boomerang.nicp_balance(caller.0).0.try_into().unwrap();
