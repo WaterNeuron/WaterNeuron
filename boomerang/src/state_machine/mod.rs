@@ -338,7 +338,6 @@ impl BoomerangSetup {
     }
 
     pub fn notify_icp_deposit(&self, caller: Principal) -> Result<DepositSuccess, BoomerangError> {
-        println!("{}", self.boomerang_id);
         Decode!(
             &assert_reply(
                     self.env.execute_ingress_as(

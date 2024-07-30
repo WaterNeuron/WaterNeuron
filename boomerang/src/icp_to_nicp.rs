@@ -129,8 +129,6 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
         maybe_subaccount: boomerang_account.subaccount,
     };
 
-    println!("WaterNeuron id: {WATER_NEURON_ID}");
-
     let conversion_result: (Result<DepositSuccess, ConversionError>,) =
         ic_cdk::call(WATER_NEURON_ID, "icp_to_nicp", (conversion_arg,))
             .await
