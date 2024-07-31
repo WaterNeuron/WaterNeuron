@@ -2,11 +2,13 @@ use ic_nns_governance::pb::v1::Neuron;
 use icrc_ledger_types::icrc1::account::Account;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use candid::CandidType;
 
 thread_local! {
     static __STATE: RefCell<Option<State>> = RefCell::default();
 }
 
+#[derive(CandidType, Clone)]
 pub struct State {
     pub neurons: BTreeMap<u64, Neuron>,
     pub disburse_to: Account,

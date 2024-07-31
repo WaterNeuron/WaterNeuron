@@ -1,0 +1,46 @@
+type Account = record { owner : principal; subaccount : opt blob };
+type BallotInfo = record { vote : int32; proposal_id : opt NeuronId };
+type DissolveState = variant {
+  DissolveDelaySeconds : nat64;
+  WhenDissolvedTimestampSeconds : nat64;
+};
+type Followees = record { followees : vec NeuronId };
+type KnownNeuronData = record { name : text; description : opt text };
+type Neuron = record {
+  id : opt NeuronId;
+  staked_maturity_e8s_equivalent : opt nat64;
+  controller : opt principal;
+  recent_ballots : vec BallotInfo;
+  kyc_verified : bool;
+  neuron_type : opt int32;
+  not_for_profit : bool;
+  maturity_e8s_equivalent : nat64;
+  cached_neuron_stake_e8s : nat64;
+  created_timestamp_seconds : nat64;
+  auto_stake_maturity : opt bool;
+  aging_since_timestamp_seconds : nat64;
+  hot_keys : vec principal;
+  account : blob;
+  joined_community_fund_timestamp_seconds : opt nat64;
+  dissolve_state : opt DissolveState;
+  followees : vec record { int32; Followees };
+  neuron_fees_e8s : nat64;
+  transfer : opt NeuronStakeTransfer;
+  known_neuron_data : opt KnownNeuronData;
+  spawn_at_timestamp_seconds : opt nat64;
+};
+type NeuronId = record { id : nat64 };
+type NeuronStakeTransfer = record {
+  to_subaccount : blob;
+  neuron_stake_e8s : nat64;
+  from : opt principal;
+  memo : nat64;
+  from_subaccount : blob;
+  transfer_timestamp : nat64;
+  block_height : nat64;
+};
+type State = record {
+  neurons : vec record { nat64; Neuron };
+  disburse_to : Account;
+};
+service : () -> { get_state : () -> (State) query }

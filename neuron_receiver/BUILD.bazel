@@ -86,7 +86,7 @@ rust_test(
     ]),
     data = ["//neuron_receiver:candid"],
     env = {
-        "neuron_receiver_CANDID_PATH": "$(rootpath //neuron_receiver:candid)",
+        "NEURON_RECEIVER_CANDID_PATH": "$(rootpath //neuron_receiver:candid)",
     },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],

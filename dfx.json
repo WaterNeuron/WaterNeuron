@@ -6,6 +6,11 @@
       "type": "custom",
       "wasm": "artifacts/waterneuron.wasm.gz"
     },
+    "neuron_receiver": {
+      "candid": "neuron_receiver/neuron_receiver.did",
+      "type": "custom",
+      "wasm": "bazel-bin/neuron_receiver/neuron_receiver.wasm"
+    },
     "wtn_governance": {
       "candid": "candid/sns_governance.did",
       "type": "custom",
