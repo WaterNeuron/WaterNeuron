@@ -31,7 +31,7 @@ thread_local! {
 pub fn get_canister_ids() -> CanisterIds {
     __CANISTER_IDS.with(|c| {
         let canister_ids = c.borrow();
-        canister_ids.clone().expect("State not initialized!")
+        canister_ids.clone().expect("Canister Ids not initialized!")
     })
 }
 
