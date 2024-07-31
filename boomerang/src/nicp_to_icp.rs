@@ -27,9 +27,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
     let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
         Err((code, message)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
-            )));
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
@@ -110,14 +108,12 @@ pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> 
     let icp_balance_e8s: u64 = match icp_client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
         Err((code, message)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
-            )));
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
-    if icp_balance_e8s == 0 {
-        return Err(BoomerangError::IcpNotAvailable);
+    if icp_balance_e8s < TRANSFER_FEE {
+        return Err(BoomerangError::NotEnoughICP);
     }
 
     let to_transfer_amount = icp_balance_e8s.checked_sub(TRANSFER_FEE).unwrap();
@@ -137,8 +133,7 @@ pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> 
             Ok(block_index) => {
                 log!(
                     INFO,
-                    "Transfered ICP for {target} at block index: {}",
-                    block_index
+                    "Transfered ICP for {target} at block index: {block_index}",
                 );
                 Ok(block_index)
             }

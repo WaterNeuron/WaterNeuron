@@ -27,9 +27,7 @@ pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
     let nicp_balance_e8s: u64 = match nicp_client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
         Err((code, message)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
-            )));
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
@@ -78,9 +76,7 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
     let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
         Err((code, message)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
-            )));
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
