@@ -1,7 +1,7 @@
 use crate::log::INFO;
 use crate::{
-    derive_subaccount_unstaking, self_canister_id, BoomerangError, ConversionArg, ConversionError,
-    WithdrawalSuccess, E8S, ICP_LEDGER_ID, NICP_LEDGER_ID, TRANSFER_FEE, WATER_NEURON_ID,
+    borrow_state, derive_subaccount_unstaking, self_canister_id, BoomerangError, ConversionArg,
+    ConversionError, WithdrawalSuccess, E8S, TRANSFER_FEE,
 };
 use candid::{Nat, Principal};
 use ic_canister_log::log;
@@ -11,6 +11,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess, BoomerangError> {
+    let s = borrow_state();
     let boomerang_id = self_canister_id();
     let subaccount = derive_subaccount_unstaking(target);
 
@@ -21,7 +22,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 
     let client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: NICP_LEDGER_ID,
+        ledger_canister_id: s.nicp_ledger_id,
     };
 
     let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
@@ -39,7 +40,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 
     let approve_args = ApproveArgs {
         from_subaccount: boomerang_account.subaccount,
-        spender: WATER_NEURON_ID.into(),
+        spender: s.water_neuron_id.into(),
         amount: balance_e8s.into(),
         expected_allowance: None,
         expires_at: None,
@@ -72,7 +73,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
     };
 
     let conversion_result: (Result<WithdrawalSuccess, ConversionError>,) =
-        ic_cdk::call(WATER_NEURON_ID, "nicp_to_icp", (conversion_arg,))
+        ic_cdk::call(s.water_neuron_id, "nicp_to_icp", (conversion_arg,))
             .await
             .unwrap();
 
@@ -92,9 +93,10 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 }
 
 pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> {
+    let s = borrow_state();
     let icp_client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: ICP_LEDGER_ID,
+        ledger_canister_id: s.icp_ledger_id,
     };
 
     let boomerang_id = self_canister_id();

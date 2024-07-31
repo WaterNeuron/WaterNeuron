@@ -4,6 +4,7 @@ use icrc_ledger_types::icrc2::approve::ApproveError;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
+use std::cell::RefCell;
 
 pub mod icp_to_nicp;
 pub mod log;
@@ -12,73 +13,33 @@ pub mod nicp_to_icp;
 #[cfg(test)]
 pub mod state_machine;
 
-// "ryjl3-tyaaa-aaaaa-aaaba-cai"
-pub const ICP_LEDGER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
-
-// "buwm7-7yaaa-aaaar-qagva-cai"
-#[cfg(not(feature = "test-env"))]
-pub const NICP_LEDGER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 2, 48, 1, 170, 1, 1]);
-
-// "jcmow-hyaaa-aaaaq-aadlq-cai"
-#[cfg(not(feature = "test-env"))]
-pub const WTN_LEDGER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 215, 1, 1]);
-
-// "tsbvt-pyaaa-aaaar-qafva-cai"
-#[cfg(not(feature = "test-env"))]
-pub const WATER_NEURON_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 2, 48, 1, 106, 1, 1]);
-
-#[test]
-#[cfg(not(feature = "test-env"))]
-fn check_canister_ids() {
-    assert_eq!(
-        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-        ICP_LEDGER_ID
-    );
-    assert_eq!(
-        Principal::from_text("buwm7-7yaaa-aaaar-qagva-cai").unwrap(),
-        NICP_LEDGER_ID
-    );
-    assert_eq!(
-        Principal::from_text("jcmow-hyaaa-aaaaq-aadlq-cai").unwrap(),
-        WTN_LEDGER_ID
-    );
-    assert_eq!(
-        Principal::from_text("tsbvt-pyaaa-aaaar-qafva-cai").unwrap(),
-        WATER_NEURON_ID
-    );
+#[derive(Deserialize, CandidType, Clone)]
+pub struct CanisterIds {
+    pub icp_ledger_id: Principal,
+    pub nicp_ledger_id: Principal,
+    pub wtn_ledger_id: Principal,
+    pub water_neuron_id: Principal,
 }
 
-// "renrk-eyaaa-aaaaa-aaada-cai"
-#[cfg(feature = "test-env")]
-pub const WTN_LEDGER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 6, 1, 1]);
+thread_local! {
+    static __STATE: RefCell<Option<CanisterIds>> = RefCell::default();
+}
 
-// "r7inp-6aaaa-aaaaa-aaabq-cai"
-#[cfg(feature = "test-env")]
-pub const WATER_NEURON_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
+/// Read (part of) the current state using `f`.
+///
+/// Panics if there is no state.
+pub fn borrow_state() -> CanisterIds {
+    __STATE.with(|s| {
+        let state = s.borrow();
+        state.clone().expect("State not initialized!")
+    })
+}
 
-// "rwlgt-iiaaa-aaaaa-aaaaa-cai"
-#[cfg(feature = "test-env")]
-pub const NICP_LEDGER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 0, 1, 1]);
-
-#[test]
-#[cfg(feature = "test-env")]
-fn check_canister_ids() {
-    assert_eq!(
-        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-        ICP_LEDGER_ID
-    );
-    assert_eq!(
-        Principal::from_text("rwlgt-iiaaa-aaaaa-aaaaa-cai").unwrap(),
-        NICP_LEDGER_ID
-    );
-    assert_eq!(
-        Principal::from_text("renrk-eyaaa-aaaaa-aaada-cai").unwrap(),
-        WTN_LEDGER_ID
-    );
-    assert_eq!(
-        Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap(),
-        WATER_NEURON_ID
-    );
+/// Replaces the current state.
+pub fn replace_state(canister_ids: CanisterIds) {
+    __STATE.with(|s| {
+        *s.borrow_mut() = Some(canister_ids);
+    });
 }
 
 pub const E8S: u64 = 100_000_000;

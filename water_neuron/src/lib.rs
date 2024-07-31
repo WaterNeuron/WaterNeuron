@@ -117,7 +117,7 @@ pub enum LiquidArg {
 #[derive(Deserialize, CandidType, Encode, Decode, PartialEq, Eq, Clone, Debug)]
 pub struct InitArg {
     #[cbor(n(0), with = "crate::cbor::principal")]
-    nicp_ledger_id: Principal,
+    pub nicp_ledger_id: Principal,
     #[cbor(n(1), with = "crate::cbor::principal")]
     pub wtn_governance_id: Principal,
     #[cbor(n(2), with = "crate::cbor::principal")]
