@@ -22,23 +22,23 @@ pub struct CanisterIds {
 }
 
 thread_local! {
-    static __STATE: RefCell<Option<CanisterIds>> = RefCell::default();
+    static __CANISTER_IDS: RefCell<Option<CanisterIds>> = RefCell::default();
 }
 
 /// Gives the canister ids.
 ///
 /// Panics if there is no state.
 pub fn get_canister_ids() -> CanisterIds {
-    __STATE.with(|s| {
-        let state = s.borrow();
-        state.clone().expect("State not initialized!")
+    __CANISTER_IDS.with(|c| {
+        let canister_ids = c.borrow();
+        canister_ids.clone().expect("State not initialized!")
     })
 }
 
 /// Replaces the current state.
-pub fn replace_state(canister_ids: CanisterIds) {
-    __STATE.with(|s| {
-        *s.borrow_mut() = Some(canister_ids);
+pub fn set_canister_ids(canister_ids: CanisterIds) {
+    __CANISTER_IDS.with(|c| {
+        *c.borrow_mut() = Some(canister_ids);
     });
 }
 

@@ -1,5 +1,5 @@
 use boomerang::{
-    derive_subaccount_staking, derive_subaccount_unstaking, replace_state, self_canister_id,
+    derive_subaccount_staking, derive_subaccount_unstaking, self_canister_id, set_canister_ids,
     BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess,
 };
 use candid::{Nat, Principal};
@@ -12,7 +12,7 @@ fn main() {}
 
 #[init]
 fn initialize_canister_ids(canister_ids: CanisterIds) {
-    replace_state(canister_ids);
+    set_canister_ids(canister_ids);
 }
 
 #[query]

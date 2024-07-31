@@ -1,4 +1,4 @@
-use crate::{BoomerangError, DepositSuccess, WithdrawalSuccess, E8S, TRANSFER_FEE, CanisterIds};
+use crate::{BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess, E8S, TRANSFER_FEE};
 use candid::{Decode, Encode, Nat, Principal};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
 use ic_nns_constants::GOVERNANCE_CANISTER_ID;

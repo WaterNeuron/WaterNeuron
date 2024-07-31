@@ -1,6 +1,6 @@
 use crate::log::INFO;
 use crate::{
-    get_canister_ids, derive_subaccount_unstaking, self_canister_id, BoomerangError, ConversionArg,
+    derive_subaccount_unstaking, get_canister_ids, self_canister_id, BoomerangError, ConversionArg,
     ConversionError, WithdrawalSuccess, E8S, TRANSFER_FEE,
 };
 use candid::{Nat, Principal};
@@ -11,7 +11,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess, BoomerangError> {
-    let s = get_canister_ids();
+    let canister_ids = get_canister_ids();
     let boomerang_id = self_canister_id();
     let subaccount = derive_subaccount_unstaking(target);
 
@@ -22,7 +22,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 
     let client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: s.nicp_ledger_id,
+        ledger_canister_id: canister_ids.nicp_ledger_id,
     };
 
     let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
@@ -40,7 +40,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 
     let approve_args = ApproveArgs {
         from_subaccount: boomerang_account.subaccount,
-        spender: s.water_neuron_id.into(),
+        spender: canister_ids.water_neuron_id.into(),
         amount: balance_e8s.into(),
         expected_allowance: None,
         expires_at: None,
@@ -72,10 +72,13 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
         maybe_subaccount: boomerang_account.subaccount,
     };
 
-    let conversion_result: (Result<WithdrawalSuccess, ConversionError>,) =
-        ic_cdk::call(s.water_neuron_id, "nicp_to_icp", (conversion_arg,))
-            .await
-            .unwrap();
+    let conversion_result: (Result<WithdrawalSuccess, ConversionError>,) = ic_cdk::call(
+        canister_ids.water_neuron_id,
+        "nicp_to_icp",
+        (conversion_arg,),
+    )
+    .await
+    .unwrap();
 
     match conversion_result.0 {
         Ok(success) => {
@@ -93,10 +96,10 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 }
 
 pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> {
-    let s = get_canister_ids();
+    let canister_ids = get_canister_ids();
     let icp_client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: s.icp_ledger_id,
+        ledger_canister_id: canister_ids.icp_ledger_id,
     };
 
     let boomerang_id = self_canister_id();

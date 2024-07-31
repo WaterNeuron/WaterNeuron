@@ -1,6 +1,6 @@
 use crate::log::INFO;
 use crate::{
-    get_canister_ids, derive_subaccount_staking, self_canister_id, BoomerangError, ConversionArg,
+    derive_subaccount_staking, get_canister_ids, self_canister_id, BoomerangError, ConversionArg,
     ConversionError, DepositSuccess, E8S, TRANSFER_FEE,
 };
 use candid::{Nat, Principal};
@@ -11,10 +11,10 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
-    let s = get_canister_ids();
+    let canister_ids = get_canister_ids();
     let nicp_client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: s.nicp_ledger_id,
+        ledger_canister_id: canister_ids.nicp_ledger_id,
     };
 
     let boomerang_id = self_canister_id();
@@ -61,7 +61,7 @@ pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
 }
 
 pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, BoomerangError> {
-    let s = get_canister_ids();
+    let canister_ids = get_canister_ids();
     let boomerang_id = self_canister_id();
     let subaccount = derive_subaccount_staking(target);
 
@@ -72,7 +72,7 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
 
     let client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: s.icp_ledger_id,
+        ledger_canister_id: canister_ids.icp_ledger_id,
     };
 
     let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
@@ -89,7 +89,7 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
     );
 
     let spender = Account {
-        owner: s.water_neuron_id,
+        owner: canister_ids.water_neuron_id,
         subaccount: None,
     };
 
@@ -127,10 +127,13 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
         maybe_subaccount: boomerang_account.subaccount,
     };
 
-    let conversion_result: (Result<DepositSuccess, ConversionError>,) =
-        ic_cdk::call(s.water_neuron_id, "icp_to_nicp", (conversion_arg,))
-            .await
-            .unwrap();
+    let conversion_result: (Result<DepositSuccess, ConversionError>,) = ic_cdk::call(
+        canister_ids.water_neuron_id,
+        "icp_to_nicp",
+        (conversion_arg,),
+    )
+    .await
+    .unwrap();
 
     match conversion_result.0 {
         Ok(success) => {
