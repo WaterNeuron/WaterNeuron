@@ -1,6 +1,6 @@
 use crate::log::INFO;
 use crate::{
-    borrow_state, derive_subaccount_unstaking, self_canister_id, BoomerangError, ConversionArg,
+    get_canister_ids, derive_subaccount_unstaking, self_canister_id, BoomerangError, ConversionArg,
     ConversionError, WithdrawalSuccess, E8S, TRANSFER_FEE,
 };
 use candid::{Nat, Principal};
@@ -11,7 +11,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess, BoomerangError> {
-    let s = borrow_state();
+    let s = get_canister_ids();
     let boomerang_id = self_canister_id();
     let subaccount = derive_subaccount_unstaking(target);
 
@@ -93,7 +93,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 }
 
 pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> {
-    let s = borrow_state();
+    let s = get_canister_ids();
     let icp_client = ICRC1Client {
         runtime: CdkRuntime,
         ledger_canister_id: s.icp_ledger_id,

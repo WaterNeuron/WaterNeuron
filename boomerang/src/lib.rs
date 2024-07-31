@@ -25,10 +25,10 @@ thread_local! {
     static __STATE: RefCell<Option<CanisterIds>> = RefCell::default();
 }
 
-/// Read (part of) the current state using `f`.
+/// Gives the canister ids.
 ///
 /// Panics if there is no state.
-pub fn borrow_state() -> CanisterIds {
+pub fn get_canister_ids() -> CanisterIds {
     __STATE.with(|s| {
         let state = s.borrow();
         state.clone().expect("State not initialized!")
