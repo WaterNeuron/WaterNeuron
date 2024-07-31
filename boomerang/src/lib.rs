@@ -25,7 +25,7 @@ thread_local! {
     static __STATE: RefCell<Option<CanisterIds>> = RefCell::default();
 }
 
-/// Gives the canister ids.
+/// Clones the canister ids.
 ///
 /// Panics if there is no state.
 pub fn get_canister_ids() -> CanisterIds {
