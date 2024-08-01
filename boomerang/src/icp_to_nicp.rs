@@ -1,7 +1,7 @@
 use crate::log::INFO;
 use crate::{
-    derive_subaccount_staking, self_canister_id, BoomerangError, ConversionArg, ConversionError,
-    DepositSuccess, E8S, ICP_LEDGER_ID, NICP_LEDGER_ID, TRANSFER_FEE, WATER_NEURON_ID,
+    derive_subaccount_staking, get_canister_ids, self_canister_id, BoomerangError, ConversionArg,
+    ConversionError, DepositSuccess, E8S, TRANSFER_FEE,
 };
 use candid::{Nat, Principal};
 use ic_canister_log::log;
@@ -11,9 +11,10 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
+    let canister_ids = get_canister_ids();
     let nicp_client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: NICP_LEDGER_ID,
+        ledger_canister_id: canister_ids.nicp_ledger_id,
     };
 
     let boomerang_id = self_canister_id();
@@ -27,9 +28,7 @@ pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
     let nicp_balance_e8s: u64 = match nicp_client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
         Err((code, message)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
-            )));
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
@@ -62,6 +61,7 @@ pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
 }
 
 pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, BoomerangError> {
+    let canister_ids = get_canister_ids();
     let boomerang_id = self_canister_id();
     let subaccount = derive_subaccount_staking(target);
 
@@ -72,15 +72,13 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
 
     let client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: ICP_LEDGER_ID,
+        ledger_canister_id: canister_ids.icp_ledger_id,
     };
 
     let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
         Err((code, message)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
-            )));
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
@@ -91,7 +89,7 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
     );
 
     let spender = Account {
-        owner: WATER_NEURON_ID,
+        owner: canister_ids.water_neuron_id,
         subaccount: None,
     };
 
@@ -129,10 +127,13 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
         maybe_subaccount: boomerang_account.subaccount,
     };
 
-    let conversion_result: (Result<DepositSuccess, ConversionError>,) =
-        ic_cdk::call(WATER_NEURON_ID, "icp_to_nicp", (conversion_arg,))
-            .await
-            .unwrap();
+    let conversion_result: (Result<DepositSuccess, ConversionError>,) = ic_cdk::call(
+        canister_ids.water_neuron_id,
+        "icp_to_nicp",
+        (conversion_arg,),
+    )
+    .await
+    .unwrap();
 
     match conversion_result.0 {
         Ok(success) => {

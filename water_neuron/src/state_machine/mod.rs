@@ -59,57 +59,6 @@ const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 lazy_static! {
     static ref CARGO_BUILD_RESULT: Result<(), std::io::Error> = cargo_build();
 }
-
-fn get_wasm(env: &str) -> Vec<u8> {
-    std::fs::read(std::env::var(env).unwrap()).unwrap()
-}
-
-fn water_neuron_wasm() -> Vec<u8> {
-    get_wasm("WATER_NEURON_CANISTER_WASM_PATH")
-}
-
-fn ledger_wasm() -> Vec<u8> {
-    get_wasm("IC_ICRC1_LEDGER_WASM_PATH")
-}
-
-fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm("LEDGER_CANISTER_WASM_PATH")
-}
-
-fn cmc_wasm() -> Vec<u8> {
-    get_wasm("CYCLES_MINTING_CANISTER_WASM_PATH")
-}
-
-fn governance_wasm() -> Vec<u8> {
-    get_wasm("GOVERNANCE_CANISTER_WASM_PATH")
-}
-
-fn sns_root() -> Vec<u8> {
-    get_wasm("SNS_ROOT_CANISTER_WASM_PATH")
-}
-
-fn sns_governance() -> Vec<u8> {
-    get_wasm("SNS_GOVERNANCE_CANISTER_WASM_PATH")
-}
-
-fn sns_swap() -> Vec<u8> {
-    get_wasm("SNS_SWAP_CANISTER_WASM_PATH")
-}
-
-pub fn sha256_hash(data: Vec<u8>) -> Vec<u8> {
-    let mut hasher = Sha256::new();
-    hasher.update(&data);
-    hasher.finalize().to_vec()
-}
-
-/// Builder to help create the initial payloads for the SNS canisters in tests.
-pub struct SnsTestsInitPayloadBuilder {
-    pub governance: GovernanceCanisterInitPayloadBuilder,
-    pub ledger: LedgerInitArgs,
-    pub root: SnsRootCanister,
-    pub swap: SwapInit,
-}
-
 pub fn nns_governance_make_proposal(
     state_machine: &mut StateMachine,
     sender: PrincipalId,

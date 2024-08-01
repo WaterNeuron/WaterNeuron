@@ -6,6 +6,11 @@
       "type": "custom",
       "wasm": "artifacts/waterneuron.wasm.gz"
     },
+    "boomerang": {
+      "candid": "boomerang/boomerang.did",
+      "type": "custom",
+      "wasm": "bazel-bin/boomerang/canister.wasm"
+    },
     "wtn_governance": {
       "candid": "candid/sns_governance.did",
       "type": "custom",

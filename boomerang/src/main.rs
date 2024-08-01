@@ -1,14 +1,19 @@
 use boomerang::{
-    derive_subaccount_staking, derive_subaccount_unstaking, self_canister_id, BoomerangError,
-    DepositSuccess, WithdrawalSuccess,
+    derive_subaccount_staking, derive_subaccount_unstaking, self_canister_id, set_canister_ids,
+    BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess,
 };
 use candid::{Nat, Principal};
 use ic_base_types::PrincipalId;
-use ic_cdk::{query, update};
+use ic_cdk::{init, query, update};
 use icp_ledger::AccountIdentifier;
 use icrc_ledger_types::icrc1::account::Account;
 
 fn main() {}
+
+#[init]
+fn initialize_canister_ids(canister_ids: CanisterIds) {
+    set_canister_ids(canister_ids);
+}
 
 #[query]
 fn get_staking_account_id(principal: Principal) -> AccountIdentifier {

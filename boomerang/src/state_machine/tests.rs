@@ -23,7 +23,7 @@ fn check_e2e() {
         )
         .is_ok());
 
-        boomerang.advance_time_and_tick(60*60);
+    boomerang.advance_time_and_tick(60 * 60);
 
     let account_id = boomerang.get_staking_account_id(caller.0);
 
@@ -33,7 +33,7 @@ fn check_e2e() {
 
     assert!(boomerang.notify_icp_deposit(caller.0).is_ok());
 
-    boomerang.advance_time_and_tick(60*60);
+    boomerang.advance_time_and_tick(60 * 60);
 
     assert!(boomerang.notify_nicp_deposit(caller.0).is_err());
     assert!(boomerang.retrieve_nicp(caller.0).is_ok());
@@ -58,14 +58,14 @@ fn check_e2e() {
     assert!(boomerang
         .nicp_transfer(caller.0, None, balance - TRANSFER_FEE, account)
         .is_ok());
-    boomerang.advance_time_and_tick(60*60);
+    boomerang.advance_time_and_tick(60 * 60);
 
     assert!(boomerang.notify_nicp_deposit(caller.0).is_ok());
-    boomerang.advance_time_and_tick(60*60);
+    boomerang.advance_time_and_tick(60 * 60);
 
     assert!(boomerang.try_retrieve_icp(caller.0).is_err());
     boomerang.advance_time_and_tick(7 * ONE_MONTH_SECONDS);
-    
+
     assert!(boomerang.try_retrieve_icp(caller.0).is_ok());
 
     let balance = boomerang.icp_balance(caller.0);

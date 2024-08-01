@@ -1,7 +1,7 @@
 use crate::log::INFO;
 use crate::{
-    derive_subaccount_unstaking, self_canister_id, BoomerangError, ConversionArg, ConversionError,
-    WithdrawalSuccess, E8S, ICP_LEDGER_ID, NICP_LEDGER_ID, TRANSFER_FEE, WATER_NEURON_ID,
+    derive_subaccount_unstaking, get_canister_ids, self_canister_id, BoomerangError, ConversionArg,
+    ConversionError, WithdrawalSuccess, E8S, TRANSFER_FEE,
 };
 use candid::{Nat, Principal};
 use ic_canister_log::log;
@@ -11,6 +11,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess, BoomerangError> {
+    let canister_ids = get_canister_ids();
     let boomerang_id = self_canister_id();
     let subaccount = derive_subaccount_unstaking(target);
 
@@ -21,15 +22,13 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 
     let client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: NICP_LEDGER_ID,
+        ledger_canister_id: canister_ids.nicp_ledger_id,
     };
 
     let balance_e8s: u64 = match client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
         Err((code, message)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
-            )));
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
@@ -41,7 +40,7 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 
     let approve_args = ApproveArgs {
         from_subaccount: boomerang_account.subaccount,
-        spender: WATER_NEURON_ID.into(),
+        spender: canister_ids.water_neuron_id.into(),
         amount: balance_e8s.into(),
         expected_allowance: None,
         expires_at: None,
@@ -73,10 +72,13 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
         maybe_subaccount: boomerang_account.subaccount,
     };
 
-    let conversion_result: (Result<WithdrawalSuccess, ConversionError>,) =
-        ic_cdk::call(WATER_NEURON_ID, "nicp_to_icp", (conversion_arg,))
-            .await
-            .unwrap();
+    let conversion_result: (Result<WithdrawalSuccess, ConversionError>,) = ic_cdk::call(
+        canister_ids.water_neuron_id,
+        "nicp_to_icp",
+        (conversion_arg,),
+    )
+    .await
+    .unwrap();
 
     match conversion_result.0 {
         Ok(success) => {
@@ -94,9 +96,10 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
 }
 
 pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> {
+    let canister_ids = get_canister_ids();
     let icp_client = ICRC1Client {
         runtime: CdkRuntime,
-        ledger_canister_id: ICP_LEDGER_ID,
+        ledger_canister_id: canister_ids.icp_ledger_id,
     };
 
     let boomerang_id = self_canister_id();
@@ -110,14 +113,12 @@ pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> 
     let icp_balance_e8s: u64 = match icp_client.balance_of(boomerang_account).await {
         Ok(balance) => balance.0.try_into().unwrap(),
         Err((code, message)) => {
-            return Err(BoomerangError::BalanceOfError(format!(
-                "code: {code} - message: {message}"
-            )));
+            return Err(BoomerangError::GenericError { code, message });
         }
     };
 
-    if icp_balance_e8s == 0 {
-        return Err(BoomerangError::IcpNotAvailable);
+    if icp_balance_e8s < TRANSFER_FEE {
+        return Err(BoomerangError::NotEnoughICP);
     }
 
     let to_transfer_amount = icp_balance_e8s.checked_sub(TRANSFER_FEE).unwrap();
@@ -137,8 +138,7 @@ pub async fn try_retrieve_icp(target: Principal) -> Result<Nat, BoomerangError> 
             Ok(block_index) => {
                 log!(
                     INFO,
-                    "Transfered ICP for {target} at block index: {}",
-                    block_index
+                    "Transfered ICP for {target} at block index: {block_index}",
                 );
                 Ok(block_index)
             }

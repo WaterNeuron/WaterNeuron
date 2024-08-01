@@ -14,9 +14,14 @@ type BoomerangError = variant {
   GenericError : record { code : int32; message : text };
   TransferError : TransferError;
   ConversionError : ConversionError;
-  IcpNotAvailable;
   ApproveError : ApproveError;
-  BalanceOfError : text;
+  NotEnoughICP;
+};
+type CanisterIds = record {
+  wtn_ledger_id : principal;
+  icp_ledger_id : principal;
+  water_neuron_id : principal;
+  nicp_ledger_id : principal;
 };
 type ConversionError = variant {
   GenericError : record { code : int32; message : text };
@@ -56,7 +61,7 @@ type TransferFromError = variant {
   InsufficientFunds : record { balance : nat };
 };
 type WithdrawalSuccess = record { block_index : nat; withdrawal_id : nat64 };
-service : {
+service : (CanisterIds) -> {
   get_staking_account_id : (principal) -> (text) query;
   get_unstaking_account : (principal) -> (Account) query;
   notify_icp_deposit : (principal) -> (Result);
