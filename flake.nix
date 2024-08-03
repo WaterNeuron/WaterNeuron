@@ -1,57 +1,71 @@
 {
   inputs = {
-    # Track a specific tag on the nixpkgs repo.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-
-    # The flake format itself is very minimal, so the use of this
-    # library is common.
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  # Here we can define various kinds of "outputs": packages, tests,
-  # and so on, but we will only define a development shell.
-
   outputs = { nixpkgs, flake-utils, ... }:
-
-    # For every platform that Nix supports, we ...
     flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
 
-      # ... get the package set for this particular platform ...
-      let pkgs = import nixpkgs { inherit system; };
+        customLibunwind = pkgs.libunwind.overrideAttrs (oldAttrs: {
+          outputs = [ "out" "dev" ];
+          configureFlags = (oldAttrs.configureFlags or []) ++ [
+            "--enable-shared"
+            "--enable-static"
+          ];
+          postInstall = ''
+            ${oldAttrs.postInstall or ""}
+            mkdir -p $dev/include
+            cp -r include/* $dev/include/
+          '';
+        });
       in
       {
-        # ... and define a development shell for it ...
-        devShells.default =
+        devShells.default = pkgs.mkShellNoCC {
+          name = "custom_dev_environment";
 
-          # ... with no globally-available CC toolchain ...
-          pkgs.mkShellNoCC {
-            name = "custom_dev_environment";
+          packages = with pkgs; [
+            gcc
+            gnumake
+            binutils
+            coreutils
+            pkg-config
+            openssl
+            customLibunwind
+            libusb1
+            sqlite
+            zlib
+            llvmPackages_18.libclang
+            protobuf
+            llvm
+            lmdb
+            xz
+            pkg-config
+          ];
 
-            # ... which makes available the following dependencies,
-            # all sourced from the `pkgs` package set:
-            packages = with pkgs; [
-              # Equivalent to build-essential
-              gcc
-              gnumake
-              binutils
-              coreutils
+          shellHook = ''
+            echo "Custom development environment loaded"
+            echo "Checking libunwind installation:"
+            echo "libunwind.out: ${customLibunwind.out}"
+            echo "libunwind.dev: ${customLibunwind.dev}"
+            echo "Searching for libunwind.h:"
+            find ${customLibunwind.dev} -name libunwind.h || echo "libunwind.h not found"
 
-              pkg-config
-              openssl
-              libunwind
-              libusb1
-              sqlite
-              zlib
-              llvmPackages_18.libclang
-              protobuf
-              llvm
-              lmdb
-              xz
-            ];
+            export C_INCLUDE_PATH=${customLibunwind.dev}/include:$C_INCLUDE_PATH
+            export CFLAGS="-I${customLibunwind.dev}/include $CFLAGS"
+            export CPPFLAGS="-I${customLibunwind.dev}/include $CPPFLAGS"
+            export LIBRARY_PATH=${customLibunwind.out}/lib:$LIBRARY_PATH
+            export LD_LIBRARY_PATH=${customLibunwind.out}/lib:$LD_LIBRARY_PATH
+            export PKG_CONFIG_PATH=${customLibunwind.dev}/lib/pkgconfig:$PKG_CONFIG_PATH
 
-            shellHook = ''
-              echo "Custom development environment loaded"
-            '';
-          };
+
+            echo "Updated C_INCLUDE_PATH: $C_INCLUDE_PATH"
+            echo "Updated LIBRARY_PATH: $LIBRARY_PATH"
+            echo "Updated LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+            echo "Updated PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+          '';
+        };
       });
 }
