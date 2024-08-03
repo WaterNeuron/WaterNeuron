@@ -21,6 +21,10 @@
             cp -r include/* $dev/include/
           '';
         });
+
+        libunwindCflags = pkgs.lib.optionals (!pkgs.stdenv.isDarwin) [
+          "-I${customLibunwind.dev}/include"
+        ];
       in
       {
         devShells.default = pkgs.mkShellNoCC {
@@ -54,13 +58,13 @@
             find ${customLibunwind.dev} -name libunwind.h || echo "libunwind.h not found"
 
             export C_INCLUDE_PATH=${customLibunwind.dev}/include:$C_INCLUDE_PATH
-            export CFLAGS="-I${customLibunwind.dev}/include $CFLAGS"
+            export CFLAGS="${builtins.toString libunwindCflags} $CFLAGS"
             export CPPFLAGS="-I${customLibunwind.dev}/include $CPPFLAGS"
             export LIBRARY_PATH=${customLibunwind.out}/lib:$LIBRARY_PATH
             export LD_LIBRARY_PATH=${customLibunwind.out}/lib:$LD_LIBRARY_PATH
             export PKG_CONFIG_PATH=${customLibunwind.dev}/lib/pkgconfig:$PKG_CONFIG_PATH
 
-
+            echo "Updated CFLAGS: $CFLAGS"
             echo "Updated C_INCLUDE_PATH: $C_INCLUDE_PATH"
             echo "Updated LIBRARY_PATH: $LIBRARY_PATH"
             echo "Updated LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
