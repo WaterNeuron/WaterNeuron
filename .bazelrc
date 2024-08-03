@@ -1,3 +1,4 @@
+# workspace status
 build --workspace_status_command "scripts/workspace_status.sh"
 
 # --config=lint implies both --config=fmt and --config=clippy.
@@ -13,3 +14,7 @@ build --@rules_rust//:clippy.toml=//:clippy.toml --@rules_rust//:clippy_flags=-D
 build:fmt --aspects=@rules_rust//rust:defs.bzl%rustfmt_aspect
 build:fmt --output_groups=+rustfmt_checks
 build --@rules_rust//:rustfmt.toml=//:rustfmt.toml
+
+# cc
+build --host_platform=@io_tweag_rules_nixpkgs//nixpkgs/platforms:host
+build --crosstool_top=@nixpkgs_config_cc//:toolchain
