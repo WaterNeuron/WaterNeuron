@@ -7,7 +7,7 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
-REPO_URL="https://github.com/dfinity/ic.git"
+REPO_URL="https://github.com/dfinity/ic"
 OLD_COMMIT="$1"
 NEW_COMMIT="$2"
 
