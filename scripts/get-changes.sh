@@ -28,7 +28,7 @@ temp_commits=$(mktemp)
 git diff --name-only $OLD_COMMIT | xargs -I {} realpath "{}" | sort > "$temp_git"
 
 # Get Bazel target dependencies and write directly to temp file
-bazel query --output=location "filter('^//', kind('source file', deps(//ic-os/guestos/envs/prod:prod)))" | sed 's/:[0-9]*:[0-9]*: .*$//' | sort > "$temp_bazel"
+bazel query --output=location "filter('^//', kind('source file', deps(//ic-os/guestos/envs/prod:update-img.tar.gz)))" | sed 's/:[0-9]*:[0-9]*: .*$//' | sort > "$temp_bazel"
 
 # Use comm to find common files and save to a temporary file
 comm -12 "$temp_git" "$temp_bazel" > "$temp_common"
