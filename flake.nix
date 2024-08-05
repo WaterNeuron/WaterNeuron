@@ -24,7 +24,8 @@
       in
       {
         devShells.default = pkgs.mkShellNoCC {
-          packages = with pkgs; [
+
+        packages = with pkgs; [
             gcc
             gnumake
             binutils
@@ -42,8 +43,7 @@
             pkg-config
 
             shfmt
-
-			customLibunwind
+            customLibunwind
 
             bazel_7
             bazel-buildtools

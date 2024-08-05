@@ -16,7 +16,6 @@ DEPENDENCIES = [
     "@crate_index//:serde_cbor",
     "@crate_index//:serde_json",
     "@crate_index//:sha2",
-
 ]
 
 PROC_MACRO_DEPENDENCIES = []

@@ -39,7 +39,7 @@ crates_repository(
         "ic-canister-sandbox-backend-lib": [crate.annotation(
             rustc_flags = [
                 "-C",
-                "link-arg=-L$(location @libunwind//:libunwind)",
+                "link-arg=-L$(location @libunwind//:lib)",
                 "-C",
                 "link-arg=-lunwind",
             ],
@@ -332,7 +332,8 @@ load("@io_tweag_rules_nixpkgs//nixpkgs:repositories.bzl", "rules_nixpkgs_depende
 
 rules_nixpkgs_dependencies()
 
-load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl", "nixpkgs_local_repository", "nixpkgs_cc_configure")
+load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl", "nixpkgs_cc_configure", "nixpkgs_local_repository", "nixpkgs_package")
+
 nixpkgs_local_repository(
     name = "nixpkgs",
     nix_file = "//:nixpkgs.nix",
@@ -340,6 +341,12 @@ nixpkgs_local_repository(
 )
 
 nixpkgs_cc_configure(
-  repository = "@nixpkgs",
-  name = "nixpkgs_config_cc",
+    name = "nixpkgs_config_cc",
+    repository = "@nixpkgs",
+)
+
+nixpkgs_package(
+    name = "libunwind",
+    attribute_path = "customLibunwind",
+    repository = "@nixpkgs",
 )
