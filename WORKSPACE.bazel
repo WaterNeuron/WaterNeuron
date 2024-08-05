@@ -4,6 +4,8 @@ workspace(
 
 IC_VERSION = "7eace38b7580dc35af53b9180ea40480af4977dc"
 
+IC_REPO = "https://github.com/dfinity/ic/"
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
 
@@ -37,9 +39,23 @@ crates_repository(
             ],
         )],
         "ic-canister-sandbox-backend-lib": [crate.annotation(
+            build_script_data = [
+                "@libunwind//:lib",
+                "@libunwind//:include",
+            ],
+            build_script_env = {
+                "LIBUNWIND_INCLUDE_PATH": "$(location @@libunwind//:include)/include",
+            },
+            build_script_rustc_env = {
+                "LIBUNWIND_INCLUDE_PATH": "$(location @@libunwind//:include)/include",
+            },
+            data = [
+                "@libunwind//:include",
+                "@libunwind//:lib",
+            ],
             rustc_flags = [
                 "-C",
-                "link-arg=-L$(location @libunwind//:lib)",
+                "link-arg=-L$(locations @libunwind//:lib)",
                 "-C",
                 "link-arg=-lunwind",
             ],
@@ -61,76 +77,76 @@ crates_repository(
             version = "4.5.9",
         ),
         "cycles-minting-canister": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "env_logger": crate.spec(version = "^0.11.3"),
         "hex": crate.spec(version = "^0.4.3"),
         "ic-agent": crate.spec(version = "^0.36.0"),
         "ic-base-types": crate.spec(
-            git = "https://github.com/dfinity/ic/",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-cdk": crate.spec(version = "^0.13.2"),
         "ic-cdk-macros": crate.spec(version = "^0.13.2"),
         "ic-canister-log": crate.spec(version = "^0.2.0"),
         "ic-canisters-http-types": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-icrc1-ledger": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-metrics-encoder": crate.spec(version = "^1.1.1"),
         "ic-nns-constants": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-nns-governance": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-sns-governance": crate.spec(
-            git = "https://github.com/dfinity/ic/",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-sns-init": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-sns-root": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-sns-swap": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-stable-structures": crate.spec(version = "^0.6.5"),
         "ic-state-machine-tests": crate.spec(
-            git = "https://github.com/dfinity/ic.git",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-utils-ensure": crate.spec(
-            git = "https://github.com/dfinity/ic/",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic0": crate.spec(version = "^0.23.0"),
         "icp-ledger": crate.spec(
-            git = "https://github.com/dfinity/ic/",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "icrc-ledger-client-cdk": crate.spec(
-            git = "https://github.com/dfinity/ic/",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "icrc-ledger-types": crate.spec(
-            git = "https://github.com/dfinity/ic/",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "ic-management-canister-types": crate.spec(
-            git = "https://github.com/dfinity/ic/",
+            git = IC_REPO,
             rev = IC_VERSION,
         ),
         "lazy_static": crate.spec(version = "^1.5.0"),
@@ -347,6 +363,5 @@ nixpkgs_cc_configure(
 
 nixpkgs_package(
     name = "libunwind",
-    attribute_path = "customLibunwind",
     repository = "@nixpkgs",
 )

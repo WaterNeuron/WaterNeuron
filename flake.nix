@@ -1,15 +1,17 @@
 {
+  description = "devenv";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { nixpkgs, flake-utils, ... }:
+  outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
 
-        customLibunwind = pkgs.libunwind.overrideAttrs (oldAttrs: {
+        libunwind = pkgs.libunwind.overrideAttrs (oldAttrs: {
           outputs = [ "out" "dev" ];
           configureFlags = (oldAttrs.configureFlags or []) ++ [
             "--enable-shared"
@@ -23,9 +25,10 @@
         });
       in
       {
-        devShells.default = pkgs.mkShellNoCC {
+        packages.libunwind = libunwind;
 
-        packages = with pkgs; [
+        devShells.default = pkgs.mkShellNoCC {
+          packages = with pkgs; [
             gcc
             gnumake
             binutils
@@ -43,15 +46,15 @@
             pkg-config
 
             shfmt
-            customLibunwind
 
             bazel_7
             bazel-buildtools
           ];
 
           shellHook = ''
-            echo "Custom development environment loaded"
+            echo "bonjour:)"
           '';
         };
       });
 }
+
