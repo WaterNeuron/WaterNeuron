@@ -8,6 +8,19 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
+
+        customLibunwind = pkgs.libunwind.overrideAttrs (oldAttrs: {
+          outputs = [ "out" "dev" ];
+          configureFlags = (oldAttrs.configureFlags or []) ++ [
+            "--enable-shared"
+            "--enable-static"
+          ];
+          postInstall = ''
+            ${oldAttrs.postInstall or ""}
+            mkdir -p $dev/include
+            cp -r include/* $dev/include/
+          '';
+        });
       in
       {
         devShells.default = pkgs.mkShellNoCC {
@@ -27,6 +40,10 @@
             lmdb
             xz
             pkg-config
+
+            shfmt
+
+			customLibunwind
 
             bazel_7
             bazel-buildtools

@@ -1,5 +1,5 @@
 {
-  "checksum": "f19a7f7451d9bb75ae31027f9857efc0aa1215d4ee543b3110a97250a0a0aa5d",
+  "checksum": "f7c15d14a50952bd44a761d5d82fc29360713eb38793e5a04edd083ce3224fe0",
   "crates": {
     "addr2line 0.22.0": {
       "name": "addr2line",
@@ -15196,12 +15196,6 @@
           ],
           "selects": {}
         },
-        "extra_deps": {
-          "common": [
-            "@libunwind//:libunwind_headers"
-          ],
-          "selects": {}
-        },
         "edition": "2021",
         "rustc_flags": {
           "common": [
@@ -15215,13 +15209,6 @@
         "version": "0.9.0"
       },
       "build_script_attrs": {
-        "data": {
-          "common": [
-            "@libunwind//:include/libunwind.h",
-            "@libunwind//:libunwind_headers"
-          ],
-          "selects": {}
-        },
         "data_glob": [
           "**"
         ],
@@ -15232,22 +15219,6 @@
               "target": "cc"
             }
           ],
-          "selects": {}
-        },
-        "build_script_env": {
-          "common": {
-            "LIBUNWIND_H_PATH": "$(execpath @libunwind//:include/libunwind.h)",
-            "LIBUNWIND_INCLUDE_PATH": "$(execpath @libunwind//:libunwind_headers)",
-            "LIBUNWIND_PATH": "$${pwd}/external/libunwind"
-          },
-          "selects": {}
-        },
-        "rustc_env": {
-          "common": {
-            "LIBUNWIND_H_PATH": "$(execpath @libunwind//:include/libunwind.h)",
-            "LIBUNWIND_INCLUDE_PATH": "$(execpath @libunwind//:libunwind_headers)",
-            "LIBUNWIND_PATH": "$${pwd}/external/libunwind"
-          },
           "selects": {}
         }
       },

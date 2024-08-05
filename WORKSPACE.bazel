@@ -37,27 +37,12 @@ crates_repository(
             ],
         )],
         "ic-canister-sandbox-backend-lib": [crate.annotation(
-            build_script_data = [
-                "@libunwind//:libunwind_headers",
-                "@libunwind//:include/libunwind.h",
-            ],
-            build_script_env = {
-                "LIBUNWIND_PATH": "$${pwd}/external/libunwind",
-                "LIBUNWIND_INCLUDE_PATH": "$(execpath @libunwind//:libunwind_headers)",
-                "LIBUNWIND_H_PATH": "$(execpath @libunwind//:include/libunwind.h)",
-            },
-            build_script_rustc_env = {
-                "LIBUNWIND_PATH": "$${pwd}/external/libunwind",
-                "LIBUNWIND_INCLUDE_PATH": "$(execpath @libunwind//:libunwind_headers)",
-                "LIBUNWIND_H_PATH": "$(execpath @libunwind//:include/libunwind.h)",
-            },
             rustc_flags = [
                 "-C",
                 "link-arg=-L$(location @libunwind//:libunwind)",
                 "-C",
                 "link-arg=-lunwind",
             ],
-            deps = ["@libunwind//:libunwind_headers"],
         )],
     },
     cargo_lockfile = "//:Cargo.lock",
@@ -323,11 +308,6 @@ ic_candidfile(
     sha256 = "8795307a19db7ac1d702e4275a2efe217bbdaee537cbd4d5eb5ba1bc7ff590ac",
 )
 
-# shfmt binary for fast shell linting
-load("//bazel:shfmt.bzl", "shfmt")
-
-shfmt(name = "shfmt")
-
 # rust-analyzer
 load("@rules_rust//tools/rust_analyzer:deps.bzl", "rust_analyzer_dependencies")
 
@@ -362,12 +342,4 @@ nixpkgs_local_repository(
 nixpkgs_cc_configure(
   repository = "@nixpkgs",
   name = "nixpkgs_config_cc",
-)
-
-http_archive(
-    name = "libunwind",
-    build_file = "//third_party:libunwind.bzl",
-    sha256 = "4a6aec666991fb45d0889c44aede8ad6eb108071c3554fcdff671f9c94794976",
-    strip_prefix = "libunwind-1.6.2",
-    urls = ["https://github.com/libunwind/libunwind/releases/download/v1.6.2/libunwind-1.6.2.tar.gz"],
 )
