@@ -57,18 +57,25 @@
             echo "Searching for libunwind.h:"
             find ${customLibunwind.dev} -name libunwind.h || echo "libunwind.h not found"
 
-            export C_INCLUDE_PATH=${customLibunwind.dev}/include:$C_INCLUDE_PATH
-            export CFLAGS="${builtins.toString libunwindCflags} $CFLAGS"
-            export CPPFLAGS="-I${customLibunwind.dev}/include $CPPFLAGS"
-            export LIBRARY_PATH=${customLibunwind.out}/lib:$LIBRARY_PATH
-            export LD_LIBRARY_PATH=${customLibunwind.out}/lib:$LD_LIBRARY_PATH
+            # echo "Initial CFLAGS: $CFLAGS"
+            # echo "Initial C_INCLUDE_PATH: $C_INCLUDE_PATH"
+            # echo "Initial CPPFLAGS: $CPPFLAGS"
+            # echo "Initial LIBRARY_PATH: $LIBRARY_PATH"
+            # echo "Initial LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+            # echo "Initial PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+
+            export C_INCLUDE_PATH="${customLibunwind.dev}/include"
+            export CFLAGS="${builtins.toString libunwindCflags}"
+            export CPPFLAGS="-I${customLibunwind.dev}/include"
+            export LIBRARY_PATH="${customLibunwind.out}/lib"
+            export LD_LIBRARY_PATH="${customLibunwind.out}/lib"
             export PKG_CONFIG_PATH=${customLibunwind.dev}/lib/pkgconfig:$PKG_CONFIG_PATH
 
-            echo "Updated CFLAGS: $CFLAGS"
-            echo "Updated C_INCLUDE_PATH: $C_INCLUDE_PATH"
-            echo "Updated LIBRARY_PATH: $LIBRARY_PATH"
-            echo "Updated LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
-            echo "Updated PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+            # echo "Updated CFLAGS: $CFLAGS"
+            # echo "Updated C_INCLUDE_PATH: $C_INCLUDE_PATH"
+            # echo "Updated LIBRARY_PATH: $LIBRARY_PATH"
+            # echo "Updated LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+            # echo "Updated PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
           '';
         };
       });
