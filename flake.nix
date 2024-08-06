@@ -1,5 +1,5 @@
 {
-  description = "devenv";
+  description = "WaterNeuron development environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
@@ -11,7 +11,7 @@
       let
         pkgs = import nixpkgs { inherit system; };
 
-        libunwind = pkgs.libunwind.overrideAttrs (oldAttrs: {
+        customLibunwind = pkgs.libunwind.overrideAttrs (oldAttrs: {
           outputs = [ "out" "dev" ];
           configureFlags = (oldAttrs.configureFlags or []) ++ [
             "--enable-shared"
@@ -23,38 +23,40 @@
             cp -r include/* $dev/include/
           '';
         });
-      in
-      {
-        packages.libunwind = libunwind;
+
+        commonPackages = with pkgs; [
+          gcc
+          gnumake
+          binutils
+          coreutils
+          pkg-config
+          openssl
+          libusb1
+          sqlite
+          zlib
+          llvmPackages_18.libclang
+          protobuf
+          llvm
+          lmdb
+          xz
+          shfmt
+          bazel_7
+          bazel-buildtools
+        ];
+
+      in {
+        packages = {
+          libunwind = customLibunwind;
+          default = customLibunwind;
+        };
 
         devShells.default = pkgs.mkShellNoCC {
-          packages = with pkgs; [
-            gcc
-            gnumake
-            binutils
-            coreutils
-            pkg-config
-            openssl
-            libusb1
-            sqlite
-            zlib
-            llvmPackages_18.libclang
-            protobuf
-            llvm
-            lmdb
-            xz
-            pkg-config
-
-            shfmt
-
-            bazel_7
-            bazel-buildtools
-          ];
+          packages = commonPackages;
 
           shellHook = ''
-            echo "bonjour:)"
+            echo "Welcome to WaterNeuron development environment!"
           '';
         };
-      });
+      }
+    );
 }
-
