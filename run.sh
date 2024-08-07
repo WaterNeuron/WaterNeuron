@@ -40,7 +40,9 @@ if [[ "$MODE" == "build" ]]; then
         -c
         "bazel build ... && \
             sha256sum bazel-bin/water_neuron/canister_shrink.wasm.gz && \
-            cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/waterneuron.wasm.gz"
+            cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/waterneuron.wasm.gz && \
+            sha256sum bazel-bin/boomerang/canister_shrink.wasm.gz && \
+            cp bazel-bin/boomerang/canister_shrink.wasm.gz /artifacts/boomerang.wasm.gz"
     )
 fi
 
