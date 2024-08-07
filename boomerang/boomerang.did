@@ -28,14 +28,12 @@ type ConversionError = variant {
   TransferError : TransferError;
   AmountTooLow : record { minimum_amount_e8s : nat64 };
   TransferFromError : TransferFromError;
-  GuardError : record { guard_error : GuardError };
 };
 type DepositSuccess = record {
   nicp_amount : opt nat64;
   block_index : nat;
   transfer_id : nat64;
 };
-type GuardError = variant { AlreadyProcessing; TooManyConcurrentRequests };
 type Result = variant { Ok : DepositSuccess; Err : BoomerangError };
 type Result_1 = variant { Ok : WithdrawalSuccess; Err : BoomerangError };
 type Result_2 = variant { Ok : nat; Err : BoomerangError };
