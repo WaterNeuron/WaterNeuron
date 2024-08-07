@@ -39,7 +39,7 @@ git checkout e356ca660e9b8fa9138421143184416271404203
     " \
     --title "Install Boomerang Module" \
     --url "https://github.com/WaterNeuron/WaterNeuron" \
-    --pem-file /home/leo/.config/dfx/identity/default/identity.pem \
+    --hsm-slot 0 \
     --canister-ids-file ./sns_canister_ids.json > msg.json
 ```
 
