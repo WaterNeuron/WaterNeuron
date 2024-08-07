@@ -30,7 +30,6 @@ PODMAN_ARGS=(
     --userns=keep-id
     --mount type=bind,source=${HOME},target=${HOME}
     --mount type=bind,source=$(pwd),target=/waterneuron
-    --mount type=bind,source=$(pwd),target=/boomerang
     --mount type=bind,source=${ARTIFACTS_DIR},target=/artifacts
     "$PODMAN_HASH"
 )
