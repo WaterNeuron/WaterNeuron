@@ -18,9 +18,9 @@ type BoomerangError = variant {
   NotEnoughICP;
 };
 type CanisterIds = record {
-  wtn_ledger_id : principal;
   icp_ledger_id : principal;
   water_neuron_id : principal;
+  wtn_ledger_id : principal;
   nicp_ledger_id : principal;
 };
 type ConversionError = variant {
@@ -28,14 +28,12 @@ type ConversionError = variant {
   TransferError : TransferError;
   AmountTooLow : record { minimum_amount_e8s : nat64 };
   TransferFromError : TransferFromError;
-  GuardError : record { guard_error : GuardError };
 };
 type DepositSuccess = record {
   nicp_amount : opt nat64;
   block_index : nat;
   transfer_id : nat64;
 };
-type GuardError = variant { AlreadyProcessing; TooManyConcurrentRequests };
 type Result = variant { Ok : DepositSuccess; Err : BoomerangError };
 type Result_1 = variant { Ok : WithdrawalSuccess; Err : BoomerangError };
 type Result_2 = variant { Ok : nat; Err : BoomerangError };
@@ -62,8 +60,8 @@ type TransferFromError = variant {
 };
 type WithdrawalSuccess = record { block_index : nat; withdrawal_id : nat64 };
 service : (CanisterIds) -> {
-  get_staking_account_id : (principal) -> (text) query;
-  get_unstaking_account : (principal) -> (Account) query;
+  get_staking_account : (principal) -> (Account);
+  get_unstaking_account : (principal) -> (Account);
   notify_icp_deposit : (principal) -> (Result);
   notify_nicp_deposit : (principal) -> (Result_1);
   retrieve_nicp : (principal) -> (Result_2);

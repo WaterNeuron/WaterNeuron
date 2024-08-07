@@ -3,7 +3,7 @@ use crate::state_machine::{
 };
 use crate::{E8S, TRANSFER_FEE};
 use ic_state_machine_tests::PrincipalId;
-use icp_ledger::AccountIdentifier;
+use icp_ledger::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::account::Account;
 
 #[test]
@@ -25,10 +25,18 @@ fn check_e2e() {
 
     boomerang.advance_time_and_tick(60 * 60);
 
-    let account_id = boomerang.get_staking_account_id(caller.0);
+    let staking_account = boomerang.get_staking_account(caller.0);
 
     assert!(boomerang
-        .icp_transfer(caller.0, None, 1_000 * E8S, account_id)
+        .icp_transfer(
+            caller.0,
+            None,
+            1_000 * E8S,
+            AccountIdentifier::new(
+                staking_account.owner.into(),
+                staking_account.subaccount.map(|s| Subaccount(s))
+            )
+        )
         .is_ok());
 
     assert!(boomerang.notify_icp_deposit(caller.0).is_ok());
@@ -53,10 +61,12 @@ fn check_e2e() {
         )
         .unwrap();
 
-    let account = boomerang.get_unstaking_account(caller.0);
+    let unstaking_account = boomerang.get_unstaking_account(caller.0);
+
+    assert_ne!(staking_account, unstaking_account);
 
     assert!(boomerang
-        .nicp_transfer(caller.0, None, balance - TRANSFER_FEE, account)
+        .nicp_transfer(caller.0, None, balance - TRANSFER_FEE, unstaking_account)
         .is_ok());
     boomerang.advance_time_and_tick(60 * 60);
 

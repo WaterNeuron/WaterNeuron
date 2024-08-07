@@ -1,7 +1,7 @@
 use crate::log::INFO;
 use crate::{
-    derive_subaccount_staking, get_canister_ids, self_canister_id, BoomerangError, ConversionArg,
-    ConversionError, DepositSuccess, E8S, TRANSFER_FEE,
+    get_canister_ids, self_canister_id, BoomerangError, ConversionArg, ConversionError,
+    DepositSuccess, E8S, TRANSFER_FEE,
 };
 use candid::{Nat, Principal};
 use ic_canister_log::log;
@@ -9,6 +9,16 @@ use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
+use sha2::{Digest, Sha256};
+
+pub fn derive_subaccount_staking(principal: Principal) -> [u8; 32] {
+    const DOMAIN: &[u8] = b"STAKE-ICP";
+
+    let mut hasher = Sha256::new();
+    hasher.update(DOMAIN);
+    hasher.update(principal.as_slice());
+    hasher.finalize().into()
+}
 
 pub async fn retrieve_nicp(target: Principal) -> Result<Nat, BoomerangError> {
     let canister_ids = get_canister_ids();
@@ -147,4 +157,26 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
         }
         Err(error) => Err(BoomerangError::ConversionError(error)),
     }
+}
+
+#[test]
+fn should_return_different_array() {
+    use crate::nicp_to_icp::derive_subaccount_unstaking;
+
+    let p = Principal::anonymous();
+
+    assert_ne!(derive_subaccount_staking(p), derive_subaccount_unstaking(p));
+
+    let p1 =
+        Principal::from_text("xwpbi-y7r63-dbg7j-ukl5y-5ncft-j5zsv-6uca6-rj5ly-e5xa7-qjlm3-xqe")
+            .unwrap();
+    let p2 =
+        Principal::from_text("i57ky-ppa5u-2nmqo-ngzn6-3y6pl-4jqv2-b44iu-kdix5-76gp3-vxfjz-kqe")
+            .unwrap();
+
+    assert_ne!(derive_subaccount_staking(p1), derive_subaccount_staking(p2));
+    assert_ne!(
+        derive_subaccount_unstaking(p1),
+        derive_subaccount_unstaking(p2)
+    );
 }

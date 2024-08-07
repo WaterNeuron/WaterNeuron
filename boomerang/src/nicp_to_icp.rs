@@ -1,7 +1,7 @@
 use crate::log::INFO;
 use crate::{
-    derive_subaccount_unstaking, get_canister_ids, self_canister_id, BoomerangError, ConversionArg,
-    ConversionError, WithdrawalSuccess, E8S, TRANSFER_FEE,
+    get_canister_ids, self_canister_id, BoomerangError, ConversionArg, ConversionError,
+    WithdrawalSuccess, E8S, TRANSFER_FEE,
 };
 use candid::{Nat, Principal};
 use ic_canister_log::log;
@@ -9,6 +9,16 @@ use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
+use sha2::{Digest, Sha256};
+
+pub fn derive_subaccount_unstaking(principal: Principal) -> [u8; 32] {
+    const DOMAIN: &[u8] = b"UNSTAKE-nICP";
+
+    let mut hasher = Sha256::new();
+    hasher.update(DOMAIN);
+    hasher.update(principal.as_slice());
+    hasher.finalize().into()
+}
 
 pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess, BoomerangError> {
     let canister_ids = get_canister_ids();

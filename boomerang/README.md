@@ -13,7 +13,7 @@ Converting ICP from the treasury funds of the SNS is pretty straightforward.
 │SNS│                      │Boomerang│                          │ICP ledger││WaterNeuron││nICP ledger│
 └─┬─┘                      └────┬────┘                          └────┬─────┘└─────┬─────┘└─────┬─────┘
   │                             │                                    │            │            │      
-  │ get_staking_account_id(SNS) │                                    │            │            │      
+  │   get_staking_account(SNS)  │                                    │            │            │      
   │────────────────────────────>│                                    │            │            │      
   │                             │                                    │            │            │      
   │   (*) TransferSnsTreasuryFunds(to Boomerang(sub SNS), amount)    │            │            │      
