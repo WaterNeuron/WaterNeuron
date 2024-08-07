@@ -18,9 +18,9 @@ type BoomerangError = variant {
   NotEnoughICP;
 };
 type CanisterIds = record {
-  wtn_ledger_id : principal;
   icp_ledger_id : principal;
   water_neuron_id : principal;
+  wtn_ledger_id : principal;
   nicp_ledger_id : principal;
 };
 type ConversionError = variant {
@@ -62,8 +62,8 @@ type TransferFromError = variant {
 };
 type WithdrawalSuccess = record { block_index : nat; withdrawal_id : nat64 };
 service : (CanisterIds) -> {
-  get_staking_account_id : (principal) -> (text) query;
-  get_unstaking_account : (principal) -> (Account) query;
+  get_staking_account : (principal) -> (Account);
+  get_unstaking_account : (principal) -> (Account);
   notify_icp_deposit : (principal) -> (Result);
   notify_nicp_deposit : (principal) -> (Result_1);
   retrieve_nicp : (principal) -> (Result_2);

@@ -68,6 +68,19 @@ fn should_return_different_array() {
     let p = Principal::anonymous();
 
     assert_ne!(derive_subaccount_staking(p), derive_subaccount_unstaking(p));
+
+    let p1 =
+        Principal::from_text("xwpbi-y7r63-dbg7j-ukl5y-5ncft-j5zsv-6uca6-rj5ly-e5xa7-qjlm3-xqe")
+            .unwrap();
+    let p2 =
+        Principal::from_text("i57ky-ppa5u-2nmqo-ngzn6-3y6pl-4jqv2-b44iu-kdix5-76gp3-vxfjz-kqe")
+            .unwrap();
+
+    assert_ne!(derive_subaccount_staking(p1), derive_subaccount_staking(p2));
+    assert_ne!(
+        derive_subaccount_unstaking(p1),
+        derive_subaccount_unstaking(p2)
+    );
 }
 
 #[cfg(target_arch = "wasm32")]

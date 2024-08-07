@@ -2,7 +2,6 @@ use crate::{BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess, E8S,
 use candid::{Decode, Encode, Nat, Principal};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
 use ic_nns_constants::GOVERNANCE_CANISTER_ID;
-
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::pb::v1::neuron::DissolveState;
 use ic_sns_governance::pb::v1::{Neuron, NeuronId, NeuronPermission, NeuronPermissionType};
@@ -313,21 +312,21 @@ impl BoomerangSetup {
         .expect("failed to decode result in notify_nicp_deposit")
     }
 
-    fn get_staking_account_id(&self, caller: Principal) -> AccountIdentifier {
+    fn get_staking_account(&self, caller: Principal) -> Account {
         Decode!(
             &assert_reply(
                 self.env
                     .execute_ingress_as(
                         caller.into(),
                         self.boomerang_id,
-                        "get_staking_account_id",
+                        "get_staking_account",
                         Encode!(&(caller)).unwrap()
                     )
-                    .expect("failed canister call in get_staking_account_id")
+                    .expect("failed canister call in get_staking_account")
             ),
-            AccountIdentifier
+            Account
         )
-        .expect("failed to decode result in get_staking_account_id")
+        .expect("failed to decode result in get_staking_account")
     }
 
     fn get_unstaking_account(&self, caller: Principal) -> Account {
