@@ -30,6 +30,7 @@ PODMAN_ARGS=(
     --userns=keep-id
     --mount type=bind,source=${HOME},target=${HOME}
     --mount type=bind,source=$(pwd),target=/waterneuron
+    --mount type=bind,source=$(pwd),target=/boomerang
     --mount type=bind,source=${ARTIFACTS_DIR},target=/artifacts
     "$PODMAN_HASH"
 )
@@ -40,7 +41,9 @@ if [[ "$MODE" == "build" ]]; then
         -c
         "bazel build ... && \
             sha256sum bazel-bin/water_neuron/canister_shrink.wasm.gz && \
-            cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/waterneuron.wasm.gz"
+            cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/waterneuron.wasm.gz && \
+            sha256sum bazel-bin/boomerang/canister_shrink.wasm.gz && \
+            cp bazel-bin/boomerang/canister_shrink.wasm.gz /artifacts/boomerang.wasm.gz"
     )
 fi
 
