@@ -4,44 +4,50 @@
     "water_neuron": {
       "candid": "water_neuron/water_neuron.did",
       "type": "custom",
-      "wasm": "artifacts/waterneuron.wasm.gz"
+      "build": "sh -c 'bazel build //water_neuron:canister'",
+      "wasm": "bazel-bin/water_neuron/canister.wasm"
     },
     "boomerang": {
       "candid": "boomerang/boomerang.did",
       "type": "custom",
+      "build": "sh -c 'bazel build //boomerang:canister'",
       "wasm": "bazel-bin/boomerang/canister.wasm"
     },
     "wtn_governance": {
-      "candid": "candid/sns_governance.did",
       "type": "custom",
-      "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
+      "build": "sh -c 'bazel build @sns-governance-canister//:sns-governance-canister.wasm.gz && bazel build @sns-governance-candid//:governance.did'",
+      "candid": "external/sns-governance-candid/governance.did",
+      "wasm": "external/sns-governance-canister/sns-governance-canister.wasm.gz"
     },
     "wtn_ledger": {
-      "candid": "candid/icrc_ledger.did",
       "type": "custom",
-      "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
-    },
-    "governance": {
-      "candid": "candid/nns_governance.did",
-      "type": "custom",
-      "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
-    },
-    "icp_ledger": {
-      "candid": "candid/ledger.did",
-      "type": "custom",
-      "wasm": "water_neuron/src/tests/ledger-canister.wasm.gz"
+      "build": "sh -c 'bazel build @ic-icrc1-ledger-canister//:ic-icrc1-ledger.wasm.gz && bazel build @ic-icrc1-ledger-candid//:ledger.did'",
+      "candid": "external/ic-icrc1-ledger-candid/ledger.did",
+      "wasm": "external/ic-icrc1-ledger-canister/ic-icrc1-ledger.wasm.gz"
     },
     "nicp_ledger": {
-      "candid": "candid/icrc_ledger.did",
-      "shrink": false,
       "type": "custom",
-      "wasm": "water_neuron/src/state_machine/canisters/ic-icrc1-ledger.wasm.gz"
+      "build": "sh -c 'bazel build @ic-icrc1-ledger-canister//:ic-icrc1-ledger.wasm.gz && bazel build @ic-icrc1-ledger-candid//:ledger.did'",
+      "candid": "external/ic-icrc1-ledger-candid/ledger.did",
+      "wasm": "external/ic-icrc1-ledger-canister/ic-icrc1-ledger.wasm.gz"
     },
-    "nicp_index": {
-      "candid": "candid/sns_index.did",
-      "shrink": false,
+    "governance": {
       "type": "custom",
-      "wasm": "water_neuron/src/state_machine/canisters/ic-icrc1-ledger.wasm.gz"
+      "build": "sh -c 'bazel build @governance-canister//:governance-canister.wasm.gz && bazel build @governance-candid//:governance.did'",
+      "candid": "external/governance-candid/governance.did",
+      "wasm": "external/governance-canister/governance-canister.wasm.gz"
+    },
+    "icp_ledger": {
+      "type": "custom",
+      "build": "sh -c 'bazel build @ledger-canister//:ledger-canister.wasm.gz && bazel build @ledger-candid//:ledger.did'",
+      "candid": "external/ledger-candid/ledger.did",
+      "wasm": "external/ledger-canister/ledger-canister.wasm.gz"
+    },
+   "nicp_index": {
+      "type": "custom",
+      "build": "sh -c 'bazel build @ic-icrc1-index-ng-canister//:ic-icrc1-index-ng.wasm.gz && bazel build @ic-icrc1-index-ng-candid//:index-ng.did'",
+      "candid": "external/ic-icrc1-ledger-candid/ledger.did",
+      "wasm": "external/ic-icrc1-ledger-canister/ic-icrc1-ledger.wasm.gz"
     }
   },
   "defaults": {
@@ -50,5 +56,11 @@
       "packtool": ""
     }
   },
+ "networks": {
+   "local": {
+	 "bind": "127.0.0.1:8000",
+	 "type": "ephemeral"
+   }
+ },
   "version": 1
 }
