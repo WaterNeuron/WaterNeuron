@@ -1,5 +1,5 @@
 {
-  "checksum": "cdad6f1281c795f5871f95adda3a36bdc6c5a87c6db247d810ae18fdf0fa2659",
+  "checksum": "97a7fd378f08d00e77c28a0bb982a869bb88601c429621712cadc05546cdd112",
   "crates": {
     "addr2line 0.22.0": {
       "name": "addr2line",
@@ -7551,7 +7551,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -8395,7 +8395,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -8459,7 +8459,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -8511,7 +8511,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -8575,7 +8575,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -8639,7 +8639,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -10700,7 +10700,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -14114,7 +14114,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -14194,7 +14194,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -14270,7 +14270,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -14547,7 +14547,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -14636,7 +14636,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -14778,7 +14778,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -14846,7 +14846,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -14969,7 +14969,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -15021,7 +15021,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -15059,6 +15059,13 @@
         "compile_data_glob": [
           "**"
         ],
+        "data": {
+          "common": [
+            "@libunwind//:include",
+            "@libunwind//:lib"
+          ],
+          "selects": {}
+        },
         "deps": {
           "common": [
             {
@@ -15197,9 +15204,25 @@
           "selects": {}
         },
         "edition": "2021",
+        "rustc_flags": {
+          "common": [
+            "-C",
+            "link-arg=-L$(locations @libunwind//:lib)",
+            "-C",
+            "link-arg=-lunwind"
+          ],
+          "selects": {}
+        },
         "version": "0.9.0"
       },
       "build_script_attrs": {
+        "data": {
+          "common": [
+            "@libunwind//:include",
+            "@libunwind//:lib"
+          ],
+          "selects": {}
+        },
         "data_glob": [
           "**"
         ],
@@ -15210,6 +15233,18 @@
               "target": "cc"
             }
           ],
+          "selects": {}
+        },
+        "build_script_env": {
+          "common": {
+            "LIBUNWIND_INCLUDE_PATH": "$(location @@libunwind//:include)/include"
+          },
+          "selects": {}
+        },
+        "rustc_env": {
+          "common": {
+            "LIBUNWIND_INCLUDE_PATH": "$(location @@libunwind//:include)/include"
+          },
           "selects": {}
         }
       },
@@ -15223,7 +15258,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -15279,7 +15314,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -15396,7 +15431,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -15797,7 +15832,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -15940,7 +15975,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16052,7 +16087,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16136,7 +16171,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16299,7 +16334,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16391,7 +16426,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16430,7 +16465,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16478,7 +16513,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16695,7 +16730,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16767,7 +16802,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16843,7 +16878,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16891,7 +16926,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16947,7 +16982,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -16995,7 +17030,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17043,7 +17078,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17115,7 +17150,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17175,7 +17210,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17259,7 +17294,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17351,7 +17386,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17455,7 +17490,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17547,7 +17582,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17631,7 +17666,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17724,7 +17759,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -17981,7 +18016,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18065,7 +18100,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18113,7 +18148,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18182,7 +18217,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18274,7 +18309,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18342,7 +18377,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18390,7 +18425,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18451,7 +18486,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18580,7 +18615,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18628,7 +18663,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18761,7 +18796,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18837,7 +18872,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -18926,7 +18961,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19018,7 +19053,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19106,7 +19141,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19179,7 +19214,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19231,7 +19266,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19279,7 +19314,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19363,7 +19398,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19415,7 +19450,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19556,7 +19591,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19612,7 +19647,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19688,7 +19723,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19793,7 +19828,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19849,7 +19884,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -19961,7 +19996,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20013,7 +20048,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20085,7 +20120,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20166,7 +20201,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20238,7 +20273,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20314,7 +20349,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20370,7 +20405,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20430,7 +20465,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20494,7 +20529,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20554,7 +20589,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20646,7 +20681,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20810,7 +20845,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -20875,7 +20910,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21121,7 +21156,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21221,7 +21256,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21325,7 +21360,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21460,7 +21495,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21644,7 +21679,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21708,7 +21743,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21820,7 +21855,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21937,7 +21972,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -21994,7 +22029,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22042,7 +22077,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22098,7 +22133,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22158,7 +22193,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22222,7 +22257,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22299,7 +22334,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22392,7 +22427,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22456,7 +22491,7 @@
       "package_url": "https://github.com/dfinity/ic",
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22514,7 +22549,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22598,7 +22633,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22695,7 +22730,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22865,7 +22900,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -22978,7 +23013,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23067,7 +23102,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23106,7 +23141,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23293,7 +23328,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23332,7 +23367,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23400,7 +23435,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23460,7 +23495,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23528,7 +23563,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23576,7 +23611,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23656,7 +23691,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23729,7 +23764,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23768,7 +23803,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23841,7 +23876,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -23957,7 +23992,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24005,7 +24040,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24303,7 +24338,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24342,7 +24377,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24423,7 +24458,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24499,7 +24534,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24583,7 +24618,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24635,7 +24670,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24727,7 +24762,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24775,7 +24810,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24839,7 +24874,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24911,7 +24946,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -24963,7 +24998,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25023,7 +25058,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25083,7 +25118,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25152,7 +25187,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25216,7 +25251,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25421,7 +25456,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25688,7 +25723,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25736,7 +25771,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25841,7 +25876,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -25906,7 +25941,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -26030,7 +26065,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -26193,7 +26228,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -26380,7 +26415,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -26448,7 +26483,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -26652,7 +26687,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -26764,7 +26799,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -27040,7 +27075,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -27247,7 +27282,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -27344,7 +27379,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -27535,7 +27570,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -27840,7 +27875,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -27912,7 +27947,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -27972,7 +28007,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28024,7 +28059,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28108,7 +28143,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28244,7 +28279,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28412,7 +28447,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28468,7 +28503,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28532,7 +28567,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28592,7 +28627,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28631,7 +28666,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28683,7 +28718,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28818,7 +28853,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28870,7 +28905,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -28934,7 +28969,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -29002,7 +29037,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -29155,7 +29190,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -29534,7 +29569,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -29675,7 +29710,7 @@
       "package_url": "https://github.com/dfinity/ic",
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -29742,7 +29777,7 @@
       "package_url": "https://github.com/dfinity/ic",
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -29809,7 +29844,7 @@
       "package_url": "https://github.com/dfinity/ic",
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -32251,7 +32286,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -34134,7 +34169,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -35481,7 +35516,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -39343,7 +39378,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -49649,7 +49684,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },
@@ -50206,7 +50241,7 @@
       "package_url": null,
       "repository": {
         "Git": {
-          "remote": "https://github.com/dfinity/ic.git",
+          "remote": "https://github.com/dfinity/ic/",
           "commitish": {
             "Rev": "7eace38b7580dc35af53b9180ea40480af4977dc"
           },

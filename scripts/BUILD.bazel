@@ -4,12 +4,10 @@ sh_test(
     srcs = ["shfmt-lint.sh"],
     data = [
         "//:WORKSPACE.bazel",
-        "@shfmt",
     ],
     env = {
         # Hack to escape the sandbox and grep on the actual repository
         "WORKSPACE": "$(rootpath //:WORKSPACE.bazel)",
-        "shfmt_path": "$(rootpath @shfmt//:shfmt)",
     },
     tags = [
         "external",  # force test to be unconditionally executed.
@@ -24,12 +22,10 @@ sh_binary(
     srcs = ["shfmt-format.sh"],
     data = [
         "//:WORKSPACE.bazel",
-        "@shfmt",
     ],
     env = {
         # Hack to escape the sandbox and grep on the actual repository
         "WORKSPACE": "$(rootpath //:WORKSPACE.bazel)",
-        "shfmt_path": "$(rootpath @shfmt//:shfmt)",
     },
     tags = [
         "local",  # precludes the action or test from being remotely cached, remotely executed, or run inside the sandbox.

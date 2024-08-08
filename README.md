@@ -19,14 +19,9 @@ sudo apt-get install podman git
 ```
 
 ## Verify
+List of proposals changing the canister
+
 ### [Proposal#9](https://dashboard.internetcomputer.org/sns/jmod6-4iaaa-aaaaq-aadkq-cai/proposal/9)
-
-Spin up the local container
-```bash
-./run.sh
-```
-
-Verify the proposal
 ```bash
 bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=d81ded9adbee1475f8f63b125d23eec861c9d163 -- \
     --proposal-id 9 \
@@ -39,13 +34,6 @@ bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=d81ded9adbee1475f8
 ```
 
 ### [Proposal#27](https://dashboard.internetcomputer.org/sns/jmod6-4iaaa-aaaaq-aadkq-cai/proposal/27)
-
-Spin up the local container
-```bash
-./run.sh
-```
-
-Verify the proposal
 ```bash
 bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=a8aad61870061619b14d61f3f9f1bb279dd03047 -- \
     --proposal-id 27 \
@@ -57,13 +45,6 @@ bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=a8aad61870061619b1
 ```
 
 ### [Proposal#29](https://dashboard.internetcomputer.org/sns/jmod6-4iaaa-aaaaq-aadkq-cai/proposal/29)
-
-Spin up the local container
-```bash
-./run.sh
-```
-
-Verify the proposal
 ```bash
 bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=f5aa7c12166c94d0f652fea2ee4527040c4b059f -- \
     --proposal-id 29 \
