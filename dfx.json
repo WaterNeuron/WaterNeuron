@@ -17,22 +17,22 @@
       "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
     },
     "wtn_ledger": {
-      "candid": "candid/sns_ledger.did",
+      "candid": "candid/icrc_ledger.did",
       "type": "custom",
       "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
     },
     "governance": {
-      "candid": "governance_full.did",
+      "candid": "candid/nns_governance.did",
       "type": "custom",
       "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
     },
     "icp_ledger": {
-      "candid": "ledger.did",
+      "candid": "candid/ledger.did",
       "type": "custom",
       "wasm": "water_neuron/src/tests/ledger-canister.wasm.gz"
     },
     "nicp_ledger": {
-      "candid": "ledger.did",
+      "candid": "candid/icrc_ledger.did",
       "shrink": false,
       "type": "custom",
       "wasm": "water_neuron/src/state_machine/canisters/ic-icrc1-ledger.wasm.gz"

@@ -1,6 +1,5 @@
 target/
 .dfx
-candid/
 
 # nix
 .direnv/
@@ -15,3 +14,5 @@ proptest-regressions
 artifacts/
 
 *.bin
+
+msg.json
