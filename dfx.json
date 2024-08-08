@@ -15,39 +15,39 @@
     },
     "wtn_governance": {
       "type": "custom",
-      "build": "sh -c 'bazel build @sns-governance-canister//:sns-governance-canister.wasm.gz && bazel build @sns-governance-candid//:governance.did'",
-      "candid": "external/sns-governance-candid/governance.did",
-      "wasm": "external/sns-governance-canister/sns-governance-canister.wasm.gz"
+      "build": "sh -c 'bazel build @sns-governance-canister//:sns-governance-canister.wasm.gz && bazel build @sns-governance-candid//:governance.did && mkdir -p canisters candid && cp $(bazel info output_base)/external/sns-governance-canister/sns-governance-canister.wasm.gz canisters/ && cp $(bazel info output_base)/external/sns-governance-candid/governance.did candid/'",
+      "candid": "candid/governance.did",
+      "wasm": "canisters/sns-governance-canister.wasm.gz"
     },
     "wtn_ledger": {
       "type": "custom",
-      "build": "sh -c 'bazel build @ic-icrc1-ledger-canister//:ic-icrc1-ledger.wasm.gz && bazel build @ic-icrc1-ledger-candid//:ledger.did'",
-      "candid": "external/ic-icrc1-ledger-candid/ledger.did",
-      "wasm": "external/ic-icrc1-ledger-canister/ic-icrc1-ledger.wasm.gz"
+      "build": "sh -c 'bazel build @ic-icrc1-ledger-canister//:ic-icrc1-ledger.wasm.gz && bazel build @ic-icrc1-ledger-candid//:ledger.did && mkdir -p canisters candid && cp $(bazel info output_base)/external/ic-icrc1-ledger-canister/ic-icrc1-ledger.wasm.gz canisters/ && cp $(bazel info output_base)/external/ic-icrc1-ledger-candid/ledger.did candid/'",
+      "candid": "candid/ledger.did",
+      "wasm": "canisters/ic-icrc1-ledger.wasm.gz"
     },
     "nicp_ledger": {
       "type": "custom",
-      "build": "sh -c 'bazel build @ic-icrc1-ledger-canister//:ic-icrc1-ledger.wasm.gz && bazel build @ic-icrc1-ledger-candid//:ledger.did'",
-      "candid": "external/ic-icrc1-ledger-candid/ledger.did",
-      "wasm": "external/ic-icrc1-ledger-canister/ic-icrc1-ledger.wasm.gz"
+      "build": "sh -c 'bazel build @ic-icrc1-ledger-canister//:ic-icrc1-ledger.wasm.gz && bazel build @ic-icrc1-ledger-candid//:ledger.did && mkdir -p canisters candid && cp $(bazel info output_base)/external/ic-icrc1-ledger-canister/ic-icrc1-ledger.wasm.gz canisters/nicp_ledger.wasm.gz && cp $(bazel info output_base)/external/ic-icrc1-ledger-candid/ledger.did candid/nicp_ledger.did'",
+      "candid": "candid/nicp_ledger.did",
+      "wasm": "canisters/nicp_ledger.wasm.gz"
     },
     "governance": {
       "type": "custom",
-      "build": "sh -c 'bazel build @governance-canister//:governance-canister.wasm.gz && bazel build @governance-candid//:governance.did'",
-      "candid": "external/governance-candid/governance.did",
-      "wasm": "external/governance-canister/governance-canister.wasm.gz"
+      "build": "sh -c 'bazel build @governance-canister//:governance-canister.wasm.gz && bazel build @governance-candid//:governance.did && mkdir -p canisters candid && cp $(bazel info output_base)/external/governance-canister/governance-canister.wasm.gz canisters/ && cp $(bazel info output_base)/external/governance-candid/governance.did candid/'",
+      "candid": "candid/governance.did",
+      "wasm": "canisters/governance-canister.wasm.gz"
     },
     "icp_ledger": {
       "type": "custom",
-      "build": "sh -c 'bazel build @ledger-canister//:ledger-canister.wasm.gz && bazel build @ledger-candid//:ledger.did'",
-      "candid": "external/ledger-candid/ledger.did",
-      "wasm": "external/ledger-canister/ledger-canister.wasm.gz"
+      "build": "sh -c 'bazel build @ledger-canister//:ledger-canister.wasm.gz && bazel build @ledger-candid//:ledger.did && mkdir -p canisters candid && cp $(bazel info output_base)/external/ledger-canister/ledger-canister.wasm.gz canisters/ && cp $(bazel info output_base)/external/ledger-candid/ledger.did candid/icp_ledger.did'",
+      "candid": "candid/icp_ledger.did",
+      "wasm": "canisters/ledger-canister.wasm.gz"
     },
-   "nicp_index": {
+    "nicp_index": {
       "type": "custom",
-      "build": "sh -c 'bazel build @ic-icrc1-index-ng-canister//:ic-icrc1-index-ng.wasm.gz && bazel build @ic-icrc1-index-ng-candid//:index-ng.did'",
-      "candid": "external/ic-icrc1-ledger-candid/ledger.did",
-      "wasm": "external/ic-icrc1-ledger-canister/ic-icrc1-ledger.wasm.gz"
+      "build": "sh -c 'bazel build @ic-icrc1-index-ng-canister//:ic-icrc1-index-ng.wasm.gz && bazel build @ic-icrc1-index-ng-candid//:index-ng.did && mkdir -p canisters candid && cp $(bazel info output_base)/external/ic-icrc1-index-ng-canister/ic-icrc1-index-ng.wasm.gz canisters/ && cp $(bazel info output_base)/external/ic-icrc1-index-ng-candid/index-ng.did candid/'",
+      "candid": "candid/index-ng.did",
+      "wasm": "canisters/ic-icrc1-index-ng.wasm.gz"
     }
   },
   "defaults": {
@@ -56,11 +56,11 @@
       "packtool": ""
     }
   },
- "networks": {
-   "local": {
-	 "bind": "127.0.0.1:8000",
-	 "type": "ephemeral"
-   }
- },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
   "version": 1
 }

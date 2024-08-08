@@ -12,6 +12,8 @@ rust-project.json
 proptest-regressions
 
 artifacts/
+candid/
+canisters/
 
 *.bin
 
