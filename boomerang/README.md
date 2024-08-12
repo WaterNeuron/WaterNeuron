@@ -98,6 +98,7 @@ Step 2: Execute the previously registered function.
 
 ```
 
+## Treasury proposals instructions
 ```
 dfx canister call wtn_governance manage_neuron '(record {
     subaccount = blob "${NEURON_ID}"; 
