@@ -44,7 +44,7 @@ crates_repository(
         "assert_matches": crate.spec(version = "^1.5.0"),
         "async-trait": crate.spec(version = "^0.1.80"),
         "candid": crate.spec(
-            version = "^0.10.7",
+            version = "^0.10.10",
         ),
         "candid_parser": crate.spec(version = "^0.1.4"),
         "ciborium": crate.spec(version = "^0.2.2"),
@@ -63,8 +63,8 @@ crates_repository(
             git = "https://github.com/dfinity/ic/",
             rev = IC_VERSION,
         ),
-        "ic-cdk": crate.spec(version = "^0.13.2"),
-        "ic-cdk-macros": crate.spec(version = "^0.13.2"),
+        "ic-cdk": crate.spec(version = "^0.15.1"),
+        "ic-cdk-macros": crate.spec(version = "^0.15.0"),
         "ic-canister-log": crate.spec(version = "^0.2.0"),
         "ic-canisters-http-types": crate.spec(
             git = "https://github.com/dfinity/ic.git",
