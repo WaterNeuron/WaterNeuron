@@ -1003,14 +1003,15 @@ impl WaterNeuron {
         .unwrap()
     }
 
-    fn get_withdrawal_requests(&self, target: Principal) -> Vec<WithdrawalDetails> {
+    fn get_withdrawal_requests(&self, target: impl Into<Account>) -> Vec<WithdrawalDetails> {
+        let target_account: Account = target.into();
         Decode!(
             &assert_reply(
                 self.env
                     .execute_ingress(
                         self.water_neuron_id,
                         "get_withdrawal_requests",
-                        Encode!(&Some(target)).unwrap()
+                        Encode!(&Some(target_account)).unwrap()
                     )
                     .expect("failed to execute token transfer")
             ),

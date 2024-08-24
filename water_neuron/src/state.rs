@@ -183,8 +183,8 @@ pub struct State {
     pub transfer_executed: BTreeMap<TransferId, ExecutedTransfer>,
 
     // Maps for tracking purposes.
-    pub principal_to_deposit: BTreeMap<Principal, Vec<TransferId>>,
-    pub principal_to_withdrawal: BTreeMap<Principal, Vec<WithdrawalId>>,
+    pub account_to_deposits: BTreeMap<Account, Vec<TransferId>>,
+    pub account_to_withdrawals: BTreeMap<Account, Vec<WithdrawalId>>,
 
     // Neurons
     pub neuron_id_6m: Option<NeuronId>,
@@ -223,8 +223,8 @@ impl State {
             maturity_neuron_to_block_indicies: Default::default(),
             withdrawal_finalized: Default::default(),
             withdrawal_id_to_request: BTreeMap::default(),
-            principal_to_deposit: BTreeMap::default(),
-            principal_to_withdrawal: BTreeMap::default(),
+            account_to_deposits: BTreeMap::default(),
+            account_to_withdrawals: BTreeMap::default(),
             transfer_id: 0,
             withdrawal_id: 0,
             voted_proposals: BTreeSet::default(),
@@ -428,8 +428,8 @@ impl State {
             ),
             None
         );
-        self.principal_to_deposit
-            .entry(receiver.owner)
+        self.account_to_deposits
+            .entry(receiver)
             .and_modify(|deposits| deposits.push(transfer_id))
             .or_insert(vec![transfer_id]);
     }
@@ -505,8 +505,8 @@ impl State {
                 )
             });
         let withdrawal_id = self.increment_withdrawal_id();
-        self.principal_to_withdrawal
-            .entry(receiver.owner)
+        self.account_to_withdrawals
+            .entry(receiver)
             .and_modify(|ids| ids.push(withdrawal_id))
             .or_insert(vec![withdrawal_id]);
         assert_eq!(
@@ -697,15 +697,15 @@ impl State {
             "pending_transfers do not match"
         );
         ensure_eq!(
-            self.principal_to_withdrawal,
-            other.principal_to_withdrawal,
-            "principal_to_withdrawal do not match"
+            self.account_to_withdrawals,
+            other.account_to_withdrawals,
+            "account_to_withdrawals do not match"
         );
 
         ensure_eq!(
-            self.principal_to_deposit,
-            other.principal_to_deposit,
-            "principal_to_deposit do not match"
+            self.account_to_deposits,
+            other.account_to_deposits,
+            "account_to_deposits do not match"
         );
         ensure_eq!(
             self.neuron_id_6m,

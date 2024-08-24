@@ -162,7 +162,7 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
                         continue;
                     }
                     if let Some(owner) = get_neuron_owner(&neuron) {
-                        if owner == self_canister_id() {
+                        if owner == self_canister_id() || owner == crate::NNS_GOVERNANCE_ID {
                             continue;
                         }
                         let vp = get_rounded_voting_power(&neuron, now_seconds);

@@ -1,11 +1,9 @@
-use crate::management::list_proposals;
-use crate::management::{get_sns_proposal, manage_neuron_sns};
-use crate::nns_types::convert_nns_proposal_to_sns_proposal;
-use crate::nns_types::ListProposalInfo;
+use crate::management::{get_sns_proposal, list_proposals, manage_neuron_sns};
+use crate::nns_types::{convert_nns_proposal_to_sns_proposal, ListProposalInfo};
 use crate::{
     compute_neuron_staking_subaccount_bytes, mutate_state, process_event, read_state,
     register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType, ProposalId,
-    TaskType, DEBUG, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
+    TaskType, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
 };
 use ic_canister_log::log;
 use ic_sns_governance::pb::v1::manage_neuron::Command as CommandSns;
@@ -149,11 +147,6 @@ pub async fn vote_on_nns_proposals() {
                 let diff_secs = deadline_timestamp_seconds
                     .saturating_sub(timestamp_nanos() / SEC_NANOS)
                     .saturating_sub(ONE_HOUR_SECONDS);
-                log!(
-                    DEBUG,
-                    "[vote_on_nns_proposals] found {} with deadline {deadline_timestamp_seconds}",
-                    proposal_id.id
-                );
                 if diff_secs == 0 {
                     if let Some(sns_proposal_id) =
                         read_state(|s| s.proposals.get(&proposal_id).cloned())

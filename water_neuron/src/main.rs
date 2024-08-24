@@ -3,6 +3,7 @@ use ic_canister_log::log;
 use ic_canisters_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_cdk_macros::{init, post_upgrade, query, update};
 use ic_metrics_encoder::MetricsEncoder;
+use icrc_ledger_types::icrc1::account::Account;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
 use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
@@ -289,7 +290,7 @@ fn get_info() -> CanisterInfo {
         neuron_8y_stake_e8s: s.main_neuron_8y_stake,
         neuron_8y_account: s.get_8y_neuron_account(),
         exchange_rate: s.get_icp_to_ncip_exchange_rate_e8s(),
-        stakers_count: s.principal_to_deposit.keys().len(),
+        stakers_count: s.account_to_deposits.keys().len(),
         total_icp_deposited: s.total_icp_deposited,
         nicp_supply: s.total_circulating_nicp,
         minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
@@ -299,11 +300,11 @@ fn get_info() -> CanisterInfo {
 }
 
 #[query]
-fn get_withdrawal_requests(maybe_principal: Option<Principal>) -> Vec<WithdrawalDetails> {
-    let principal = maybe_principal.unwrap_or(ic_cdk::caller());
+fn get_withdrawal_requests(maybe_account: Option<Account>) -> Vec<WithdrawalDetails> {
+    let account = maybe_account.unwrap_or(ic_cdk::caller().into());
     read_state(|s| {
-        s.principal_to_withdrawal
-            .get(&principal)
+        s.account_to_withdrawals
+            .get(&account)
             .cloned()
             .unwrap_or(vec![])
             .iter()
@@ -364,7 +365,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                 )?;
                 w.encode_gauge(
                     "stakers",
-                    s.principal_to_deposit.keys().len() as f64,
+                    s.account_to_deposits.keys().len() as f64,
                     "Stakers count",
                 )?;
                 w.encode_gauge(
@@ -474,7 +475,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
             neuron_8y_stake_e8s: s.main_neuron_8y_stake,
             neuron_8y_account: s.get_8y_neuron_account(),
             exchange_rate: s.get_icp_to_ncip_exchange_rate_e8s(),
-            stakers_count: s.principal_to_deposit.keys().len(),
+            stakers_count: s.account_to_deposits.keys().len(),
             total_icp_deposited: s.total_icp_deposited,
             nicp_supply: s.total_circulating_nicp,
             minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
