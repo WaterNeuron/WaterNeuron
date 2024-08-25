@@ -469,10 +469,10 @@ async fn process_pending_transfer() -> u64 {
 
     for transfer in pending_transfers {
         let (ledger_id, fee) = (transfer.unit.ledger_id(), transfer.unit.fee());
-        if transfer.amount <= fee {
+        if transfer.amount <= fee || transfer.receiver == NNS_GOVERNANCE_ID.into() {
             log!(
                 INFO,
-                "[process_pending_transfer] Amount lower than fee: {} skipping.",
+                "[process_pending_transfer] Impossible transfer with id {}, skipping.",
                 transfer.transfer_id
             );
             mutate_state(|s| {

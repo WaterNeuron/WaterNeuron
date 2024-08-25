@@ -158,7 +158,7 @@ service : (LiquidArg) -> {
   get_events : (GetEventsArg) -> (GetEventsResult) query;
   get_info : () -> (CanisterInfo) query;
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
-  get_withdrawal_requests : (opt principal) -> (vec WithdrawalDetails) query;
+  get_withdrawal_requests : (opt Account) -> (vec WithdrawalDetails) query;
   get_wtn_proposal_id : (nat64) -> (opt nat64) query;
   icp_to_nicp : (ConversionArg) -> (Result_1);
   nicp_to_icp : (ConversionArg) -> (Result_2);
