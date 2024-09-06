@@ -11,9 +11,19 @@ use ic_canister_log::log;
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
+use crate::management::merge_neuron;
+use crate::state::SIX_MONTHS_NEURON_NONCE;
 
 pub const MINIMUM_DEPOSIT_AMOUNT: ICP = ICP::ONE;
 pub const MINIMUM_WITHDRAWAL_AMOUNT: ICP = ICP::from_unscaled(10);
+
+pub async cancel_withdrawal(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
+    let caller = ic_cdk::caller();
+    let _guard_principal = GuardPrincipal::new(caller)
+        .map_err(|guard_error| ConversionError::GuardError { guard_error })?;
+
+    merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id);
+}
 
 pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, ConversionError> {
     let caller = ic_cdk::caller();

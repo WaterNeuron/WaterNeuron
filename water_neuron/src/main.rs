@@ -333,6 +333,13 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
     check_postcondition(water_neuron::conversion::icp_to_nicp(arg).await)
 }
 
+#[update]
+async fn cancel_unstake(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String>  {
+    reject_anonymous_call();
+
+    water_neuron::conversion::cancel_withdrawal(neuron_id);
+}
+
 #[query(hidden = true)]
 fn http_request(req: HttpRequest) -> HttpResponse {
     if req.path() == "/dashboard" {

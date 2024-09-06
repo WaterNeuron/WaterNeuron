@@ -2,7 +2,7 @@ use crate::nns_types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use crate::nns_types::manage_neuron::configure::Operation;
 use crate::nns_types::manage_neuron::{
     Command, Configure, Disburse, IncreaseDissolveDelay, NeuronIdOrSubaccount, Spawn, Split,
-    StartDissolving,
+    StartDissolving, Merge
 };
 use crate::nns_types::{
     AccountIdentifier, DisburseResponse, Empty, GovernanceError, ListNeurons, ListNeuronsResponse,
@@ -309,6 +309,16 @@ pub async fn split_neuron(
         NeuronNonceOrId::Nonce(neuron_nonce),
     )
     .await
+}
+
+pub async fn merge_neuron(
+    neuron_nonce: u64,
+    neuron_id: NeuronId, 
+) -> Result<ManageNeuronResponse, String> {
+    manage_neuron(
+        Command::Merge(Merge { source_neuron_id: neuron_id}), 
+        NeuronNonceOrId::Nonce(neuron_nonce),
+    ).await;
 }
 
 #[derive(Debug)]
