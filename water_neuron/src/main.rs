@@ -9,7 +9,9 @@ use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
 use water_neuron::logs::INFO;
 use water_neuron::management::register_vote;
-use water_neuron::nns_types::{GovernanceError, ManageNeuronResponse, Neuron, ProposalId};
+use water_neuron::nns_types::{
+    GovernanceError, ManageNeuronResponse, Neuron, NeuronId, ProposalId,
+};
 use water_neuron::numeric::{ICP, WTN};
 use water_neuron::sns_distribution::compute_rewards;
 use water_neuron::state::audit::{process_event, replay_events};
@@ -334,10 +336,31 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 }
 
 #[update]
-async fn cancel_unstake(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String>  {
+async fn cancel_unstake(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
     reject_anonymous_call();
 
-    water_neuron::conversion::cancel_withdrawal(neuron_id);
+    let neuron_ids: Vec<Option<NeuronId>> = read_state(|s| {
+        s.account_to_withdrawals
+            .get(&ic_cdk::caller().into())
+            .cloned()
+            .unwrap_or(vec![])
+            .iter()
+            .map(|id| s.withdrawal_id_to_request.get(id).unwrap().neuron_id)
+            .collect::<Vec<Option<NeuronId>>>()
+    });
+
+    let mut is_owner = false;
+    for maybe_neuron in neuron_ids {
+        if let Some(target_neuron_id) = maybe_neuron {
+            is_owner = is_owner || neuron_id == target_neuron_id;
+        }
+    }
+
+    if is_owner {
+        water_neuron::conversion::cancel_withdrawal(neuron_id).await
+    } else {
+        Err("Could not cancel withdrawal.".to_string())
+    }
 }
 
 #[query(hidden = true)]

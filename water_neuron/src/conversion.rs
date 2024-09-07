@@ -1,28 +1,35 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::INFO;
+use crate::management::{merge_neuron, stop_dissolvement};
+use crate::nns_types::{ManageNeuronResponse, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
+use crate::state::SIX_MONTHS_NEURON_NONCE;
 use crate::state::{mutate_state, read_state};
 use crate::tasks::{schedule_now, TaskType};
+use crate::GuardError;
 use crate::{ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess, ICP_LEDGER_ID};
 use candid::Nat;
 use ic_canister_log::log;
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
-use crate::management::merge_neuron;
-use crate::state::SIX_MONTHS_NEURON_NONCE;
 
 pub const MINIMUM_DEPOSIT_AMOUNT: ICP = ICP::ONE;
 pub const MINIMUM_WITHDRAWAL_AMOUNT: ICP = ICP::from_unscaled(10);
 
-pub async cancel_withdrawal(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
+pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
     let caller = ic_cdk::caller();
-    let _guard_principal = GuardPrincipal::new(caller)
-        .map_err(|guard_error| ConversionError::GuardError { guard_error })?;
-
-    merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id);
+    let _guard_principal =
+        GuardPrincipal::new(caller).map_err(|guard_error| match guard_error {
+            GuardError::AlreadyProcessing => "Already processing request.",
+            GuardError::TooManyConcurrentRequests => "Too many concurrent requests.",
+        })?;
+    schedule_now(TaskType::ProcessLogic);
+    
+    stop_dissolvement(neuron_id).await?;
+    merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id).await
 }
 
 pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, ConversionError> {

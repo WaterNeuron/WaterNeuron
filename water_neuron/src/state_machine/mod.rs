@@ -885,22 +885,23 @@ impl WaterNeuron {
     }
 
     fn cancel_unstake(
-        &self, 
-        caller: PrincipalId, 
-        neuron_id: NeuronId, 
+        &self,
+        caller: PrincipalId,
+        neuron_id: NeuronId,
     ) -> Result<ManageNeuronResponse, String> {
         Decode!(
             &assert_reply(
                 self.env.execute_ingress_as(
-                    caller, 
-                    self.water_neuron_id, 
-                    "cancel_unstake", 
+                    caller,
+                    self.water_neuron_id,
+                    "cancel_unstake",
                     Encode!(&neuron_id).unwrap()
                 ).expect("failed to cancel_unstake")
-            ), 
+            ),
             Result<ManageNeuronResponse, String>
-        ).unwrap()
-    }  
+        )
+        .unwrap()
+    }
 
     fn get_airdrop_allocation(&self, caller: Principal) -> u64 {
         Decode!(
@@ -1277,7 +1278,6 @@ fn e2e_basic() {
 
     water_neuron.advance_time_and_tick(60 * 60);
 
-
     match water_neuron.nicp_to_icp(caller.0.into(), nicp_to_unwrap) {
         Ok(WithdrawalSuccess { withdrawal_id, .. }) => {
             assert_eq!(withdrawal_id, 1);
@@ -1285,16 +1285,42 @@ fn e2e_basic() {
         Err(e) => panic!("Expected WithdrawalSuccess, got {e:?}"),
     }
 
-    water_neuron.advance_time_and_tick(24*60*60);
+    water_neuron.advance_time_and_tick(24 * 60 * 60);
 
-    let requests = water_neuron.get_withdrawal_requests(caller.0);
-    assert_eq!(requests.len(), 1);
+    let neuron_ids: Vec<Option<NeuronId>> = water_neuron
+        .get_withdrawal_requests(caller.0)
+        .iter()
+        .map(|detail| detail.request.neuron_id)
+        .collect();
+    assert_eq!(neuron_ids.len(), 2);
 
-    let withdrawal_id = water_neuron.get_withdrawal_requests(caller.0)[0].request.withdraw_id;
+    match water_neuron.cancel_unstake(caller.0.into(), neuron_ids[1].unwrap()) {
+        Ok(response) => match response.command.unwrap() {
+            CommandResponse::Merge(merge) => {
+                println!("{:?}", merge);
+                assert_eq!(
+                    merge.source_neuron.unwrap().id.unwrap().id,
+                    12440400712491049369
+                );
+                assert_eq!(
+                    merge.target_neuron.unwrap().id.unwrap().id,
+                    12420353447771927594
+                );
+            }
+            CommandResponse::Error(e) => {
+                panic!(
+                    "Error during cancel_unstake call ({}):  {}",
+                    e.error_type, e.error_message
+                );
+            }
+            _ => panic!("Not the expected CommandResponse."),
+        },
+        Err(e) => {
+            panic!("Expected ManageNeuronResponse, got {e:?}");
+        }
+    }
 
-    match water_neuron.cancel_unstake(caller.0.into(), withdrawal_id);
-
-
+    water_neuron.advance_time_and_tick(60 * 60);
 
     let info = water_neuron.get_info();
     assert_eq!(info.exchange_rate, E8S);
@@ -2089,9 +2115,4 @@ fn should_mirror_all_proposals() {
         },
     );
     assert_eq!(proposals.proposals.len(), 4);
-}
-
-#[test]
-fn should_merge_neuron() {
-    let mut water_neuron = WaterNeuron::new();
 }
