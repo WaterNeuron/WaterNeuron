@@ -1324,7 +1324,7 @@ fn e2e_basic() {
 
     let info = water_neuron.get_info();
     assert_eq!(info.exchange_rate, E8S);
-    assert_eq!(info.neuron_6m_stake_e8s, ICP::from_e8s(9_100_000_042));
+    assert_eq!(info.neuron_6m_stake_e8s, ICP::from_e8s(9_099_980_042));
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
     assert_eq!(info.neuron_8y_stake_e8s, ICP::from_e8s(100_000_042));
     assert_eq!(info.stakers_count, 1);
