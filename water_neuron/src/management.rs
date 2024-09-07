@@ -7,7 +7,7 @@ use crate::nns_types::manage_neuron::{
 use crate::nns_types::{
     AccountIdentifier, DisburseResponse, Empty, GovernanceError, ListNeurons, ListNeuronsResponse,
     ListProposalInfo, ListProposalInfoResponse, ManageNeuron, ManageNeuronResponse, Neuron,
-    NeuronId, ProposalId,
+    NeuronId, NeuronInfo, ProposalId,
 };
 use crate::state::{read_state, NNS_GOVERNANCE_ID};
 use crate::{compute_neuron_staking_subaccount_bytes, CommandResponse};
@@ -241,6 +241,21 @@ pub async fn get_neuron_ids() -> Result<Vec<u64>, String> {
             .await
             .map_err(|(code, msg)| (code as i32, msg));
     match res_gov {
+        Ok((res,)) => Ok(res),
+        Err((code, msg)) => Err(format!(
+            "Error while calling Governance canister ({}): {:?}",
+            code, msg
+        )),
+    }
+}
+
+pub async fn get_neuron_info(id: u64) -> Result<Result<NeuronInfo, GovernanceError>, String> {
+    let result: Result<(Result<NeuronInfo, GovernanceError>,), (i32, String)> =
+        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "get_neuron_info", (id,))
+            .await
+            .map_err(|(code, msg)| (code as i32, msg));
+
+    match result {
         Ok((res,)) => Ok(res),
         Err((code, msg)) => Err(format!(
             "Error while calling Governance canister ({}): {:?}",

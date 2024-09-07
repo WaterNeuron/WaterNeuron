@@ -1,6 +1,6 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::INFO;
-use crate::management::{merge_neuron, stop_dissolvement};
+use crate::management::{get_neuron_info, merge_neuron, stop_dissolvement};
 use crate::nns_types::{ManageNeuronResponse, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
@@ -8,8 +8,8 @@ use crate::state::event::EventType;
 use crate::state::SIX_MONTHS_NEURON_NONCE;
 use crate::state::{mutate_state, read_state};
 use crate::tasks::{schedule_now, TaskType};
-use crate::GuardError;
 use crate::{ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess, ICP_LEDGER_ID};
+use crate::{GuardError, DEFAULT_LEDGER_FEE};
 use candid::Nat;
 use ic_canister_log::log;
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
@@ -26,10 +26,38 @@ pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<ManageNeuronRespon
             GuardError::AlreadyProcessing => "Already processing request.",
             GuardError::TooManyConcurrentRequests => "Too many concurrent requests.",
         })?;
+
+    let icp_stake_e8s;
+    match get_neuron_info(neuron_id.id).await? {
+        Ok(neuron_info) => icp_stake_e8s = neuron_info.stake_e8s,
+        Err(gov_err) => {
+            return Err(format!("governance error: {gov_err:?}"));
+        }
+    }
+
     schedule_now(TaskType::ProcessLogic);
-    
+
     stop_dissolvement(neuron_id).await?;
-    merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id).await
+    let result = merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id).await?;
+
+    schedule_now(TaskType::ProcessPendingTransfers);
+
+    mutate_state(|s| {
+        process_event(
+            s,
+            EventType::MergeNeuron {
+                icp_stake_e8s: ICP::from_e8s(
+                    icp_stake_e8s.checked_sub(DEFAULT_LEDGER_FEE).unwrap(),
+                ),
+                receiver: Account {
+                    owner: caller,
+                    subaccount: None,
+                },
+            },
+        );
+    });
+
+    Ok(result)
 }
 
 pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, ConversionError> {

@@ -120,6 +120,14 @@ pub enum EventType {
         #[n(1)]
         sns_proposal_id: ProposalId,
     },
+
+    #[n(16)]
+    MergeNeuron {
+        #[n(0)]
+        icp_stake_e8s: ICP,
+        #[cbor(n(1), with = "crate::cbor::account")]
+        receiver: Account,
+    },
 }
 
 #[derive(CandidType, Encode, Decode, Debug, PartialEq, Eq, Clone, Deserialize)]

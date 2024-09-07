@@ -346,21 +346,17 @@ async fn cancel_unstake(neuron_id: NeuronId) -> Result<ManageNeuronResponse, Str
             .unwrap_or(vec![])
             .iter()
             .map(|id| s.withdrawal_id_to_request.get(id).unwrap().neuron_id)
-            .collect::<Vec<Option<NeuronId>>>()
+            .collect()
     });
 
-    let mut is_owner = false;
-    for maybe_neuron in neuron_ids {
-        if let Some(target_neuron_id) = maybe_neuron {
-            is_owner = is_owner || neuron_id == target_neuron_id;
+    for maybe_neuron_id in neuron_ids {
+        if let Some(target_neuron_id) = maybe_neuron_id {
+            if target_neuron_id == neuron_id {
+                return water_neuron::conversion::cancel_withdrawal(neuron_id).await;
+            }
         }
     }
-
-    if is_owner {
-        water_neuron::conversion::cancel_withdrawal(neuron_id).await
-    } else {
-        Err("Could not cancel withdrawal.".to_string())
-    }
+    Err("Could not cancel withdrawal.".to_string())
 }
 
 #[query(hidden = true)]

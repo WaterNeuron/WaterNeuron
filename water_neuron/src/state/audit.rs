@@ -68,6 +68,10 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             withdrawal_id,
             neuron_id,
         } => state.record_neuron_split(*withdrawal_id, *neuron_id),
+        EventType::MergeNeuron {
+            icp_stake_e8s,
+            receiver,
+        } => state.record_neuron_merge(*icp_stake_e8s, *receiver),
         EventType::StartedToDissolve { withdrawal_id } => {
             state.record_started_to_dissolve_neuron(*withdrawal_id)
         }

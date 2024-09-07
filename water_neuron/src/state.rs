@@ -101,7 +101,7 @@ pub struct WithdrawalRequest {
     pub timestamp: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct WithdrawalDetails {
     pub status: WithdrawalStatus,
     pub request: WithdrawalRequest,
@@ -538,6 +538,32 @@ impl State {
             .neuron_id_to_withdrawal_id
             .insert(neuron_id, withdrawal_id)
             .is_none());
+    }
+
+    pub fn record_neuron_merge(&mut self, icp_stake_e8s: ICP, receiver: Account) {
+        let nicp_to_mint = self.convert_icp_to_nicp(icp_stake_e8s);
+        self.total_circulating_nicp += nicp_to_mint;
+
+        self.tracked_6m_stake += icp_stake_e8s;
+        let transfer_id = self.increment_transfer_id();
+        assert_eq!(
+            self.pending_transfers.insert(
+                transfer_id,
+                PendingTransfer {
+                    transfer_id,
+                    from_subaccount: None,
+                    amount: nicp_to_mint.0,
+                    receiver,
+                    unit: Unit::NICP,
+                    memo: None
+                }
+            ),
+            None
+        );
+        self.account_to_deposits
+            .entry(receiver)
+            .and_modify(|deposits| deposits.push(transfer_id))
+            .or_insert(vec![transfer_id]);
     }
 
     pub fn record_started_to_dissolve_neuron(&mut self, withdrawal_id: WithdrawalId) {

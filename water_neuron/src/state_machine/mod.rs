@@ -1032,7 +1032,7 @@ impl WaterNeuron {
                         "get_withdrawal_requests",
                         Encode!(&Some(target_account)).unwrap()
                     )
-                    .expect("failed to execute token transfer")
+                    .expect("failed to execute get_withdrawal_requests")
             ),
             Vec<WithdrawalDetails>
         )
@@ -1297,7 +1297,6 @@ fn e2e_basic() {
     match water_neuron.cancel_unstake(caller.0.into(), neuron_ids[1].unwrap()) {
         Ok(response) => match response.command.unwrap() {
             CommandResponse::Merge(merge) => {
-                println!("{:?}", merge);
                 assert_eq!(
                     merge.source_neuron.unwrap().id.unwrap().id,
                     12440400712491049369
@@ -1378,7 +1377,7 @@ fn e2e_basic() {
     assert!(neuron_6m_stake_e8s_before_proposal < water_neuron.get_info().neuron_6m_stake_e8s);
 
     dbg!(water_neuron.get_events());
-    assert_eq!(water_neuron.get_events().total_event_count, 22);
+    assert_eq!(water_neuron.get_events().total_event_count, 27);
 
     assert!(water_neuron
         .get_events()
@@ -1400,14 +1399,13 @@ fn e2e_basic() {
         .count();
 
     assert_eq!(count, 2);
-
     let info = water_neuron.get_info();
 
     assert_eq!(
         water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
         Nat::from(info.tracked_6m_stake.0)
     );
-    assert_eq!(info.exchange_rate, 5_270);
+    assert_eq!(info.exchange_rate, 5_261);
 
     assert_eq!(info.governance_fee_share_percent, 10);
 
@@ -1422,27 +1420,24 @@ fn e2e_basic() {
         ),
         Ok(_)
     );
-
     water_neuron.advance_time_and_tick(60);
     let info = water_neuron.get_info();
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
-    assert_eq!(info.exchange_rate, 5_270);
+    assert_eq!(info.exchange_rate, 5_261);
     assert_eq!(info.governance_fee_share_percent, 20);
-
     assert_eq!(
         water_neuron
             .icp_to_nicp(caller.0.into(), E8S)
             .unwrap()
             .nicp_amount,
-        Some(nICP::from_e8s(5_270))
+        Some(nICP::from_e8s(5_261))
     );
-
     assert_eq!(
         water_neuron
-            .nicp_to_icp(caller.0.into(), 5_2711)
+            .nicp_to_icp(caller.0.into(), nicp_to_unwrap)
             .unwrap()
             .icp_amount,
-        Some(ICP::from_e8s(1000165632))
+        Some(ICP::from_e8s(19008256016165))
     );
 
     assert_eq!(
@@ -1455,7 +1450,6 @@ fn e2e_basic() {
     );
 
     water_neuron.advance_time_and_tick(60 * 60);
-
     let neuron_id = match water_neuron
         .get_withdrawal_requests(caller.0)
         .last()
@@ -1467,7 +1461,7 @@ fn e2e_basic() {
     };
 
     let full_neuron = water_neuron.get_full_neuron(neuron_id.id).unwrap().unwrap();
-    assert_eq!(full_neuron.cached_neuron_stake_e8s, 1000155632);
+    assert_eq!(full_neuron.cached_neuron_stake_e8s, 19008256006165);
 }
 
 #[test]
