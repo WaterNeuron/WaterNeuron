@@ -31,14 +31,27 @@ pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<ManageNeuronRespon
     match get_neuron_info(neuron_id.id).await? {
         Ok(neuron_info) => icp_stake_e8s = neuron_info.stake_e8s,
         Err(gov_err) => {
-            return Err(format!("governance error: {gov_err:?}"));
+            return Err(format!("[cancel_withdrawal] Governance error: {gov_err:?}"));
         }
     }
 
     schedule_now(TaskType::ProcessLogic);
 
     stop_dissolvement(neuron_id).await?;
-    let result = merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id).await?;
+    match merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id).await?.command.expect("[cancel_withdrawal] Expected a command but got None.") {
+        CommandResponse::Merge(response) => {
+            
+        }, 
+        CommandResponse::Error(e) => {
+            Err(
+                "[cancel_withdrawal] Governance error ({}):  {}",
+                e.error_type, e.error_message
+            );
+        }, 
+        _ => {
+            Err("[cancel_withdrawal] Expected Merge command but got other.")
+        }
+    }
 
     schedule_now(TaskType::ProcessPendingTransfers);
 
@@ -47,7 +60,7 @@ pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<ManageNeuronRespon
             s,
             EventType::MergeNeuron {
                 icp_stake_e8s: ICP::from_e8s(
-                    icp_stake_e8s.checked_sub(DEFAULT_LEDGER_FEE).unwrap(),
+                    icp_stake_e8s.checked_sub(DEFAULT_LEDGER_FEE).expect("[cancel_withdrawal] Underflow while submitting the stake from the source neuron."),
                 ),
                 receiver: Account {
                     owner: caller,

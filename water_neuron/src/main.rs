@@ -10,7 +10,7 @@ use water_neuron::guards::GuardPrincipal;
 use water_neuron::logs::INFO;
 use water_neuron::management::register_vote;
 use water_neuron::nns_types::{
-    GovernanceError, ManageNeuronResponse, Neuron, NeuronId, ProposalId,
+    GovernanceError, MergeResponse, Neuron, NeuronId, ProposalId,
 };
 use water_neuron::numeric::{ICP, WTN};
 use water_neuron::sns_distribution::compute_rewards;
@@ -336,7 +336,7 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 }
 
 #[update]
-async fn cancel_unstake(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
+async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, String> {
     reject_anonymous_call();
 
     let neuron_ids: Vec<Option<NeuronId>> = read_state(|s| {
@@ -356,7 +356,7 @@ async fn cancel_unstake(neuron_id: NeuronId) -> Result<ManageNeuronResponse, Str
             }
         }
     }
-    Err("Could not cancel withdrawal.".to_string())
+    Err("Could not cancel withdrawal. Caller did not match owner.".to_string())
 }
 
 #[query(hidden = true)]
