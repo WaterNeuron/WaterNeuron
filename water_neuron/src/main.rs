@@ -9,7 +9,9 @@ use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
 use water_neuron::logs::INFO;
 use water_neuron::management::register_vote;
-use water_neuron::nns_types::{GovernanceError, MergeResponse, Neuron, NeuronId, ProposalId, ManageNeuronResponse};
+use water_neuron::nns_types::{
+    GovernanceError, ManageNeuronResponse, MergeResponse, Neuron, NeuronId, ProposalId,
+};
 use water_neuron::numeric::{ICP, WTN};
 use water_neuron::sns_distribution::compute_rewards;
 use water_neuron::state::audit::{process_event, replay_events};

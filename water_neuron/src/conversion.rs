@@ -1,7 +1,7 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::INFO;
 use crate::management::{get_neuron_info, merge_neuron, stop_dissolvement};
-use crate::nns_types::{MergeResponse, NeuronId, CommandResponse};
+use crate::nns_types::{CommandResponse, MergeResponse, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
