@@ -3,7 +3,7 @@ use crate::nns_types::{
     manage_neuron, manage_neuron::claim_or_refresh,
     manage_neuron::claim_or_refresh::MemoAndController, proposal::Action, ClaimOrRefreshResponse,
     CommandResponse, GovernanceError, ManageNeuron, ManageNeuronResponse, Neuron, Proposal,
-    ProposalInfo,
+    ProposalInfo, MergeResponse, 
 };
 use crate::sns_distribution::EXPECTED_INITIAL_BALANCE;
 use crate::state::event::{GetEventsArg, GetEventsResult};
@@ -884,21 +884,21 @@ impl WaterNeuron {
         .unwrap()
     }
 
-    fn cancel_unstake(
+    fn cancel_withdrawal(
         &self,
         caller: PrincipalId,
         neuron_id: NeuronId,
-    ) -> Result<ManageNeuronResponse, String> {
+    ) -> Result<MergeResponse, String> {
         Decode!(
             &assert_reply(
                 self.env.execute_ingress_as(
                     caller,
                     self.water_neuron_id,
-                    "cancel_unstake",
+                    "cancel_withdrawal",
                     Encode!(&neuron_id).unwrap()
-                ).expect("failed to cancel_unstake")
+                ).expect("failed to cancel_withdrawal")
             ),
-            Result<ManageNeuronResponse, String>
+            Result<MergeResponse, String>
         )
         .unwrap()
     }
@@ -1294,28 +1294,19 @@ fn e2e_basic() {
         .collect();
     assert_eq!(neuron_ids.len(), 2);
 
-    match water_neuron.cancel_unstake(caller.0.into(), neuron_ids[1].unwrap()) {
-        Ok(response) => match response.command.unwrap() {
-            CommandResponse::Merge(merge) => {
-                assert_eq!(
-                    merge.source_neuron.unwrap().id.unwrap().id,
-                    12440400712491049369
-                );
-                assert_eq!(
-                    merge.target_neuron.unwrap().id.unwrap().id,
-                    12420353447771927594
-                );
-            }
-            CommandResponse::Error(e) => {
-                panic!(
-                    "Error during cancel_unstake call ({}):  {}",
-                    e.error_type, e.error_message
-                );
-            }
-            _ => panic!("Not the expected CommandResponse."),
-        },
+    match water_neuron.cancel_withdrawal(caller.0.into(), neuron_ids[1].unwrap()) {
+        Ok(response) => {
+            assert_eq!(
+                response.source_neuron.unwrap().id.unwrap().id,
+                12440400712491049369
+            );
+            assert_eq!(
+                response.target_neuron.unwrap().id.unwrap().id,
+                12420353447771927594
+            );
+        }
         Err(e) => {
-            panic!("Expected ManageNeuronResponse, got {e:?}");
+            panic!("Expected MergeResponse, got error: {e:?}");
         }
     }
 

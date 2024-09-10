@@ -1,7 +1,7 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::INFO;
 use crate::management::{get_neuron_info, merge_neuron, stop_dissolvement};
-use crate::nns_types::{ManageNeuronResponse, NeuronId};
+use crate::nns_types::{MergeResponse, NeuronId, CommandResponse};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
@@ -19,7 +19,7 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 pub const MINIMUM_DEPOSIT_AMOUNT: ICP = ICP::ONE;
 pub const MINIMUM_WITHDRAWAL_AMOUNT: ICP = ICP::from_unscaled(10);
 
-pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
+pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, String> {
     let caller = ic_cdk::caller();
     let _guard_principal =
         GuardPrincipal::new(caller).map_err(|guard_error| match guard_error {
@@ -38,39 +38,38 @@ pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<ManageNeuronRespon
     schedule_now(TaskType::ProcessLogic);
 
     stop_dissolvement(neuron_id).await?;
-    match merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id).await?.command.expect("[cancel_withdrawal] Expected a command but got None.") {
+    match merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id)
+        .await?
+        .command
+        .expect("[cancel_withdrawal] Expected a command but got None.")
+    {
         CommandResponse::Merge(response) => {
-            
-        }, 
-        CommandResponse::Error(e) => {
-            Err(
-                "[cancel_withdrawal] Governance error ({}):  {}",
-                e.error_type, e.error_message
-            );
-        }, 
-        _ => {
-            Err("[cancel_withdrawal] Expected Merge command but got other.")
+            schedule_now(TaskType::ProcessPendingTransfers);
+
+            mutate_state(|s| {
+                process_event(
+                    s,
+                    EventType::MergeNeuron {
+                        icp_stake_e8s: ICP::from_e8s(
+                            icp_stake_e8s.checked_sub(DEFAULT_LEDGER_FEE).expect("[cancel_withdrawal] Underflow while submitting the stake from the source neuron."),
+                        ),
+                        receiver: Account {
+                            owner: caller,
+                            subaccount: None,
+                        },
+                    },
+                );
+            });
+            Ok(*response)
         }
+        CommandResponse::Error(e) => Err(format!(
+            "[cancel_withdrawal] Governance error ({}):  {}",
+            e.error_type, e.error_message
+        )),
+        _ => Err(format!(
+            "[cancel_withdrawal] Expected Merge command but got other."
+        )),
     }
-
-    schedule_now(TaskType::ProcessPendingTransfers);
-
-    mutate_state(|s| {
-        process_event(
-            s,
-            EventType::MergeNeuron {
-                icp_stake_e8s: ICP::from_e8s(
-                    icp_stake_e8s.checked_sub(DEFAULT_LEDGER_FEE).expect("[cancel_withdrawal] Underflow while submitting the stake from the source neuron."),
-                ),
-                receiver: Account {
-                    owner: caller,
-                    subaccount: None,
-                },
-            },
-        );
-    });
-
-    Ok(result)
 }
 
 pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, ConversionError> {
