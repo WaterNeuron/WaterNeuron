@@ -18,6 +18,7 @@ use water_neuron::state::audit::{process_event, replay_events};
 use water_neuron::state::event::{EventType, GetEventsArg, GetEventsResult};
 use water_neuron::state::{
     mutate_state, read_state, replace_state, State, TransferStatus, WithdrawalDetails,
+    WithdrawalRequest,
 };
 use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
@@ -339,24 +340,32 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, String> {
     reject_anonymous_call();
 
-    let neuron_ids: Vec<Option<NeuronId>> = read_state(|s| {
+    let withdrawal_requests: Vec<WithdrawalRequest> = read_state(|s| {
         s.account_to_withdrawals
             .get(&ic_cdk::caller().into())
             .cloned()
             .unwrap_or(vec![])
             .iter()
-            .map(|id| s.withdrawal_id_to_request.get(id).unwrap().neuron_id)
+            .filter_map(|id| {
+                s.withdrawal_id_to_request
+                    .get(id)
+                    .map(|request| request.clone())
+            })
             .collect()
     });
 
-    for maybe_neuron_id in neuron_ids {
-        if let Some(target_neuron_id) = maybe_neuron_id {
-            if target_neuron_id == neuron_id {
-                return water_neuron::conversion::cancel_withdrawal(neuron_id).await;
+    for request in withdrawal_requests {
+        if let Some(target_neuron_id) = request.neuron_id {
+            if neuron_id == target_neuron_id {
+                return water_neuron::conversion::cancel_withdrawal(neuron_id, request.icp_due)
+                    .await;
             }
         }
     }
-    Err("Could not cancel withdrawal. Caller did not match owner.".to_string())
+
+    Err(format!(
+        "Could not cancel withdrawal. Caller did not match owner."
+    ))
 }
 
 #[query(hidden = true)]

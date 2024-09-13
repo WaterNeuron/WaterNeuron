@@ -1,6 +1,6 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::INFO;
-use crate::management::{get_neuron_info, merge_neuron, stop_dissolvement};
+use crate::management::{merge_neuron, stop_dissolvement};
 use crate::nns_types::{CommandResponse, MergeResponse, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
@@ -19,21 +19,13 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 pub const MINIMUM_DEPOSIT_AMOUNT: ICP = ICP::ONE;
 pub const MINIMUM_WITHDRAWAL_AMOUNT: ICP = ICP::from_unscaled(10);
 
-pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, String> {
+pub async fn cancel_withdrawal(neuron_id: NeuronId, icp_due: ICP) -> Result<MergeResponse, String> {
     let caller = ic_cdk::caller();
     let _guard_principal =
         GuardPrincipal::new(caller).map_err(|guard_error| match guard_error {
             GuardError::AlreadyProcessing => "Already processing request.",
             GuardError::TooManyConcurrentRequests => "Too many concurrent requests.",
         })?;
-
-    let icp_stake_e8s;
-    match get_neuron_info(neuron_id.id).await? {
-        Ok(neuron_info) => icp_stake_e8s = neuron_info.stake_e8s,
-        Err(gov_err) => {
-            return Err(format!("[cancel_withdrawal] Governance error: {gov_err:?}"));
-        }
-    }
 
     schedule_now(TaskType::ProcessLogic);
 
@@ -50,9 +42,9 @@ pub async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, Str
                 process_event(
                     s,
                     EventType::MergeNeuron {
-                        icp_stake_e8s: ICP::from_e8s(
-                            icp_stake_e8s.checked_sub(DEFAULT_LEDGER_FEE).expect("[cancel_withdrawal] Underflow while submitting the stake from the source neuron."),
-                        ),
+                        icp_stake_e8s: icp_due
+                            .checked_sub(ICP::from_e8s(2*DEFAULT_LEDGER_FEE))
+                            .expect("[cancel_withdrawal] Underflow while submitting the stake from the source neuron."),
                         receiver: Account {
                             owner: caller,
                             subaccount: None,

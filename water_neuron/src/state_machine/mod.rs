@@ -1296,6 +1296,9 @@ fn e2e_basic() {
 
     match water_neuron.cancel_withdrawal(caller.0.into(), neuron_ids[1].unwrap()) {
         Ok(response) => {
+            println!("{:?}", response);
+            let target_neuron_info = response.target_neuron_info.unwrap().clone();
+            let source_neuron_info = response.source_neuron_info.unwrap().clone();
             assert_eq!(
                 response.source_neuron.unwrap().id.unwrap().id,
                 12440400712491049369
@@ -1303,6 +1306,22 @@ fn e2e_basic() {
             assert_eq!(
                 response.target_neuron.unwrap().id.unwrap().id,
                 12420353447771927594
+            );
+            assert_eq!(
+                target_neuron_info.dissolve_delay_seconds, 
+                15_865_200 // 6 months
+            );
+            assert_eq!(
+                target_neuron_info.stake_e8s, 
+                9_099_980_042
+            );
+            assert_eq!(
+                source_neuron_info.age_seconds, 
+                0
+            );
+            assert_eq!(
+                source_neuron_info.stake_e8s, 
+                0
             );
         }
         Err(e) => {
