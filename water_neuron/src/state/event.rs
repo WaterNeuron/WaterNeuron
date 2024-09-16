@@ -127,6 +127,8 @@ pub enum EventType {
         icp_stake_e8s: ICP,
         #[cbor(n(1), with = "crate::cbor::account")]
         receiver: Account,
+        #[n(2)]
+        neuron_id: NeuronId
     },
 }
 

@@ -8,8 +8,11 @@ use crate::state::event::EventType;
 use crate::state::SIX_MONTHS_NEURON_NONCE;
 use crate::state::{mutate_state, read_state};
 use crate::tasks::{schedule_now, TaskType};
-use crate::{ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess, ICP_LEDGER_ID};
-use crate::{GuardError, DEFAULT_LEDGER_FEE};
+use crate::DEFAULT_LEDGER_FEE;
+use crate::{
+    CancelWithdrawalError, ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess,
+    ICP_LEDGER_ID,
+};
 use candid::Nat;
 use ic_canister_log::log;
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
@@ -19,48 +22,47 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 pub const MINIMUM_DEPOSIT_AMOUNT: ICP = ICP::ONE;
 pub const MINIMUM_WITHDRAWAL_AMOUNT: ICP = ICP::from_unscaled(10);
 
-pub async fn cancel_withdrawal(neuron_id: NeuronId, icp_due: ICP) -> Result<MergeResponse, String> {
+pub async fn cancel_withdrawal(
+    neuron_id: NeuronId,
+    icp_due: ICP,
+) -> Result<MergeResponse, CancelWithdrawalError> {
     let caller = ic_cdk::caller();
-    let _guard_principal =
-        GuardPrincipal::new(caller).map_err(|guard_error| match guard_error {
-            GuardError::AlreadyProcessing => "Already processing request.",
-            GuardError::TooManyConcurrentRequests => "Too many concurrent requests.",
-        })?;
+    let _guard_principal = GuardPrincipal::new(caller)
+        .map_err(|guard_error| CancelWithdrawalError::GuardError { guard_error })?;
 
-    schedule_now(TaskType::ProcessLogic);
-
-    stop_dissolvement(neuron_id).await?;
+    stop_dissolvement(neuron_id).await.unwrap();
     match merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id)
-        .await?
+        .await
+        .unwrap()
         .command
-        .expect("[cancel_withdrawal] Expected a command but got None.")
+        .expect("Command should always be set.")
     {
         CommandResponse::Merge(response) => {
-            schedule_now(TaskType::ProcessPendingTransfers);
-
             mutate_state(|s| {
-                process_event(
-                    s,
-                    EventType::MergeNeuron {
-                        icp_stake_e8s: icp_due
-                            .checked_sub(ICP::from_e8s(2*DEFAULT_LEDGER_FEE))
-                            .expect("[cancel_withdrawal] Underflow while submitting the stake from the source neuron."),
-                        receiver: Account {
-                            owner: caller,
-                            subaccount: None,
+                if s.neuron_id_to_withdrawal_id.get(&neuron_id).is_some() {
+                    process_event(
+                        s,
+                         EventType::MergeNeuron {
+                            icp_stake_e8s: icp_due
+                                .checked_sub(ICP::from_e8s(2*DEFAULT_LEDGER_FEE))
+                                .expect("ICP due should always be more than 10."),
+                            receiver: Account {
+                                owner: caller,
+                                subaccount: None,
+                            },
+                            neuron_id, 
                         },
-                    },
-                );
+                    );
+                    schedule_now(TaskType::ProcessPendingTransfers);
+                    schedule_now(TaskType::ProcessLogic);
+                }
             });
             Ok(*response)
         }
-        CommandResponse::Error(e) => Err(format!(
-            "[cancel_withdrawal] Governance error ({}):  {}",
-            e.error_type, e.error_message
-        )),
-        _ => Err(format!(
-            "[cancel_withdrawal] Expected Merge command but got other."
-        )),
+        CommandResponse::Error(e) => Err(CancelWithdrawalError::GovernanceError(e)),
+        _ => Err(CancelWithdrawalError::BadCommand {
+            message: format!("Expected merge commande got other."),
+        }),
     }
 }
 

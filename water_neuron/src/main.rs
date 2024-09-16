@@ -23,8 +23,8 @@ use water_neuron::state::{
 use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
-    CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg, Unit, UpgradeArg,
-    WithdrawalSuccess,
+    CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
+    Unit, UpgradeArg, WithdrawalSuccess,
 };
 
 fn reject_anonymous_call() {
@@ -337,7 +337,7 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 }
 
 #[update]
-async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, String> {
+async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelWithdrawalError> {
     reject_anonymous_call();
 
     let withdrawal_requests: Vec<WithdrawalRequest> = read_state(|s| {
@@ -357,15 +357,16 @@ async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, String>
     for request in withdrawal_requests {
         if let Some(target_neuron_id) = request.neuron_id {
             if neuron_id == target_neuron_id {
+                log!(INFO, "{:?}", request.icp_due);
                 return water_neuron::conversion::cancel_withdrawal(neuron_id, request.icp_due)
                     .await;
             }
         }
     }
 
-    Err(format!(
-        "Could not cancel withdrawal. Caller did not match owner."
-    ))
+    Err(CancelWithdrawalError::BadCaller {
+        message: format!("Caller did not match owner."),
+    })
 }
 
 #[query(hidden = true)]
