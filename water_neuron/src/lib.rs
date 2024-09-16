@@ -245,6 +245,7 @@ pub enum CancelWithdrawalError {
     GovernanceError(GovernanceError),
     BadCommand { message: String },
     BadCaller { message: String },
+    RequestNotFound,
 }
 
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This

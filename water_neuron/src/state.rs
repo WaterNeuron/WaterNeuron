@@ -127,6 +127,7 @@ pub enum WithdrawalStatus {
     WaitingDissolvement { neuron_id: NeuronId },
     ConversionDone { transfer_block_height: u64 },
     NotFound,
+    Cancelled { transfer_block_height: u64 },
 }
 
 impl fmt::Display for WithdrawalStatus {
@@ -143,6 +144,7 @@ impl fmt::Display for WithdrawalStatus {
                 transfer_block_height,
             } => write!(f, "Neuron Disbursed at index: {transfer_block_height}"),
             WithdrawalStatus::NotFound => write!(f, "Neuron Not Found"),
+            WithdrawalStatus::Cancelled { transfer_block_height } => write!(f, "Withdrawal cancelled at index: {transfer_block_height}")
         }
     }
 }
@@ -171,6 +173,11 @@ pub struct State {
     pub withdrawal_finalized: BTreeMap<WithdrawalId, u64>,
     pub withdrawal_id_to_request: BTreeMap<WithdrawalId, WithdrawalRequest>,
     pub neuron_id_to_withdrawal_id: BTreeMap<NeuronId, WithdrawalId>,
+
+
+    // Cancel Withdrawal
+    pub withdrawal_cancelled: BTreeSet<WithdrawalId>,
+
 
     // Neurons To Disburse
     pub to_disburse: BTreeMap<NeuronId, DisburseRequest>,
@@ -223,6 +230,7 @@ impl State {
             maturity_neuron_to_block_indicies: Default::default(),
             withdrawal_finalized: Default::default(),
             withdrawal_id_to_request: BTreeMap::default(),
+            withdrawal_cancelled: BTreeSet::default(),
             account_to_deposits: BTreeMap::default(),
             account_to_withdrawals: BTreeMap::default(),
             transfer_id: 0,
@@ -295,6 +303,13 @@ impl State {
                 transfer_block_height: *block_index,
             };
         }
+        
+        if let Some(block_index) = self.withdrawal_cancelled.get(&withdrawal_id) {
+            return WithdrawalStatus::Cancelled {
+                transfer_block_height: *block_index, 
+            };
+        }
+
         WithdrawalStatus::NotFound
     }
 
@@ -546,6 +561,11 @@ impl State {
         receiver: Account,
         neuron_id: NeuronId,
     ) {
+        let withdrawal_id: &u64 = self.neuron_id_to_withdrawal_id.get(&neuron_id).unwrap();
+        self.withdrawal_to_split.remove(withdrawal_id);
+        self.withdrawal_to_start_dissolving.remove(withdrawal_id);
+        self.withdrawal_to_disburse.remove(withdrawal_id);
+        self.withdrawal_cancelled.insert(*withdrawal_id);
         assert!(self.neuron_id_to_withdrawal_id.remove(&neuron_id).is_some());
 
         let nicp_to_mint = self.convert_icp_to_nicp(icp_stake_e8s);

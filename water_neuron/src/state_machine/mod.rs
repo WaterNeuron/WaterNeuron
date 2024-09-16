@@ -15,7 +15,7 @@ use crate::{
     compute_neuron_staking_subaccount_bytes, nICP, CanisterInfo, ConversionArg, ConversionError,
     DepositSuccess, InitArg, LiquidArg, NeuronId, PendingTransfer, Unit, UpgradeArg,
     WithdrawalSuccess, DEFAULT_LEDGER_FEE, E8S, ICP, MIN_DISSOLVE_DELAY_FOR_REWARDS,
-    NEURON_LEDGER_FEE,
+    NEURON_LEDGER_FEE, CancelWithdrawalError,
 };
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
@@ -888,7 +888,7 @@ impl WaterNeuron {
         &self,
         caller: PrincipalId,
         neuron_id: NeuronId,
-    ) -> Result<MergeResponse, String> {
+    ) -> Result<MergeResponse, CancelWithdrawalError> {
         Decode!(
             &assert_reply(
                 self.env.execute_ingress_as(
@@ -898,7 +898,7 @@ impl WaterNeuron {
                     Encode!(&neuron_id).unwrap()
                 ).expect("failed to cancel_withdrawal")
             ),
-            Result<MergeResponse, String>
+            Result<MergeResponse, CancelWithdrawalError>
         )
         .unwrap()
     }
@@ -1288,6 +1288,19 @@ fn e2e_basic() {
 
     water_neuron.advance_time_and_tick(60 * 60 * 24 + 1);
 
+    match water_neuron.cancel_withdrawal(caller.0.into(), water_neuron.get_withdrawal_requests(caller.0)[0].request.neuron_id.unwrap()) {
+        Ok(response) => {
+            panic!("Expected CancelWithdrawalError, got response: {response:?}");
+        }
+        Err(e) => {
+            match e {
+                CancelWithdrawalError::RequestNotFound => {},
+                _ => {panic!("Expected RequestNotFound, got {e:?}")}
+            }
+        }
+    }
+      
+
     assert_eq!(
         water_neuron.balance_of(
             water_neuron.icp_ledger_id,
@@ -1362,22 +1375,26 @@ fn e2e_basic() {
 
     water_neuron.advance_time_and_tick(60 * 60);
 
+    assert_eq!(
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
+            .status,
+        WithdrawalStatus::Cancelled {
+            transfer_block_height: 1
+        },
+    );
+
     match water_neuron.cancel_withdrawal(caller.0.into(), neuron_ids[1].unwrap()) {
         Ok(response) => {
-            let target_neuron_info = response.target_neuron_info.unwrap().clone();
-            let source_neuron_info = response.source_neuron_info.unwrap().clone();
-            let source_neuron = response.source_neuron.unwrap().clone();
-            let target_neuron = response.target_neuron.unwrap().clone();
-            assert_eq!(
-                target_neuron_info.dissolve_delay_seconds,
-                15_865_200 // 6 months
-            );
-            assert_eq!(target_neuron_info.stake_e8s, 9_099_980_042);
-            assert_eq!(source_neuron_info.age_seconds, 3600);
-            assert_eq!(source_neuron_info.stake_e8s, 0);
+            panic!("Expected CancelWithdrawalError, got response: {response:?}");
         }
         Err(e) => {
-            panic!("Expected MergeResponse, got error: {e:?}");
+            match e {
+                CancelWithdrawalError::RequestNotFound => {},
+                _ => {panic!("Expected RequestNotFound, got {e:?}")}
+            }
         }
     }
 

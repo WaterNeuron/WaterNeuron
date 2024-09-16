@@ -5,13 +5,11 @@ use crate::nns_types::{CommandResponse, MergeResponse, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
-use crate::state::SIX_MONTHS_NEURON_NONCE;
-use crate::state::{mutate_state, read_state};
+use crate::state::{SIX_MONTHS_NEURON_NONCE, mutate_state, read_state, WithdrawalRequest};
 use crate::tasks::{schedule_now, TaskType};
-use crate::DEFAULT_LEDGER_FEE;
 use crate::{
     CancelWithdrawalError, ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess,
-    ICP_LEDGER_ID,
+    ICP_LEDGER_ID, DEFAULT_LEDGER_FEE
 };
 use candid::Nat;
 use ic_canister_log::log;
@@ -24,11 +22,40 @@ pub const MINIMUM_WITHDRAWAL_AMOUNT: ICP = ICP::from_unscaled(10);
 
 pub async fn cancel_withdrawal(
     neuron_id: NeuronId,
-    icp_due: ICP,
 ) -> Result<MergeResponse, CancelWithdrawalError> {
     let caller = ic_cdk::caller();
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| CancelWithdrawalError::GuardError { guard_error })?;
+
+
+    let maybe_withdrawal_request: Option<WithdrawalRequest> = read_state(|s| {
+        s.neuron_id_to_withdrawal_id
+            .get(&neuron_id)
+            .map(|withdrawal_id| {
+                s.withdrawal_id_to_request
+                    .get(&withdrawal_id)
+                    .unwrap()
+                    .clone()
+            })
+    });
+
+    let icp_due = match maybe_withdrawal_request {
+        Some(withdrawal_request) => {
+            let caller_account = Account {
+                owner: caller,
+                subaccount: None,
+            };
+            if caller_account == withdrawal_request.receiver {
+                withdrawal_request.icp_due
+            } else {
+                return Err(CancelWithdrawalError::BadCaller {
+                    message: format!("Caller did not match owner."),
+                });
+            }
+        },
+        None => {return Err(CancelWithdrawalError::RequestNotFound);},
+    };
+    
 
     stop_dissolvement(neuron_id).await.unwrap();
     match merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id)
