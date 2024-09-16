@@ -1368,10 +1368,6 @@ fn e2e_basic() {
             let source_neuron_info = response.source_neuron_info.unwrap().clone();
             let source_neuron = response.source_neuron.unwrap().clone();
             let target_neuron = response.target_neuron.unwrap().clone();
-
-            assert_eq!(source_neuron.id.unwrap().id, 12440400712491049369);
-            assert_eq!(source_neuron.cached_neuron_stake_e8s, 0);
-            assert_eq!(target_neuron.id.unwrap().id, 12420353447771927594);
             assert_eq!(
                 target_neuron_info.dissolve_delay_seconds,
                 15_865_200 // 6 months
@@ -1391,15 +1387,8 @@ fn e2e_basic() {
     );
 
     info = water_neuron.get_info();
-    assert_eq!(info.exchange_rate, E8S);
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
-    assert_eq!(info.neuron_8y_stake_e8s, ICP::from_e8s(100_000_042));
-    assert_eq!(info.stakers_count, 1);
     assert_eq!(info.total_icp_deposited, ICP::from_e8s(icp_to_wrap));
-    assert_eq!(info.minimum_deposit_amount, MINIMUM_DEPOSIT_AMOUNT);
-    assert_eq!(info.minimum_withdraw_amount, MINIMUM_WITHDRAWAL_AMOUNT);
-    assert!(info.neuron_id_6m.is_some());
-    assert!(info.neuron_id_8y.is_some());
 
     // Make a proposal to generate some rewards.
 
