@@ -9,7 +9,7 @@ use crate::nns_types::{
     ListProposalInfo, ListProposalInfoResponse, ManageNeuron, ManageNeuronResponse, Neuron,
     NeuronId, ProposalId,
 };
-use crate::state::{read_state, NNS_GOVERNANCE_ID};
+use crate::state::{read_state, NNS_GOVERNANCE_ID, EIGHT_YEARS_NEURON_ID, SIX_MONTHS_NEURON_ID};
 use crate::{compute_neuron_staking_subaccount_bytes, CommandResponse};
 use candid::{Nat, Principal};
 use ic_sns_governance::pb::v1::{
@@ -325,6 +325,7 @@ pub async fn merge_neuron(
     neuron_nonce: u64,
     neuron_id: NeuronId,
 ) -> Result<ManageNeuronResponse, String> {
+    assert!(neuron_id.id != SIX_MONTHS_NEURON_ID && neuron_id.id != EIGHT_YEARS_NEURON_ID);
     manage_neuron(
         Command::Merge(Merge {
             source_neuron_id: Some(neuron_id),

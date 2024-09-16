@@ -28,6 +28,8 @@ thread_local! {
 
 pub const SIX_MONTHS_NEURON_NONCE: u64 = 0;
 pub const EIGHT_YEARS_NEURON_NONCE: u64 = 1;
+pub const SIX_MONTHS_NEURON_ID: u64 = 13680855657433416220;
+pub const EIGHT_YEARS_NEURON_ID: u64 = 433047053926084807;
 
 // "ryjl3-tyaaa-aaaaa-aaaba-cai"
 pub const ICP_LEDGER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
