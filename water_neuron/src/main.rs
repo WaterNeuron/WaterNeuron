@@ -357,7 +357,6 @@ async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelW
     for request in withdrawal_requests {
         if let Some(target_neuron_id) = request.neuron_id {
             if neuron_id == target_neuron_id {
-                log!(INFO, "{:?}", request.icp_due);
                 return water_neuron::conversion::cancel_withdrawal(neuron_id, request.icp_due)
                     .await;
             }
