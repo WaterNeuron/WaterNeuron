@@ -42,15 +42,15 @@ pub async fn cancel_withdrawal(
                 if s.neuron_id_to_withdrawal_id.get(&neuron_id).is_some() {
                     process_event(
                         s,
-                         EventType::MergeNeuron {
+                        EventType::MergeNeuron {
                             icp_stake_e8s: icp_due
-                                .checked_sub(ICP::from_e8s(2*DEFAULT_LEDGER_FEE))
+                                .checked_sub(ICP::from_e8s(2 * DEFAULT_LEDGER_FEE))
                                 .expect("ICP due should always be more than 10."),
                             receiver: Account {
                                 owner: caller,
                                 subaccount: None,
                             },
-                            neuron_id, 
+                            neuron_id,
                         },
                     );
                     schedule_now(TaskType::ProcessPendingTransfers);

@@ -540,7 +540,12 @@ impl State {
             .is_none());
     }
 
-    pub fn record_neuron_merge(&mut self, icp_stake_e8s: ICP, receiver: Account, neuron_id: NeuronId) {
+    pub fn record_neuron_merge(
+        &mut self,
+        icp_stake_e8s: ICP,
+        receiver: Account,
+        neuron_id: NeuronId,
+    ) {
         assert!(self.neuron_id_to_withdrawal_id.remove(&neuron_id).is_some());
 
         let nicp_to_mint = self.convert_icp_to_nicp(icp_stake_e8s);

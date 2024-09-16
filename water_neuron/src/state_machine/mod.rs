@@ -1192,7 +1192,6 @@ fn e2e_basic() {
         Nat::from(10_999_990_000_u64)
     );
 
-
     let icp_to_wrap = 100 * E8S;
 
     water_neuron.advance_time_and_tick(60);
@@ -1286,7 +1285,7 @@ fn e2e_basic() {
         water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
         Nat::from(9_100_000_042_u64)
     );
-    
+
     water_neuron.advance_time_and_tick(60 * 60 * 24 + 1);
 
     assert_eq!(
@@ -1344,22 +1343,10 @@ fn e2e_basic() {
             let source_neuron_info = response.source_neuron_info.unwrap().clone();
             let source_neuron = response.source_neuron.unwrap().clone();
             let target_neuron = response.target_neuron.unwrap().clone();
-            assert_eq!(
-                source_neuron.id.unwrap().id,
-                12440400712491049369
-            );
-            assert_eq!(
-                source_neuron.neuron_fees_e8s,
-                0
-            );
-            assert_eq!(
-                target_neuron.id.unwrap().id,
-                12420353447771927594
-            );
-            assert_eq!(
-                target_neuron.neuron_fees_e8s,
-                0
-            );
+            assert_eq!(source_neuron.id.unwrap().id, 12440400712491049369);
+            assert_eq!(source_neuron.neuron_fees_e8s, 0);
+            assert_eq!(target_neuron.id.unwrap().id, 12420353447771927594);
+            assert_eq!(target_neuron.neuron_fees_e8s, 0);
             assert_eq!(
                 target_neuron_info.dissolve_delay_seconds,
                 15_865_200 // 6 months
@@ -1375,25 +1362,16 @@ fn e2e_basic() {
 
     water_neuron.advance_time_and_tick(60 * 60);
 
-    match water_neuron.cancel_withdrawal(caller.0.into(), neuron_ids[1].unwrap()) { 
+    match water_neuron.cancel_withdrawal(caller.0.into(), neuron_ids[1].unwrap()) {
         Ok(response) => {
             let target_neuron_info = response.target_neuron_info.unwrap().clone();
             let source_neuron_info = response.source_neuron_info.unwrap().clone();
             let source_neuron = response.source_neuron.unwrap().clone();
             let target_neuron = response.target_neuron.unwrap().clone();
 
-            assert_eq!(
-                source_neuron.id.unwrap().id,
-                12440400712491049369
-            );
-            assert_eq!(
-                source_neuron.cached_neuron_stake_e8s,
-                0
-            );
-            assert_eq!(
-                target_neuron.id.unwrap().id,
-                12420353447771927594
-            );
+            assert_eq!(source_neuron.id.unwrap().id, 12440400712491049369);
+            assert_eq!(source_neuron.cached_neuron_stake_e8s, 0);
+            assert_eq!(target_neuron.id.unwrap().id, 12420353447771927594);
             assert_eq!(
                 target_neuron_info.dissolve_delay_seconds,
                 15_865_200 // 6 months

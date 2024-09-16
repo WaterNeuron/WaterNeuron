@@ -128,7 +128,7 @@ pub enum EventType {
         #[cbor(n(1), with = "crate::cbor::account")]
         receiver: Account,
         #[n(2)]
-        neuron_id: NeuronId
+        neuron_id: NeuronId,
     },
 }
 
