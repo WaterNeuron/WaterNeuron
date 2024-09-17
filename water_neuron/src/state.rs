@@ -146,7 +146,9 @@ impl fmt::Display for WithdrawalStatus {
                 transfer_block_height,
             } => write!(f, "Neuron Disbursed at index: {transfer_block_height}"),
             WithdrawalStatus::NotFound => write!(f, "Neuron Not Found"),
-            WithdrawalStatus::Cancelled { transfer_block_height } => write!(f, "Withdrawal cancelled at index: {transfer_block_height}")
+            WithdrawalStatus::Cancelled {
+                transfer_block_height,
+            } => write!(f, "Withdrawal cancelled at index: {transfer_block_height}"),
         }
     }
 }
@@ -176,10 +178,8 @@ pub struct State {
     pub withdrawal_id_to_request: BTreeMap<WithdrawalId, WithdrawalRequest>,
     pub neuron_id_to_withdrawal_id: BTreeMap<NeuronId, WithdrawalId>,
 
-
     // Cancel Withdrawal
     pub withdrawal_cancelled: BTreeSet<WithdrawalId>,
-
 
     // Neurons To Disburse
     pub to_disburse: BTreeMap<NeuronId, DisburseRequest>,
@@ -305,10 +305,10 @@ impl State {
                 transfer_block_height: *block_index,
             };
         }
-        
+
         if let Some(block_index) = self.withdrawal_cancelled.get(&withdrawal_id) {
             return WithdrawalStatus::Cancelled {
-                transfer_block_height: *block_index, 
+                transfer_block_height: *block_index,
             };
         }
 

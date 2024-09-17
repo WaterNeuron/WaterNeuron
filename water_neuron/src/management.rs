@@ -9,7 +9,7 @@ use crate::nns_types::{
     ListProposalInfo, ListProposalInfoResponse, ManageNeuron, ManageNeuronResponse, Neuron,
     NeuronId, ProposalId,
 };
-use crate::state::{read_state, NNS_GOVERNANCE_ID, EIGHT_YEARS_NEURON_ID, SIX_MONTHS_NEURON_ID};
+use crate::state::{read_state, EIGHT_YEARS_NEURON_ID, NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_ID};
 use crate::{compute_neuron_staking_subaccount_bytes, CommandResponse};
 use candid::{Nat, Principal};
 use ic_sns_governance::pb::v1::{

@@ -12,10 +12,10 @@ use crate::state::{
 };
 use crate::EventType::{DisbursedMaturityNeuron, DisbursedUserNeuron};
 use crate::{
-    compute_neuron_staking_subaccount_bytes, nICP, CanisterInfo, ConversionArg, ConversionError,
-    DepositSuccess, InitArg, LiquidArg, NeuronId, PendingTransfer, Unit, UpgradeArg,
-    WithdrawalSuccess, DEFAULT_LEDGER_FEE, E8S, ICP, MIN_DISSOLVE_DELAY_FOR_REWARDS,
-    NEURON_LEDGER_FEE, CancelWithdrawalError,
+    compute_neuron_staking_subaccount_bytes, nICP, CancelWithdrawalError, CanisterInfo,
+    ConversionArg, ConversionError, DepositSuccess, InitArg, LiquidArg, NeuronId, PendingTransfer,
+    Unit, UpgradeArg, WithdrawalSuccess, DEFAULT_LEDGER_FEE, E8S, ICP,
+    MIN_DISSOLVE_DELAY_FOR_REWARDS, NEURON_LEDGER_FEE,
 };
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
@@ -1288,18 +1288,23 @@ fn e2e_basic() {
 
     water_neuron.advance_time_and_tick(60 * 60 * 24 + 1);
 
-    match water_neuron.cancel_withdrawal(caller.0.into(), water_neuron.get_withdrawal_requests(caller.0)[0].request.neuron_id.unwrap()) {
+    match water_neuron.cancel_withdrawal(
+        caller.0.into(),
+        water_neuron.get_withdrawal_requests(caller.0)[0]
+            .request
+            .neuron_id
+            .unwrap(),
+    ) {
         Ok(response) => {
             panic!("Expected CancelWithdrawalError, got response: {response:?}");
         }
-        Err(e) => {
-            match e {
-                CancelWithdrawalError::RequestNotFound => {},
-                _ => {panic!("Expected RequestNotFound, got {e:?}")}
+        Err(e) => match e {
+            CancelWithdrawalError::RequestNotFound => {}
+            _ => {
+                panic!("Expected RequestNotFound, got {e:?}")
             }
-        }
+        },
     }
-      
 
     assert_eq!(
         water_neuron.balance_of(
@@ -1390,12 +1395,12 @@ fn e2e_basic() {
         Ok(response) => {
             panic!("Expected CancelWithdrawalError, got response: {response:?}");
         }
-        Err(e) => {
-            match e {
-                CancelWithdrawalError::RequestNotFound => {},
-                _ => {panic!("Expected RequestNotFound, got {e:?}")}
+        Err(e) => match e {
+            CancelWithdrawalError::RequestNotFound => {}
+            _ => {
+                panic!("Expected RequestNotFound, got {e:?}")
             }
-        }
+        },
     }
 
     assert_eq!(

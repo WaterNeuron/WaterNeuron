@@ -5,11 +5,11 @@ use crate::nns_types::{CommandResponse, MergeResponse, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
-use crate::state::{SIX_MONTHS_NEURON_NONCE, mutate_state, read_state, WithdrawalRequest};
+use crate::state::{mutate_state, read_state, WithdrawalRequest, SIX_MONTHS_NEURON_NONCE};
 use crate::tasks::{schedule_now, TaskType};
 use crate::{
     CancelWithdrawalError, ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess,
-    ICP_LEDGER_ID, DEFAULT_LEDGER_FEE
+    DEFAULT_LEDGER_FEE, ICP_LEDGER_ID,
 };
 use candid::Nat;
 use ic_canister_log::log;
@@ -26,7 +26,6 @@ pub async fn cancel_withdrawal(
     let caller = ic_cdk::caller();
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| CancelWithdrawalError::GuardError { guard_error })?;
-
 
     let maybe_withdrawal_request: Option<WithdrawalRequest> = read_state(|s| {
         s.neuron_id_to_withdrawal_id
@@ -52,10 +51,11 @@ pub async fn cancel_withdrawal(
                     message: format!("Caller did not match owner."),
                 });
             }
-        },
-        None => {return Err(CancelWithdrawalError::RequestNotFound);},
+        }
+        None => {
+            return Err(CancelWithdrawalError::RequestNotFound);
+        }
     };
-    
 
     stop_dissolvement(neuron_id).await.unwrap();
     match merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id)
