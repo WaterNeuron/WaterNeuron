@@ -1187,6 +1187,299 @@ fn e2e_basic() {
         water_neuron.water_neuron_id.get().0.into(),
     );
 
+    let icp_to_wrap = 100 * E8S;
+
+    water_neuron.advance_time_and_tick(60);
+
+    let info = water_neuron.get_info();
+    assert_eq!(
+        water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
+        Nat::from(E8S + 42)
+    );
+
+    assert_eq!(
+        water_neuron.icp_to_nicp(caller.0.into(), icp_to_wrap),
+        Ok(DepositSuccess {
+            block_index: Nat::from(7_u8),
+            transfer_id: 0,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
+        })
+    );
+
+    assert_eq!(
+        water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
+        Nat::from(E8S + 42 + icp_to_wrap)
+    );
+    assert_eq!(
+        water_neuron.balance_of(water_neuron.nicp_ledger_id, caller.0),
+        Nat::from(icp_to_wrap)
+    );
+
+    water_neuron.advance_time_and_tick(MIN_DISSOLVE_DELAY_FOR_REWARDS.into());
+
+    let icp_balance_before_withdrawal =
+        water_neuron.balance_of(water_neuron.icp_ledger_id, caller.0);
+    let nicp_to_unwrap = 10 * E8S;
+
+    water_neuron.approve(
+        caller,
+        water_neuron.nicp_ledger_id,
+        water_neuron.water_neuron_id.get().0.into(),
+    );
+
+    water_neuron.advance_time_and_tick(24 * 60 * 60 + 10);
+
+    match water_neuron.nicp_to_icp(caller.0.into(), nicp_to_unwrap) {
+        Ok(WithdrawalSuccess { withdrawal_id, .. }) => {
+            assert_eq!(withdrawal_id, 0);
+        }
+        Err(e) => panic!("Expected WithdrawalSuccess, got {e:?}"),
+    }
+
+    assert_eq!(water_neuron.get_withdrawal_requests(caller.0).len(), 1);
+    assert_eq!(
+        water_neuron.get_withdrawal_requests(caller.0)[0].status,
+        WithdrawalStatus::WaitingToSplitNeuron
+    );
+
+    assert_matches!(
+        water_neuron.get_withdrawal_requests(caller.0)[0].status,
+        WithdrawalStatus::WaitingDissolvement { .. }
+    );
+
+    water_neuron.advance_time_and_tick(MIN_DISSOLVE_DELAY_FOR_REWARDS.into());
+
+    assert_eq!(water_neuron.get_withdrawal_requests(caller.0).len(), 1);
+    assert_eq!(
+        water_neuron.get_withdrawal_requests(caller.0)[0].status,
+        WithdrawalStatus::ConversionDone {
+            transfer_block_height: 9
+        }
+    );
+
+    assert_eq!(
+        water_neuron.balance_of(water_neuron.icp_ledger_id, caller.0)
+            - icp_balance_before_withdrawal,
+        Nat::from(999_980_000_u64)
+    );
+
+    water_neuron.advance_time_and_tick(60 * 60 * 24 + 1);
+
+    assert_eq!(
+        water_neuron.balance_of(
+            water_neuron.icp_ledger_id,
+            Account {
+                owner: water_neuron.water_neuron_id.get().0,
+                subaccount: Some([1; 32])
+            }
+        ),
+        Nat::from(0_u8)
+    );
+
+    water_neuron.advance_time_and_tick(60 * 60);
+
+    let info = water_neuron.get_info();
+    assert_eq!(info.exchange_rate, E8S);
+    assert_eq!(info.neuron_6m_stake_e8s, ICP::from_e8s(9_100_000_042));
+    assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
+    assert_eq!(info.neuron_8y_stake_e8s, ICP::from_e8s(100_000_042));
+    assert_eq!(info.stakers_count, 1);
+    assert_eq!(info.total_icp_deposited, ICP::from_e8s(icp_to_wrap));
+    assert_eq!(info.minimum_deposit_amount, MINIMUM_DEPOSIT_AMOUNT);
+    assert_eq!(info.minimum_withdraw_amount, MINIMUM_WITHDRAWAL_AMOUNT);
+    assert!(info.neuron_id_6m.is_some());
+    assert!(info.neuron_id_8y.is_some());
+
+    // Make a proposal to generate some rewards.
+
+    assert_eq!(
+        water_neuron.balance_of(
+            water_neuron.icp_ledger_id,
+            Account {
+                owner: water_neuron.water_neuron_id.into(),
+                subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT)
+            }
+        ),
+        Nat::from(0_u8)
+    );
+    let neuron_6m_stake_e8s_before_proposal = water_neuron.get_info().neuron_6m_stake_e8s;
+
+    let proposal = Proposal {
+        title: Some("Yellah".to_string()),
+        summary: "Dummy Proposal".to_string(),
+        url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
+            .to_string(),
+        action: Some(Action::Motion(crate::nns_types::Motion {
+            motion_text: "".to_string(),
+        })),
+    };
+
+    let _proposal_id =
+        match nns_governance_make_proposal(&mut water_neuron.env, caller, neuron_id, &proposal)
+            .command
+            .unwrap()
+        {
+            CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
+            _ => panic!("unexpected response"),
+        };
+
+    water_neuron.advance_time_and_tick(15 * 60);
+    water_neuron.advance_time_and_tick(15 * 60);
+    water_neuron.advance_time_and_tick(4 * 60 * 60 * 24 - 60 * 60);
+    water_neuron.advance_time_and_tick(7 * 24 * 60 * 60 + 10);
+    water_neuron.advance_time_and_tick(7 * 24 * 60 * 60 + 10);
+    water_neuron.advance_time_and_tick(24 * 60 * 60 + 10);
+    water_neuron.advance_time_and_tick(24 * 60 * 60 + 10);
+
+    assert!(neuron_6m_stake_e8s_before_proposal < water_neuron.get_info().neuron_6m_stake_e8s);
+
+    dbg!(water_neuron.get_events());
+    assert_eq!(water_neuron.get_events().total_event_count, 22);
+
+    assert!(water_neuron
+        .get_events()
+        .events
+        .iter()
+        .map(|e| &e.payload)
+        .any(|payload| payload
+            == &DisbursedUserNeuron {
+                withdrawal_id: 0,
+                transfer_block_height: 9,
+            }),);
+
+    let count = water_neuron
+        .get_events()
+        .events
+        .iter()
+        .map(|e| &e.payload)
+        .filter(|payload| matches!(payload, DisbursedMaturityNeuron { .. }))
+        .count();
+
+    assert_eq!(count, 2);
+
+    let info = water_neuron.get_info();
+
+    assert_eq!(
+        water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
+        Nat::from(info.tracked_6m_stake.0)
+    );
+    assert_eq!(info.exchange_rate, 5_270);
+
+    assert_eq!(info.governance_fee_share_percent, 10);
+
+    assert_matches!(
+        water_neuron.env.upgrade_canister(
+            water_neuron.water_neuron_id,
+            water_neuron_wasm(),
+            Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
+                governance_fee_share_percent: Some(20),
+            })))
+            .unwrap(),
+        ),
+        Ok(_)
+    );
+
+    water_neuron.advance_time_and_tick(60);
+    let info = water_neuron.get_info();
+    assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
+    assert_eq!(info.exchange_rate, 5_270);
+    assert_eq!(info.governance_fee_share_percent, 20);
+
+    assert_eq!(
+        water_neuron
+            .icp_to_nicp(caller.0.into(), E8S)
+            .unwrap()
+            .nicp_amount,
+        Some(nICP::from_e8s(5_270))
+    );
+
+    assert_eq!(
+        water_neuron
+            .nicp_to_icp(caller.0.into(), 5_2711)
+            .unwrap()
+            .icp_amount,
+        Some(ICP::from_e8s(1000165632))
+    );
+
+    assert_eq!(
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
+            .status,
+        WithdrawalStatus::WaitingToSplitNeuron
+    );
+
+    water_neuron.advance_time_and_tick(60 * 60);
+
+    let neuron_id = match water_neuron
+        .get_withdrawal_requests(caller.0)
+        .last()
+        .unwrap()
+        .status
+    {
+        WithdrawalStatus::WaitingDissolvement { neuron_id } => neuron_id,
+        _ => panic!(""),
+    };
+
+    let full_neuron = water_neuron.get_full_neuron(neuron_id.id).unwrap().unwrap();
+    assert_eq!(full_neuron.cached_neuron_stake_e8s, 1000155632);
+}
+
+#[test]
+fn should_cancel_withdrawal() {
+    let mut water_neuron = WaterNeuron::new();
+    water_neuron.with_voting_topic();
+
+    let caller = PrincipalId::new_user_test_id(212);
+
+    let water_neuron_principal: Principal = water_neuron.water_neuron_id.get().into();
+
+    assert_eq!(
+        water_neuron.transfer(
+            water_neuron.minter,
+            water_neuron_principal,
+            10 * E8S,
+            water_neuron.icp_ledger_id
+        ),
+        Nat::from(1_u8)
+    );
+    assert_eq!(
+        water_neuron.transfer(
+            water_neuron.minter,
+            caller.0,
+            110 * E8S,
+            water_neuron.icp_ledger_id
+        ),
+        Nat::from(2_u8)
+    );
+
+    assert_eq!(
+        water_neuron.transfer(
+            water_neuron.minter,
+            Account {
+                owner: GOVERNANCE_CANISTER_ID.into(),
+                subaccount: Some(compute_neuron_staking_subaccount_bytes(caller.into(), 0))
+            },
+            11 * E8S,
+            water_neuron.icp_ledger_id
+        ),
+        Nat::from(3_u8)
+    );
+
+    let neuron_id = nns_claim_or_refresh_neuron(&mut water_neuron.env, caller, 0);
+
+    let _increase_dissolve_delay_result =
+        nns_increase_dissolve_delay(&mut water_neuron.env, caller, neuron_id, 200 * 24 * 60 * 60);
+
+    water_neuron.advance_time_and_tick(70);
+
+    water_neuron.approve(
+        caller,
+        water_neuron.icp_ledger_id,
+        water_neuron.water_neuron_id.get().0.into(),
+    );
+
     assert_eq!(
         water_neuron.balance_of(water_neuron.icp_ledger_id, caller.0),
         Nat::from(10_999_990_000_u64)
@@ -1323,11 +1616,6 @@ fn e2e_basic() {
     assert_eq!(info.exchange_rate, E8S);
     assert_eq!(info.stakers_count, 1);
     assert_eq!(info.total_icp_deposited, ICP::from_e8s(icp_to_wrap));
-    assert_eq!(info.minimum_deposit_amount, MINIMUM_DEPOSIT_AMOUNT);
-    assert_eq!(info.minimum_withdraw_amount, MINIMUM_WITHDRAWAL_AMOUNT);
-    assert!(info.neuron_id_6m.is_some());
-    assert!(info.neuron_id_8y.is_some());
-    assert_eq!(info.neuron_8y_stake_e8s, ICP::from_e8s(100_000_042));
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
 
     match water_neuron.nicp_to_icp(caller.0.into(), nicp_to_unwrap) {
@@ -1411,137 +1699,6 @@ fn e2e_basic() {
     info = water_neuron.get_info();
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
     assert_eq!(info.total_icp_deposited, ICP::from_e8s(icp_to_wrap));
-
-    // Make a proposal to generate some rewards.
-
-    assert_eq!(
-        water_neuron.balance_of(
-            water_neuron.icp_ledger_id,
-            Account {
-                owner: water_neuron.water_neuron_id.into(),
-                subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT)
-            }
-        ),
-        Nat::from(0_u8)
-    );
-    let neuron_6m_stake_e8s_before_proposal = water_neuron.get_info().neuron_6m_stake_e8s;
-
-    let proposal = Proposal {
-        title: Some("Yellah".to_string()),
-        summary: "Dummy Proposal".to_string(),
-        url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
-            .to_string(),
-        action: Some(Action::Motion(crate::nns_types::Motion {
-            motion_text: "".to_string(),
-        })),
-    };
-
-    let _proposal_id =
-        match nns_governance_make_proposal(&mut water_neuron.env, caller, neuron_id, &proposal)
-            .command
-            .unwrap()
-        {
-            CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
-            _ => panic!("unexpected response"),
-        };
-
-    water_neuron.advance_time_and_tick(15 * 60);
-    water_neuron.advance_time_and_tick(15 * 60);
-    water_neuron.advance_time_and_tick(4 * 60 * 60 * 24 - 60 * 60);
-    water_neuron.advance_time_and_tick(7 * 24 * 60 * 60 + 10);
-    water_neuron.advance_time_and_tick(7 * 24 * 60 * 60 + 10);
-    water_neuron.advance_time_and_tick(24 * 60 * 60 + 10);
-    water_neuron.advance_time_and_tick(24 * 60 * 60 + 10);
-
-    assert!(neuron_6m_stake_e8s_before_proposal < water_neuron.get_info().neuron_6m_stake_e8s);
-
-    dbg!(water_neuron.get_events());
-    assert_eq!(water_neuron.get_events().total_event_count, 27);
-
-    assert!(water_neuron
-        .get_events()
-        .events
-        .iter()
-        .map(|e| &e.payload)
-        .any(|payload| payload
-            == &DisbursedUserNeuron {
-                withdrawal_id: 0,
-                transfer_block_height: 9,
-            }),);
-
-    let count = water_neuron
-        .get_events()
-        .events
-        .iter()
-        .map(|e| &e.payload)
-        .filter(|payload| matches!(payload, DisbursedMaturityNeuron { .. }))
-        .count();
-
-    assert_eq!(count, 2);
-    info = water_neuron.get_info();
-
-    assert_eq!(
-        water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
-        Nat::from(info.tracked_6m_stake.0)
-    );
-    assert_eq!(info.exchange_rate, 5274);
-
-    assert_eq!(info.governance_fee_share_percent, 10);
-
-    assert_matches!(
-        water_neuron.env.upgrade_canister(
-            water_neuron.water_neuron_id,
-            water_neuron_wasm(),
-            Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
-                governance_fee_share_percent: Some(20),
-            })))
-            .unwrap(),
-        ),
-        Ok(_)
-    );
-    water_neuron.advance_time_and_tick(60);
-
-    info = water_neuron.get_info();
-    assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
-    assert_eq!(info.exchange_rate, 5274);
-    assert_eq!(info.governance_fee_share_percent, 20);
-    assert_eq!(
-        water_neuron
-            .icp_to_nicp(caller.0.into(), E8S)
-            .unwrap()
-            .nicp_amount,
-        Some(nICP::from_e8s(5274))
-    );
-    assert_eq!(
-        water_neuron
-            .nicp_to_icp(caller.0.into(), nicp_to_unwrap)
-            .unwrap()
-            .icp_amount,
-        Some(ICP::from_e8s(18961559429865))
-    );
-
-    assert_eq!(
-        water_neuron
-            .get_withdrawal_requests(caller.0)
-            .last()
-            .unwrap()
-            .status,
-        WithdrawalStatus::WaitingToSplitNeuron
-    );
-
-    water_neuron.advance_time_and_tick(60 * 60);
-    let neuron_id = match water_neuron
-        .get_withdrawal_requests(caller.0)
-        .last()
-        .unwrap()
-        .status
-    {
-        WithdrawalStatus::WaitingDissolvement { neuron_id } => neuron_id,
-        _ => panic!(""),
-    };
-
-    let full_neuron = water_neuron.get_full_neuron(neuron_id.id).unwrap().unwrap();
-    assert_eq!(full_neuron.cached_neuron_stake_e8s, 18961559419865);
 }
 
 #[test]
