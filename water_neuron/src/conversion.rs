@@ -57,6 +57,10 @@ pub async fn cancel_withdrawal(
         }
     };
 
+    let icp_stake_e8s = icp_due
+        .checked_sub(ICP::from_e8s(2 * DEFAULT_LEDGER_FEE))
+        .expect("ICP due should always be more than 10.");
+
     stop_dissolvement(neuron_id).await.unwrap();
     match merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id)
         .await
@@ -70,9 +74,7 @@ pub async fn cancel_withdrawal(
                     process_event(
                         s,
                         EventType::MergeNeuron {
-                            icp_stake_e8s: icp_due
-                                .checked_sub(ICP::from_e8s(2 * DEFAULT_LEDGER_FEE))
-                                .expect("ICP due should always be more than 10."),
+                            icp_stake_e8s,
                             receiver: Account {
                                 owner: caller,
                                 subaccount: None,
