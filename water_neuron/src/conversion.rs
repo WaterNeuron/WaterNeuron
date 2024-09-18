@@ -1,15 +1,15 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::INFO;
-use crate::management::{merge_neuron, stop_dissolvement};
+use crate::management::{merge_neuron_into_six_months, stop_dissolvement};
 use crate::nns_types::{CommandResponse, MergeResponse, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
-use crate::state::{mutate_state, read_state, WithdrawalRequest, SIX_MONTHS_NEURON_NONCE};
+use crate::state::{mutate_state, read_state};
 use crate::tasks::{schedule_now, TaskType};
 use crate::{
     CancelWithdrawalError, ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess,
-    DEFAULT_LEDGER_FEE, ICP_LEDGER_ID,
+    ICP_LEDGER_ID,
 };
 use candid::Nat;
 use ic_canister_log::log;
@@ -27,42 +27,23 @@ pub async fn cancel_withdrawal(
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| CancelWithdrawalError::GuardError { guard_error })?;
 
-    let maybe_withdrawal_request: Option<WithdrawalRequest> = read_state(|s| {
+    match read_state(|s| {
         s.neuron_id_to_withdrawal_id
             .get(&neuron_id)
-            .map(|withdrawal_id| {
-                s.withdrawal_id_to_request
-                    .get(&withdrawal_id)
-                    .unwrap()
-                    .clone()
-            })
-    });
-
-    let icp_due = match maybe_withdrawal_request {
+            .and_then(|withdrawal_id| s.withdrawal_id_to_request.get(&withdrawal_id).cloned())
+    }) {
         Some(withdrawal_request) => {
-            let caller_account = Account {
-                owner: caller,
-                subaccount: None,
-            };
-            if caller_account == withdrawal_request.receiver {
-                withdrawal_request.icp_due
-            } else {
+            if withdrawal_request.receiver != caller.into() {
                 return Err(CancelWithdrawalError::BadCaller {
-                    message: format!("Caller did not match owner."),
+                    message: format!("Caller is not the owner."),
                 });
             }
         }
-        None => {
-            return Err(CancelWithdrawalError::RequestNotFound);
-        }
-    };
-
-    let icp_stake_e8s = icp_due
-        .checked_sub(ICP::from_e8s(2 * DEFAULT_LEDGER_FEE))
-        .expect("ICP due should always be more than 10.");
+        None => return Err(CancelWithdrawalError::RequestNotFound),
+    }
 
     stop_dissolvement(neuron_id).await.unwrap();
-    match merge_neuron(SIX_MONTHS_NEURON_NONCE, neuron_id)
+    match merge_neuron_into_six_months(neuron_id)
         .await
         .unwrap()
         .command
@@ -71,17 +52,7 @@ pub async fn cancel_withdrawal(
         CommandResponse::Merge(response) => {
             mutate_state(|s| {
                 if s.neuron_id_to_withdrawal_id.get(&neuron_id).is_some() {
-                    process_event(
-                        s,
-                        EventType::MergeNeuron {
-                            icp_stake_e8s,
-                            receiver: Account {
-                                owner: caller,
-                                subaccount: None,
-                            },
-                            neuron_id,
-                        },
-                    );
+                    process_event(s, EventType::MergeNeuron { neuron_id });
                     schedule_now(TaskType::ProcessPendingTransfers);
                     schedule_now(TaskType::ProcessLogic);
                 }
@@ -89,8 +60,8 @@ pub async fn cancel_withdrawal(
             Ok(*response)
         }
         CommandResponse::Error(e) => Err(CancelWithdrawalError::GovernanceError(e)),
-        _ => Err(CancelWithdrawalError::BadCommand {
-            message: format!("Expected merge commande got other."),
+        other => Err(CancelWithdrawalError::BadCommand {
+            message: format!("Expected merge commande got {other:?}"),
         }),
     }
 }

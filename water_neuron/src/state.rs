@@ -4,7 +4,7 @@ use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
     compute_neuron_staking_subaccount_bytes, self_canister_id, InitArg, PendingTransfer, Unit,
-    UpgradeArg, E8S,
+    UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -129,7 +129,7 @@ pub enum WithdrawalStatus {
     WaitingDissolvement { neuron_id: NeuronId },
     ConversionDone { transfer_block_height: u64 },
     NotFound,
-    Cancelled { transfer_block_height: u64 },
+    Cancelled,
 }
 
 impl fmt::Display for WithdrawalStatus {
@@ -146,9 +146,7 @@ impl fmt::Display for WithdrawalStatus {
                 transfer_block_height,
             } => write!(f, "Neuron Disbursed at index: {transfer_block_height}"),
             WithdrawalStatus::NotFound => write!(f, "Neuron Not Found"),
-            WithdrawalStatus::Cancelled {
-                transfer_block_height,
-            } => write!(f, "Withdrawal cancelled at index: {transfer_block_height}"),
+            WithdrawalStatus::Cancelled => write!(f, "Withdrawal Cancelled"),
         }
     }
 }
@@ -306,10 +304,8 @@ impl State {
             };
         }
 
-        if let Some(block_index) = self.withdrawal_cancelled.get(&withdrawal_id) {
-            return WithdrawalStatus::Cancelled {
-                transfer_block_height: *block_index,
-            };
+        if self.withdrawal_cancelled.get(&withdrawal_id).is_some() {
+            return WithdrawalStatus::Cancelled;
         }
 
         WithdrawalStatus::NotFound
@@ -557,23 +553,34 @@ impl State {
             .is_none());
     }
 
-    pub fn record_neuron_merge(
-        &mut self,
-        icp_stake_e8s: ICP,
-        receiver: Account,
-        neuron_id: NeuronId,
-    ) {
+    pub fn record_neuron_merge(&mut self, neuron_id: NeuronId) {
         let withdrawal_id: &u64 = self.neuron_id_to_withdrawal_id.get(&neuron_id).unwrap();
-        self.withdrawal_to_split.remove(withdrawal_id);
         self.withdrawal_to_start_dissolving.remove(withdrawal_id);
         self.withdrawal_to_disburse.remove(withdrawal_id);
+
+        let withdrawal_request = self
+            .withdrawal_id_to_request
+            .get(withdrawal_id)
+            .expect("Request should match withdrawal id.")
+            .clone();
+
         self.withdrawal_cancelled.insert(*withdrawal_id);
         assert!(self.neuron_id_to_withdrawal_id.remove(&neuron_id).is_some());
 
+        // Merging the neuron costs two times the ICP ledger transaction fee.
+        // Once to calculate the effects of merging two neurons (step 1).
+        // Once to operate the transaction of the source neuron stake to the target neuron (step 5).
+        // Here is the link to the according merge_neurons function used:
+        // https://github.com/dfinity/ic/blob/714c85c6a4245fb5b39e76f5c8003e6d90e49c4d/rs/nns/governance/src/governance.rs#L2780
+        let icp_stake_e8s = withdrawal_request
+            .icp_due
+            .checked_sub(ICP::from_e8s(2 * DEFAULT_LEDGER_FEE))
+            .expect("ICP due should be greater than 10.");
         let nicp_to_mint = self.convert_icp_to_nicp(icp_stake_e8s);
         self.total_circulating_nicp += nicp_to_mint;
 
         self.tracked_6m_stake += icp_stake_e8s;
+
         let transfer_id = self.increment_transfer_id();
         assert_eq!(
             self.pending_transfers.insert(
@@ -582,7 +589,7 @@ impl State {
                     transfer_id,
                     from_subaccount: None,
                     amount: nicp_to_mint.0,
-                    receiver,
+                    receiver: withdrawal_request.receiver,
                     unit: Unit::NICP,
                     memo: None
                 }
@@ -590,7 +597,7 @@ impl State {
             None
         );
         self.account_to_deposits
-            .entry(receiver)
+            .entry(withdrawal_request.receiver)
             .and_modify(|deposits| deposits.push(transfer_id))
             .or_insert(vec![transfer_id]);
     }
