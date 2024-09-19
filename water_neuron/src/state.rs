@@ -561,7 +561,7 @@ impl State {
         let withdrawal_request = self
             .withdrawal_id_to_request
             .get(withdrawal_id)
-            .expect("Request should match withdrawal id.")
+            .unwrap()
             .clone();
 
         self.withdrawal_cancelled.insert(*withdrawal_id);
