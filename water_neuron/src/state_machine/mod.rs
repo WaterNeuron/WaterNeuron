@@ -1604,28 +1604,40 @@ fn should_cancel_withdrawal() {
         }
         Err(e) => panic!("Expected WithdrawalSuccess, got {e:?}"),
     }
-    
+
     assert_eq!(water_neuron.get_withdrawal_requests(caller.0).len(), 2);
 
     assert_matches!(
-        water_neuron.get_withdrawal_requests(caller.0).last().unwrap().status,
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
+            .status,
         WithdrawalStatus::WaitingToSplitNeuron
-    ); 
+    );
 
     assert_matches!(
-        water_neuron.get_withdrawal_requests(caller.0).last().unwrap().status,
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
+            .status,
         WithdrawalStatus::WaitingDissolvement { .. }
-    ); 
+    );
 
     assert_eq!(
         water_neuron.balance_of(water_neuron.icp_ledger_id, caller.0),
         Nat::from(999_980_000_u64)
     );
-    
+
     water_neuron.advance_time_and_tick(MIN_DISSOLVE_DELAY_FOR_REWARDS);
-    
+
     assert_eq!(
-        water_neuron.get_withdrawal_requests(caller.0).last().unwrap().status,
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
+            .status,
         WithdrawalStatus::ConversionDone {
             transfer_block_height: 11
         }
@@ -1664,7 +1676,7 @@ fn should_cancel_withdrawal() {
 
     assert_eq!(
         water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
-        Nat::from(E8S + 42 + icp_to_wrap - nicp_to_unwrap - 2*DEFAULT_LEDGER_FEE)
+        Nat::from(E8S + 42 + icp_to_wrap - nicp_to_unwrap - 2 * DEFAULT_LEDGER_FEE)
     );
 
     match water_neuron.nicp_to_icp(caller.0.into(), nicp_to_unwrap) {
@@ -1686,10 +1698,13 @@ fn should_cancel_withdrawal() {
     );
 
     assert_matches!(
-        water_neuron.get_withdrawal_requests(caller.0).last().unwrap().status,
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
+            .status,
         WithdrawalStatus::WaitingDissolvement { .. }
     );
-
 
     let proposal = Proposal {
         title: Some("Yellah".to_string()),
@@ -1701,14 +1716,18 @@ fn should_cancel_withdrawal() {
         })),
     };
 
-    let proposal_id =
-        match nns_governance_make_proposal(&mut water_neuron.env, caller, info.neuron_6m_id.unwrap(), &proposal)
-            .command
-            .unwrap()
-        {
-            CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
-            _ => panic!("unexpected response"),
-        };
+    let proposal_id = match nns_governance_make_proposal(
+        &mut water_neuron.env,
+        caller,
+        info.neuron_6m_id.unwrap(),
+        &proposal,
+    )
+    .command
+    .unwrap()
+    {
+        CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
+        _ => panic!("unexpected response"),
+    };
 
     water_neuron.advance_time_and_tick(30 * 60);
 
@@ -1738,7 +1757,10 @@ fn should_cancel_withdrawal() {
 
     match water_neuron.cancel_withdrawal(
         caller.0.into(),
-        water_neuron.get_withdrawal_requests(caller.0).last().unwrap()
+        water_neuron
+            .get_withdrawal_requests(caller.0)
+            .last()
+            .unwrap()
             .request
             .neuron_id
             .unwrap(),
