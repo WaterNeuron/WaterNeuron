@@ -42,14 +42,27 @@ pub async fn cancel_withdrawal(
         None => return Err(CancelWithdrawalError::RequestNotFound),
     }
 
-    stop_dissolvement(neuron_id).await.unwrap();
+    stop_dissolvement(neuron_id)
+        .await
+        .map_err(|error_msg| CancelWithdrawalError::StopDissolvementError { message: error_msg })?;
+
     match merge_neuron_into_six_months(neuron_id)
         .await
-        .unwrap()
+        .map_err(|error_msg| CancelWithdrawalError::MergeNeuronError { message: error_msg })?
         .command
         .expect("Command should always be set.")
     {
         CommandResponse::Merge(response) => {
+            assert!(
+                response
+                    .source_neuron
+                    .as_ref()
+                    .unwrap()
+                    .cached_neuron_stake_e8s
+                    == 0
+            );
+            assert!(response.target_neuron.is_some());
+
             mutate_state(|s| {
                 if s.neuron_id_to_withdrawal_id.get(&neuron_id).is_some() {
                     process_event(s, EventType::MergeNeuron { neuron_id });

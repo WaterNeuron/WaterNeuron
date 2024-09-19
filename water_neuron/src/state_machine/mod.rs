@@ -1719,7 +1719,7 @@ fn should_cancel_withdrawal() {
     let proposal_id = match nns_governance_make_proposal(
         &mut water_neuron.env,
         caller,
-        info.neuron_6m_id.unwrap(),
+        neuron_id,
         &proposal,
     )
     .command

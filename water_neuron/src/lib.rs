@@ -246,6 +246,8 @@ pub enum CancelWithdrawalError {
     BadCommand { message: String },
     BadCaller { message: String },
     RequestNotFound,
+    StopDissolvementError { message: String },
+    MergeNeuronError { message: String },
 }
 
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This
