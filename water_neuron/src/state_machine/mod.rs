@@ -1624,8 +1624,6 @@ fn should_cancel_withdrawal() {
     
     water_neuron.advance_time_and_tick(MIN_DISSOLVE_DELAY_FOR_REWARDS);
     
-    
-    println!("{:?}", water_neuron.get_withdrawal_requests(caller.0).last().unwrap().request.icp_due);
     assert_eq!(
         water_neuron.get_withdrawal_requests(caller.0).last().unwrap().status,
         WithdrawalStatus::ConversionDone {
@@ -1669,6 +1667,101 @@ fn should_cancel_withdrawal() {
         Nat::from(E8S + 42 + icp_to_wrap - nicp_to_unwrap - 2*DEFAULT_LEDGER_FEE)
     );
 
+    match water_neuron.nicp_to_icp(caller.0.into(), nicp_to_unwrap) {
+        Ok(WithdrawalSuccess { withdrawal_id, .. }) => {
+            assert_eq!(withdrawal_id, 2);
+        }
+        Err(e) => panic!("Expected WithdrawalSuccess, got {e:?}"),
+    }
+
+    assert_eq!(water_neuron.get_withdrawal_requests(caller.0).len(), 3);
+
+    water_neuron.advance_time_and_tick(ONE_DAY_SECONDS);
+    info = water_neuron.get_info();
+    assert_eq!(info.exchange_rate, E8S);
+
+    assert_eq!(
+        water_neuron.balance_of(water_neuron.nicp_ledger_id, caller.0),
+        Nat::from(7_999_970_000_u64)
+    );
+
+    assert_matches!(
+        water_neuron.get_withdrawal_requests(caller.0).last().unwrap().status,
+        WithdrawalStatus::WaitingDissolvement { .. }
+    );
+
+
+    let proposal = Proposal {
+        title: Some("Yellah".to_string()),
+        summary: "Dummy Proposal".to_string(),
+        url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
+            .to_string(),
+        action: Some(Action::Motion(crate::nns_types::Motion {
+            motion_text: "".to_string(),
+        })),
+    };
+
+    let proposal_id =
+        match nns_governance_make_proposal(&mut water_neuron.env, caller, info.neuron_6m_id.unwrap(), &proposal)
+            .command
+            .unwrap()
+        {
+            CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
+            _ => panic!("unexpected response"),
+        };
+
+    water_neuron.advance_time_and_tick(30 * 60);
+
+    let proposals = water_neuron.list_proposals(
+        water_neuron.wtn_governance_id,
+        ListProposals {
+            include_reward_status: vec![],
+            before_proposal: None,
+            limit: 10,
+            exclude_type: vec![],
+            include_status: vec![],
+        },
+    );
+    assert_eq!(proposals.proposals.len(), 2);
+
+    use crate::nns_types::Empty;
+    use crate::CommandResponse::RegisterVote;
+
+    assert_eq!(
+        water_neuron.approve_proposal(proposal_id.id, water_neuron.wtn_governance_id.get().0),
+        Ok(ManageNeuronResponse {
+            command: Some(RegisterVote(Empty {}))
+        })
+    );
+
+    water_neuron.advance_time_and_tick(30 * 60);
+
+    match water_neuron.cancel_withdrawal(
+        caller.0.into(),
+        water_neuron.get_withdrawal_requests(caller.0).last().unwrap()
+            .request
+            .neuron_id
+            .unwrap(),
+    ) {
+        Ok(response) => {
+            let target_neuron_info = response.target_neuron_info.unwrap().clone();
+            let source_neuron_info = response.source_neuron_info.unwrap().clone();
+            let target_neuron = response.target_neuron.unwrap().clone();
+            assert_eq!(target_neuron.id.unwrap(), info.neuron_id_6m.unwrap());
+            assert_eq!(
+                target_neuron_info.dissolve_delay_seconds,
+                15_865_200 // 6 months
+            );
+            assert_eq!(target_neuron_info.stake_e8s, 9_099_960_042);
+            assert_eq!(source_neuron_info.age_seconds, 0);
+            assert_eq!(source_neuron_info.stake_e8s, 0);
+        }
+        Err(e) => {
+            panic!("Expected MergeResponse, got error: {e:?}");
+        }
+    }
+
+    water_neuron.advance_time_and_tick(30 * 60);
 
     info = water_neuron.get_info();
     assert_eq!(info.exchange_rate, E8S);
