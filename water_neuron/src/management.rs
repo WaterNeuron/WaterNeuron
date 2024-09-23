@@ -9,10 +9,7 @@ use crate::nns_types::{
     ListProposalInfo, ListProposalInfoResponse, ManageNeuron, ManageNeuronResponse, Neuron,
     NeuronId, ProposalId,
 };
-use crate::state::{
-    read_state, EIGHT_YEARS_NEURON_ID, NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_ID,
-    SIX_MONTHS_NEURON_NONCE,
-};
+use crate::state::{read_state, NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE};
 use crate::{compute_neuron_staking_subaccount_bytes, CommandResponse};
 use candid::{Nat, Principal};
 use ic_sns_governance::pb::v1::{
@@ -315,6 +312,10 @@ pub async fn split_neuron(
 }
 
 pub async fn stop_dissolvement(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
+    assert!(
+        neuron_id != read_state(|s| s.neuron_id_6m.unwrap())
+            && neuron_id != read_state(|s| s.neuron_id_8y.unwrap())
+    );
     manage_neuron(
         Command::Configure(Configure {
             operation: Some(Operation::StopDissolving(StopDissolving {})),
@@ -327,7 +328,10 @@ pub async fn stop_dissolvement(neuron_id: NeuronId) -> Result<ManageNeuronRespon
 pub async fn merge_neuron_into_six_months(
     neuron_id: NeuronId,
 ) -> Result<ManageNeuronResponse, String> {
-    assert!(neuron_id.id != SIX_MONTHS_NEURON_ID && neuron_id.id != EIGHT_YEARS_NEURON_ID);
+    assert!(
+        neuron_id != read_state(|s| s.neuron_id_8y.unwrap())
+            && neuron_id != read_state(|s| s.neuron_id_6m.unwrap())
+    );
     manage_neuron(
         Command::Merge(Merge {
             source_neuron_id: Some(neuron_id),

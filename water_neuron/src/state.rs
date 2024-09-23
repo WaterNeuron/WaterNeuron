@@ -28,8 +28,6 @@ thread_local! {
 
 pub const SIX_MONTHS_NEURON_NONCE: u64 = 0;
 pub const EIGHT_YEARS_NEURON_NONCE: u64 = 1;
-pub const SIX_MONTHS_NEURON_ID: u64 = 13680855657433416220;
-pub const EIGHT_YEARS_NEURON_ID: u64 = 433047053926084807;
 
 // "ryjl3-tyaaa-aaaaa-aaaba-cai"
 pub const ICP_LEDGER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
@@ -555,8 +553,10 @@ impl State {
 
     pub fn record_neuron_merge(&mut self, neuron_id: NeuronId) {
         let withdrawal_id: &u64 = self.neuron_id_to_withdrawal_id.get(&neuron_id).unwrap();
-        self.withdrawal_to_start_dissolving.remove(withdrawal_id);
-        self.withdrawal_to_disburse.remove(withdrawal_id);
+        debug_assert!(
+            self.withdrawal_to_start_dissolving.remove(withdrawal_id)
+                || self.withdrawal_to_disburse.remove(withdrawal_id)
+        );
 
         let withdrawal_request = self
             .withdrawal_id_to_request
@@ -567,7 +567,7 @@ impl State {
         self.withdrawal_cancelled.insert(*withdrawal_id);
         assert!(self.neuron_id_to_withdrawal_id.remove(&neuron_id).is_some());
 
-        // Merging the neuron costs two times the ICP ledger transaction fee.
+        // Merging the neurons costs two times the ICP ledger transaction fee.
         // Once to calculate the effects of merging two neurons (step 1).
         // Once to operate the transaction of the source neuron stake to the target neuron (step 5).
         // Here is the link to the according merge_neurons function used:

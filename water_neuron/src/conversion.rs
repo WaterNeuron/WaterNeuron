@@ -9,7 +9,7 @@ use crate::state::{mutate_state, read_state};
 use crate::tasks::{schedule_now, TaskType};
 use crate::{
     CancelWithdrawalError, ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess,
-    ICP_LEDGER_ID,
+    DEFAULT_LEDGER_FEE, ICP_LEDGER_ID,
 };
 use candid::Nat;
 use ic_canister_log::log;
@@ -27,7 +27,7 @@ pub async fn cancel_withdrawal(
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| CancelWithdrawalError::GuardError { guard_error })?;
 
-    match read_state(|s| {
+    let icp_due = match read_state(|s| {
         s.neuron_id_to_withdrawal_id
             .get(&neuron_id)
             .and_then(|withdrawal_id| s.withdrawal_id_to_request.get(&withdrawal_id).cloned())
@@ -38,9 +38,10 @@ pub async fn cancel_withdrawal(
                     message: format!("Caller is not the owner."),
                 });
             }
+            withdrawal_request.icp_due
         }
         None => return Err(CancelWithdrawalError::RequestNotFound),
-    }
+    };
 
     stop_dissolvement(neuron_id)
         .await
@@ -61,20 +62,28 @@ pub async fn cancel_withdrawal(
                     .cached_neuron_stake_e8s
                     == 0
             );
-            assert!(response.target_neuron.is_some());
+
+            assert!(
+                response
+                    .target_neuron
+                    .as_ref()
+                    .unwrap()
+                    .cached_neuron_stake_e8s
+                    == read_state(|s| s.tracked_6m_stake.0) + icp_due.0 - 2 * DEFAULT_LEDGER_FEE
+            );
 
             mutate_state(|s| {
                 if s.neuron_id_to_withdrawal_id.get(&neuron_id).is_some() {
                     process_event(s, EventType::MergeNeuron { neuron_id });
                     schedule_now(TaskType::ProcessPendingTransfers);
-                    schedule_now(TaskType::ProcessLogic);
+                    schedule_now(TaskType::RefreshShortTerm);
                 }
             });
             Ok(*response)
         }
         CommandResponse::Error(e) => Err(CancelWithdrawalError::GovernanceError(e)),
         other => Err(CancelWithdrawalError::BadCommand {
-            message: format!("Expected merge commande got {other:?}"),
+            message: format!("Expected merge command got {other:?}"),
         }),
     }
 }

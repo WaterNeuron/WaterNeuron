@@ -1716,18 +1716,14 @@ fn should_cancel_withdrawal() {
         })),
     };
 
-    let proposal_id = match nns_governance_make_proposal(
-        &mut water_neuron.env,
-        caller,
-        neuron_id,
-        &proposal,
-    )
-    .command
-    .unwrap()
-    {
-        CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
-        _ => panic!("unexpected response"),
-    };
+    let proposal_id =
+        match nns_governance_make_proposal(&mut water_neuron.env, caller, neuron_id, &proposal)
+            .command
+            .unwrap()
+        {
+            CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
+            _ => panic!("unexpected response"),
+        };
 
     water_neuron.advance_time_and_tick(30 * 60);
 
