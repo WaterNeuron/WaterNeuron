@@ -899,6 +899,7 @@ impl From<u64> for NeuronId {
     PartialOrd,
     CborEncode,
     Decode,
+    Default,
 )]
 pub struct ProposalId {
     #[n(0)]
