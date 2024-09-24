@@ -553,7 +553,7 @@ impl State {
 
     pub fn record_neuron_merge(&mut self, neuron_id: NeuronId) {
         let withdrawal_id: &u64 = self.neuron_id_to_withdrawal_id.get(&neuron_id).unwrap();
-        debug_assert!(
+        assert!(
             self.withdrawal_to_start_dissolving.remove(withdrawal_id)
                 || self.withdrawal_to_disburse.remove(withdrawal_id)
         );
