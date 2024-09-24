@@ -157,9 +157,9 @@ pub struct State {
     pub withdrawal_id: WithdrawalId,
 
     // NNS Proposal Id to SNS Proposals ID
-    // and deadline_timestamp_seconds of the NNS proposal
     pub proposals: BTreeMap<ProposalId, ProposalId>,
     pub voted_proposals: BTreeSet<ProposalId>,
+    pub last_nns_proposal_seen: ProposalId,
 
     // Airdrop Map
     pub airdrop: BTreeMap<Principal, WTN>,
@@ -240,6 +240,7 @@ impl State {
             principal_guards: BTreeSet::default(),
             active_tasks: BTreeSet::default(),
             latest_distribution_icp_per_vp: None,
+            last_nns_proposal_seen: Default::default(),
         }
     }
 

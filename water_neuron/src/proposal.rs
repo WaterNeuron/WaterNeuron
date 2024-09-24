@@ -51,6 +51,12 @@ pub async fn mirror_proposals() -> Result<(), String> {
                     }
                 };
 
+                mutate_state(|s| {
+                    if proposal_id > s.last_nns_proposal_seen {
+                        s.last_nns_proposal_seen = proposal_id.clone();
+                    }
+                });
+
                 // Skip proposal ineligible for rewards.
                 // https://github.com/dfinity/ic/blob/17df8febdb922c3981475035d830f09d9b990a5a/rs/nns/governance/src/gen/ic_nns_governance.pb.v1.rs#L4127
                 if proposal_info.reward_status > 1 {

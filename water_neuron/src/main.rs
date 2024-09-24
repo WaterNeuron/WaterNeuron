@@ -70,6 +70,12 @@ pub fn post_upgrade(args: LiquidArg) {
                 mutate_state(|s| process_event(s, EventType::Upgrade(args)));
             }
 
+            mutate_state(|s| {
+                if let Some(entry) = s.proposals.last_entry() {
+                    s.last_nns_proposal_seen = entry.key().clone();
+                }
+            });
+
             let end = ic_cdk::api::instruction_counter();
 
             let event_count = total_event_count();
@@ -151,13 +157,14 @@ fn get_airdrop_allocation(p: Option<Principal>) -> WTN {
 }
 
 #[query]
-fn get_wtn_proposal_id(nns_proposal_id: u64) -> Option<u64> {
+fn get_wtn_proposal_id(nns_proposal_id: u64) -> Result<ProposalId, ProposalId> {
     read_state(|s| {
         s.proposals
             .get(&ProposalId {
                 id: nns_proposal_id,
             })
-            .map(|p| p.id)
+            .cloned()
+            .ok_or_else(|| s.last_nns_proposal_seen.clone())
     })
 }
 
