@@ -1,9 +1,9 @@
 use crate::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
 use crate::nns_types::{
     manage_neuron, manage_neuron::claim_or_refresh,
-    manage_neuron::claim_or_refresh::MemoAndController, proposal::Action, ClaimOrRefreshResponse,
-    CommandResponse, GovernanceError, ManageNeuron, ManageNeuronResponse, MergeResponse, Neuron,
-    Proposal, ProposalInfo, neuron
+    manage_neuron::claim_or_refresh::MemoAndController, neuron, proposal::Action,
+    ClaimOrRefreshResponse, CommandResponse, GovernanceError, ManageNeuron, ManageNeuronResponse,
+    MergeResponse, Neuron, Proposal, ProposalInfo,
 };
 use crate::sns_distribution::EXPECTED_INITIAL_BALANCE;
 use crate::state::event::{GetEventsArg, GetEventsResult};
@@ -1585,7 +1585,7 @@ fn should_cancel_withdrawal() {
             .unwrap()
             .dissolve_state
             .unwrap(),
-            neuron::DissolveState::DissolveDelaySeconds(15_865_200)
+        neuron::DissolveState::DissolveDelaySeconds(15_865_200)
     );
     assert_eq!(info.exchange_rate, E8S);
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
