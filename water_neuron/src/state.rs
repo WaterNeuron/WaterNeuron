@@ -556,7 +556,8 @@ impl State {
         let withdrawal_id: &u64 = self.neuron_id_to_withdrawal_id.get(&neuron_id).unwrap();
         assert!(
             self.withdrawal_to_start_dissolving.remove(withdrawal_id)
-                || self.withdrawal_to_disburse.remove(withdrawal_id)
+                || (self.withdrawal_to_disburse.remove(withdrawal_id)
+                    && self.to_disburse.remove(&neuron_id).is_some())
         );
 
         let withdrawal_request = self
