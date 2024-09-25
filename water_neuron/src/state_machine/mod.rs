@@ -3,7 +3,7 @@ use crate::nns_types::{
     manage_neuron, manage_neuron::claim_or_refresh,
     manage_neuron::claim_or_refresh::MemoAndController, proposal::Action, ClaimOrRefreshResponse,
     CommandResponse, GovernanceError, ManageNeuron, ManageNeuronResponse, MergeResponse, Neuron,
-    Proposal, ProposalInfo,
+    Proposal, ProposalInfo, neuron
 };
 use crate::sns_distribution::EXPECTED_INITIAL_BALANCE;
 use crate::state::event::{GetEventsArg, GetEventsResult};
@@ -1568,7 +1568,6 @@ fn should_cancel_withdrawal() {
                 15_865_200 // 6 months
             );
             assert_eq!(target_neuron_info.stake_e8s, 10_099_980_042);
-            //assert_eq!(target_neuron_info.age_seconds, 28588832);
             assert_eq!(source_neuron_info.age_seconds, 0);
             assert_eq!(source_neuron_info.stake_e8s, 0);
         }
@@ -1579,6 +1578,15 @@ fn should_cancel_withdrawal() {
 
     water_neuron.advance_time_and_tick(60);
     info = water_neuron.get_info();
+    assert_eq!(
+        water_neuron
+            .get_full_neuron(info.neuron_id_6m.unwrap().id)
+            .unwrap()
+            .unwrap()
+            .dissolve_state
+            .unwrap(),
+            neuron::DissolveState::DissolveDelaySeconds(15_865_200)
+    );
     assert_eq!(info.exchange_rate, E8S);
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
 
