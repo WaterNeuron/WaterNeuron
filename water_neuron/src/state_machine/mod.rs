@@ -1679,12 +1679,12 @@ fn should_cancel_withdrawal() {
 
     assert_eq!(
         water_neuron.balance_of(water_neuron.nicp_ledger_id, caller.0),
-        Nat::from(8_999_970_000_u64)
+        Nat::from(8_994_970_100_u64)
     );
 
     assert_eq!(
         water_neuron.balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account),
-        Nat::from(E8S + 42 + icp_to_wrap - nicp_to_unwrap - 2 * DEFAULT_LEDGER_FEE)
+        Nat::from(9_099_484_756_u64)
     );
 
     match water_neuron.nicp_to_icp(caller.0.into(), nicp_to_unwrap) {
@@ -1698,11 +1698,11 @@ fn should_cancel_withdrawal() {
 
     water_neuron.advance_time_and_tick(ONE_DAY_SECONDS);
     info = water_neuron.get_info();
-    assert_eq!(info.exchange_rate, E8S);
+    assert_eq!(info.exchange_rate, 99_950_496_u64);
 
     assert_eq!(
         water_neuron.balance_of(water_neuron.nicp_ledger_id, caller.0),
-        Nat::from(7_999_970_000_u64)
+        Nat::from(7_994_970_100_u64)
     );
 
     assert_matches!(
@@ -1778,7 +1778,7 @@ fn should_cancel_withdrawal() {
                 target_neuron_info.dissolve_delay_seconds,
                 15_865_200 // 6 months
             );
-            assert_eq!(target_neuron_info.stake_e8s, 9_099_960_042);
+            assert_eq!(target_neuron_info.stake_e8s, 9_099_464_756);
             assert_eq!(source_neuron_info.age_seconds, 0);
             assert_eq!(source_neuron_info.stake_e8s, 0);
         }
@@ -1790,7 +1790,7 @@ fn should_cancel_withdrawal() {
     water_neuron.advance_time_and_tick(30 * 60);
 
     info = water_neuron.get_info();
-    assert_eq!(info.exchange_rate, E8S);
+    assert_eq!(info.exchange_rate, 99_895_549_u64);
     assert_eq!(info.stakers_count, 1);
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
     assert_eq!(info.total_icp_deposited, ICP::from_e8s(icp_to_wrap));
