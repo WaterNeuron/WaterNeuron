@@ -578,7 +578,11 @@ impl State {
             .icp_due
             .checked_sub(ICP::from_e8s(2 * DEFAULT_LEDGER_FEE))
             .expect("ICP due should be greater than 10.");
-        let nicp_to_mint = self.convert_icp_to_nicp(icp_stake_e8s);
+        let nicp_stake_value_e8s = self.convert_icp_to_nicp(icp_stake_e8s);
+
+        // 0.5% fee when a withdrawal is cancelled.
+        let nicp_fee = nICP::from_e8s(nicp_stake_value_e8s.0.checked_div(200).unwrap());
+        let nicp_to_mint = nicp_stake_value_e8s.checked_sub(nicp_fee).unwrap();
         self.total_circulating_nicp += nicp_to_mint;
 
         self.tracked_6m_stake += icp_stake_e8s;
