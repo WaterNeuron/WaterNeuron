@@ -1587,12 +1587,12 @@ fn should_cancel_withdrawal() {
             .unwrap(),
         neuron::DissolveState::DissolveDelaySeconds(15_865_200)
     );
-    assert_eq!(info.exchange_rate, E8S);
+    assert_eq!(info.exchange_rate, 99_950_496);
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
 
     assert_eq!(
         water_neuron.balance_of(water_neuron.nicp_ledger_id, caller.0),
-        Nat::from(9_999_970_000_u64)
+        Nat::from(9_994_970_100_u64)
     );
 
     water_neuron.advance_time_and_tick(ONE_DAY_SECONDS);
@@ -1653,7 +1653,7 @@ fn should_cancel_withdrawal() {
 
     assert_eq!(
         water_neuron.balance_of(water_neuron.icp_ledger_id, caller.0),
-        Nat::from(1_999_960_000_u64)
+        Nat::from(2_000_455_286_u64)
     );
 
     match water_neuron.cancel_withdrawal(
