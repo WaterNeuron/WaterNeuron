@@ -312,10 +312,7 @@ pub async fn split_neuron(
 }
 
 pub async fn stop_dissolvement(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
-    assert!(
-        neuron_id != read_state(|s| s.neuron_id_6m.unwrap())
-            && neuron_id != read_state(|s| s.neuron_id_8y.unwrap())
-    );
+    assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
     manage_neuron(
         Command::Configure(Configure {
             operation: Some(Operation::StopDissolving(StopDissolving {})),
@@ -328,10 +325,7 @@ pub async fn stop_dissolvement(neuron_id: NeuronId) -> Result<ManageNeuronRespon
 pub async fn merge_neuron_into_six_months(
     neuron_id: NeuronId,
 ) -> Result<ManageNeuronResponse, String> {
-    assert!(
-        neuron_id != read_state(|s| s.neuron_id_8y.unwrap())
-            && neuron_id != read_state(|s| s.neuron_id_6m.unwrap())
-    );
+    assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
     manage_neuron(
         Command::Merge(Merge {
             source_neuron_id: Some(neuron_id),

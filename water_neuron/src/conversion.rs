@@ -69,22 +69,22 @@ pub async fn cancel_withdrawal(
         .expect("Command should always be set.")
     {
         CommandResponse::Merge(response) => {
-            assert!(
+            assert_eq!(
                 response
                     .source_neuron
                     .as_ref()
                     .unwrap()
-                    .cached_neuron_stake_e8s
-                    == 0
+                    .cached_neuron_stake_e8s,
+                0
             );
 
-            assert!(
+            assert_eq!(
                 response
                     .target_neuron
                     .as_ref()
                     .unwrap()
-                    .cached_neuron_stake_e8s
-                    == read_state(|s| s.tracked_6m_stake.0) + icp_due.0 - 2 * DEFAULT_LEDGER_FEE
+                    .cached_neuron_stake_e8s,
+                read_state(|s| s.tracked_6m_stake.0) + icp_due.0 - 2 * DEFAULT_LEDGER_FEE
             );
 
             mutate_state(|s| {
