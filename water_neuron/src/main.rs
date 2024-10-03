@@ -345,6 +345,11 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 #[update]
 async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelWithdrawalError> {
     reject_anonymous_call();
+    // test in prod
+    assert_eq!(
+        ic_cdk::caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
     check_postcondition(water_neuron::conversion::cancel_withdrawal(neuron_id).await)
 }
 
