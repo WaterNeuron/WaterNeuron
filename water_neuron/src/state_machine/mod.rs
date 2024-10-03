@@ -15,7 +15,7 @@ use crate::{
     compute_neuron_staking_subaccount_bytes, nICP, CancelWithdrawalError, CanisterInfo,
     ConversionArg, ConversionError, DepositSuccess, InitArg, LiquidArg, NeuronId, PendingTransfer,
     Unit, UpgradeArg, WithdrawalSuccess, DEFAULT_LEDGER_FEE, E8S, ICP,
-    MIN_DISSOLVE_DELAY_FOR_REWARDS, NEURON_LEDGER_FEE, ONE_DAY_SECONDS, ONE_MONTH_SECONDS
+    MIN_DISSOLVE_DELAY_FOR_REWARDS, NEURON_LEDGER_FEE, ONE_DAY_SECONDS, ONE_MONTH_SECONDS,
 };
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
