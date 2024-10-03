@@ -8,8 +8,8 @@ use crate::state::event::EventType;
 use crate::state::{mutate_state, read_state};
 use crate::tasks::{schedule_now, TaskType};
 use crate::{
-    CancelWithdrawalError, ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess,
-    DEFAULT_LEDGER_FEE, ICP_LEDGER_ID,
+    get_full_neuron, timestamp_nanos, CancelWithdrawalError, ConversionArg, ConversionError,
+    DepositSuccess, WithdrawalSuccess, DEFAULT_LEDGER_FEE, ICP_LEDGER_ID, ONE_DAY_SECONDS,
 };
 use candid::Nat;
 use ic_canister_log::log;
@@ -26,6 +26,21 @@ pub async fn cancel_withdrawal(
     let caller = ic_cdk::caller();
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| CancelWithdrawalError::GuardError { guard_error })?;
+
+    match get_full_neuron(neuron_id.id).await {
+        Ok(result) => match result {
+            Ok(neuron) => match neuron.time_left(timestamp_nanos()) {
+                Some(time) => {
+                    if time < ONE_DAY_SECONDS * 14 {
+                        return Err(CancelWithdrawalError::TooLate);
+                    }
+                }
+                None => return Err(CancelWithdrawalError::UnknownTimeLeft),
+            },
+            Err(gov_err) => return Err(CancelWithdrawalError::GovernanceError(gov_err)),
+        },
+        Err(error) => return Err(CancelWithdrawalError::GetFullNeuronError { message: error }),
+    }
 
     let icp_due = match read_state(|s| {
         s.neuron_id_to_withdrawal_id
@@ -73,11 +88,9 @@ pub async fn cancel_withdrawal(
             );
 
             mutate_state(|s| {
-                if s.neuron_id_to_withdrawal_id.get(&neuron_id).is_some() {
-                    process_event(s, EventType::MergeNeuron { neuron_id });
-                    schedule_now(TaskType::ProcessPendingTransfers);
-                    schedule_now(TaskType::RefreshShortTerm);
-                }
+                process_event(s, EventType::MergeNeuron { neuron_id });
+                schedule_now(TaskType::ProcessPendingTransfers);
+                schedule_now(TaskType::RefreshShortTerm);
             });
             Ok(*response)
         }

@@ -248,6 +248,9 @@ pub enum CancelWithdrawalError {
     RequestNotFound,
     StopDissolvementError { message: String },
     MergeNeuronError { message: String },
+    GetFullNeuronError { message: String },
+    TooLate,
+    UnknownTimeLeft,
 }
 
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This

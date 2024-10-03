@@ -1670,9 +1670,9 @@ fn should_cancel_withdrawal() {
             panic!("Expected CancelWithdrawalError, got response: {response:?}");
         }
         Err(e) => match e {
-            CancelWithdrawalError::RequestNotFound => {}
+            CancelWithdrawalError::TooLate => {}
             _ => {
-                panic!("Expected RequestNotFound, got {e:?}")
+                panic!("Expected TooLate, got {e:?}")
             }
         },
     }
