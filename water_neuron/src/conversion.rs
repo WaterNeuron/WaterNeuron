@@ -29,7 +29,7 @@ pub async fn cancel_withdrawal(
 
     match get_full_neuron(neuron_id.id).await {
         Ok(result) => match result {
-            Ok(neuron) => match neuron.time_left(timestamp_nanos()) {
+            Ok(neuron) => match neuron.time_left_seconds(timestamp_nanos() / crate::SEC_NANOS) {
                 Some(time) => {
                     if time < ONE_DAY_SECONDS * 14 {
                         return Err(CancelWithdrawalError::TooLate);

@@ -127,13 +127,12 @@ impl Neuron {
         }
     }
 
-    pub fn time_left(&self, current_ts: u64) -> Option<u64> {
-        let now_seconds = current_ts / crate::SEC_NANOS;
+    pub fn time_left_seconds(&self, now_secs: u64) -> Option<u64> {
         match self.dissolve_state {
             Some(crate::nns_types::neuron::DissolveState::DissolveDelaySeconds(d)) => Some(d),
             Some(crate::nns_types::neuron::DissolveState::WhenDissolvedTimestampSeconds(ts)) => {
-                if ts > now_seconds {
-                    Some(ts - now_seconds)
+                if ts > now_secs {
+                    Some(ts - now_secs)
                 } else {
                     Some(0)
                 }
