@@ -71,7 +71,7 @@ COPY --chown=ubuntu:ubuntu scripts/data/.vimrc /home/ubuntu/.vimrc
 RUN curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-# Add config
-ARG git config --global --add safe.directory /waterneuron
+# Copy .gitconfig
+COPY --chown=ubuntu:ubuntu scripts/data/.gitconfig /waterneuron/.gitconfig
 
 CMD ["/usr/bin/bash"]
