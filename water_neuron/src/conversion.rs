@@ -89,9 +89,9 @@ pub async fn cancel_withdrawal(
 
             mutate_state(|s| {
                 process_event(s, EventType::MergeNeuron { neuron_id });
-                schedule_now(TaskType::ProcessPendingTransfers);
-                schedule_now(TaskType::RefreshShortTerm);
             });
+            schedule_now(TaskType::ProcessPendingTransfers);
+            schedule_now(TaskType::RefreshShortTerm);
             Ok(*response)
         }
         CommandResponse::Error(e) => Err(CancelWithdrawalError::GovernanceError(e)),
