@@ -54,7 +54,7 @@ USER ubuntu
 ENV PATH=/home/ubuntu/.cargo/bin:/home/ubuntu/.local/bin:$PATH
 
 # Add Rust/Cargo support
-ARG RUST_VERSION=1.82.0
+ARG RUST_VERSION=1.76.0
 RUN curl --fail https://sh.rustup.rs -sSf \
     | sh -s -- -y --default-toolchain ${RUST_VERSION}-x86_64-unknown-linux-gnu --no-modify-path && \
     rustup default ${RUST_VERSION}-x86_64-unknown-linux-gnu && \
