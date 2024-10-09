@@ -74,7 +74,7 @@ rust_test(
     ]),
     crate_name = "water_neuron",
     data = [
-        "//water_neuron:canister",
+        "//water_neuron:canister_debug",
         "@cycles-minting-canister//:wasm",
         "@governance-canister//:wasm",
         "@ic-icrc1-ledger-canister//:wasm",
@@ -91,22 +91,39 @@ rust_test(
         "SNS_ROOT_CANISTER_WASM_PATH": "$(rootpath @sns-root-canister//:wasm)",
         "SNS_GOVERNANCE_CANISTER_WASM_PATH": "$(rootpath @sns-governance-canister//:wasm)",
         "SNS_SWAP_CANISTER_WASM_PATH": "$(rootpath @sns-swap-canister//:wasm)",
-        "WATER_NEURON_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister)",
+        "WATER_NEURON_CANISTER_WASM_PATH": "$(rootpath //water_neuron:canister_debug)",
     },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     tags = ["requires-network"],
     deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
 )
 
-rust_canister(
-    name = "canister",
-    srcs = glob([
-        "src/**/*.rs",
-    ]),
-    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
-    service_file = "water_neuron.did",
-    deps = DEPENDENCIES + [":lib"],
-)
+[
+    rust_canister(
+        name = name,
+        srcs = glob([
+            "src/**/*.rs",
+        ]),
+        crate_features = features,
+        proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+        service_file = "water_neuron.did",
+        deps = DEPENDENCIES + [":lib"],
+    )
+    for (name, features) in [
+        # Production version without debug assertions.
+        (
+            "canister",
+            [],
+        ),
+        # Test version with internal consistency checks.
+        (
+            "canister_debug",
+            ["self_check"],
+        ),
+    ]
+]
+
+
 
 rust_test(
     name = "test-main",
