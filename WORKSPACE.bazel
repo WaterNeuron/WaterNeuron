@@ -2,7 +2,7 @@ workspace(
     name = "waterneuron",
 )
 
-IC_VERSION = "7eace38b7580dc35af53b9180ea40480af4977dc"
+IC_VERSION = "7d98e006957b1769479725aaeb9acafa046aeee6"
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
@@ -12,7 +12,7 @@ rules_rust_dependencies()
 rust_register_toolchains(
     edition = "2021",
     versions = [
-        "1.76.0",
+        "1.81.0",
     ],
 )
 
