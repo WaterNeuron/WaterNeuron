@@ -11,7 +11,6 @@ RUN apt -yq update && \
         vim \
         gcc \
         lld \
-        fish \
         sudo \
         wget \
         tree \
@@ -55,7 +54,7 @@ USER ubuntu
 ENV PATH=/home/ubuntu/.cargo/bin:/home/ubuntu/.local/bin:$PATH
 
 # Add Rust/Cargo support
-ARG RUST_VERSION=1.79.0
+ARG RUST_VERSION=1.82.0
 RUN curl --fail https://sh.rustup.rs -sSf \
     | sh -s -- -y --default-toolchain ${RUST_VERSION}-x86_64-unknown-linux-gnu --no-modify-path && \
     rustup default ${RUST_VERSION}-x86_64-unknown-linux-gnu && \
@@ -65,14 +64,11 @@ RUN curl --fail https://sh.rustup.rs -sSf \
 # Install ripgrep
 RUN cargo install ripgrep ic-wasm tokei git-delta bat
 
-# Copy fish config
-COPY --chown=ubuntu:ubuntu scripts/data/config.fish /home/ubuntu/.config/fish/config.fish
-
 # Copy .vimrc
 COPY --chown=ubuntu:ubuntu scripts/data/.vimrc /home/ubuntu/.vimrc
 
-# Install Plug 
+# Install Plug
 RUN curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-CMD ["/usr/bin/fish"]
+CMD ["/usr/bin/bash"]
