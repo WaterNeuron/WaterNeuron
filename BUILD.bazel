@@ -31,7 +31,6 @@ genrule(
     outs = ["version.txt"],
     cmd_bash = """
         export HOME="/waterneuron"
-        git config --global --add safe.directory /waterneuron
         if [[ -n "$${STABLE_GIT_COMMIT:-}" ]]; then
             echo "$${STABLE_GIT_COMMIT}" > $@
         else
