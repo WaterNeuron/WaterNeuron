@@ -126,6 +126,20 @@ impl Neuron {
             None => NeuronState::Dissolved,
         }
     }
+
+    pub fn time_left_seconds(&self, now_secs: u64) -> Option<u64> {
+        match self.dissolve_state {
+            Some(crate::nns_types::neuron::DissolveState::DissolveDelaySeconds(d)) => Some(d),
+            Some(crate::nns_types::neuron::DissolveState::WhenDissolvedTimestampSeconds(ts)) => {
+                if ts > now_secs {
+                    Some(ts - now_secs)
+                } else {
+                    Some(0)
+                }
+            }
+            None => None,
+        }
+    }
 }
 
 pub mod neuron {

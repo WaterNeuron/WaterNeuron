@@ -120,6 +120,12 @@ pub enum EventType {
         #[n(1)]
         sns_proposal_id: ProposalId,
     },
+
+    #[n(16)]
+    MergeNeuron {
+        #[n(0)]
+        neuron_id: NeuronId,
+    },
 }
 
 #[derive(CandidType, Encode, Decode, Debug, PartialEq, Eq, Clone, Deserialize)]

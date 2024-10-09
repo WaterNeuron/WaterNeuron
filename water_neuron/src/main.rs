@@ -9,7 +9,9 @@ use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
 use water_neuron::logs::INFO;
 use water_neuron::management::register_vote;
-use water_neuron::nns_types::{GovernanceError, ManageNeuronResponse, Neuron, ProposalId};
+use water_neuron::nns_types::{
+    GovernanceError, ManageNeuronResponse, MergeResponse, Neuron, NeuronId, ProposalId,
+};
 use water_neuron::numeric::{ICP, WTN};
 use water_neuron::sns_distribution::compute_rewards;
 use water_neuron::state::audit::{process_event, replay_events};
@@ -20,8 +22,8 @@ use water_neuron::state::{
 use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
-    CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg, Unit, UpgradeArg,
-    WithdrawalSuccess,
+    CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
+    Unit, UpgradeArg, WithdrawalSuccess,
 };
 
 fn reject_anonymous_call() {
@@ -338,6 +340,19 @@ async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, Conversion
 async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionError> {
     reject_anonymous_call();
     check_postcondition(water_neuron::conversion::icp_to_nicp(arg).await)
+}
+
+#[update]
+async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelWithdrawalError> {
+    reject_anonymous_call();
+
+    #[cfg(not(feature = "self_check"))]
+    assert_eq!(
+        ic_cdk::caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+
+    check_postcondition(water_neuron::conversion::cancel_withdrawal(neuron_id).await)
 }
 
 #[query(hidden = true)]

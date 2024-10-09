@@ -1,11 +1,16 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::INFO;
+use crate::management::{merge_neuron_into_six_months, stop_dissolvement};
+use crate::nns_types::{CommandResponse, MergeResponse, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
 use crate::state::{mutate_state, read_state};
 use crate::tasks::{schedule_now, TaskType};
-use crate::{ConversionArg, ConversionError, DepositSuccess, WithdrawalSuccess, ICP_LEDGER_ID};
+use crate::{
+    get_full_neuron, timestamp_nanos, CancelWithdrawalError, ConversionArg, ConversionError,
+    DepositSuccess, WithdrawalSuccess, DEFAULT_LEDGER_FEE, ICP_LEDGER_ID, ONE_DAY_SECONDS,
+};
 use candid::Nat;
 use ic_canister_log::log;
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
@@ -14,6 +19,87 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 
 pub const MINIMUM_DEPOSIT_AMOUNT: ICP = ICP::ONE;
 pub const MINIMUM_WITHDRAWAL_AMOUNT: ICP = ICP::from_unscaled(10);
+
+pub async fn cancel_withdrawal(
+    neuron_id: NeuronId,
+) -> Result<MergeResponse, CancelWithdrawalError> {
+    let caller = ic_cdk::caller();
+    let _guard_principal = GuardPrincipal::new(caller)
+        .map_err(|guard_error| CancelWithdrawalError::GuardError { guard_error })?;
+
+    match get_full_neuron(neuron_id.id).await {
+        Ok(result) => match result {
+            Ok(neuron) => match neuron.time_left_seconds(timestamp_nanos() / crate::SEC_NANOS) {
+                Some(time) => {
+                    if time < ONE_DAY_SECONDS * 14 {
+                        return Err(CancelWithdrawalError::TooLate);
+                    }
+                }
+                None => return Err(CancelWithdrawalError::UnknownTimeLeft),
+            },
+            Err(gov_err) => return Err(CancelWithdrawalError::GovernanceError(gov_err)),
+        },
+        Err(error) => return Err(CancelWithdrawalError::GetFullNeuronError { message: error }),
+    }
+
+    let icp_due = match read_state(|s| {
+        s.neuron_id_to_withdrawal_id
+            .get(&neuron_id)
+            .and_then(|withdrawal_id| s.withdrawal_id_to_request.get(&withdrawal_id).cloned())
+    }) {
+        Some(withdrawal_request) => {
+            if withdrawal_request.receiver != caller.into() {
+                return Err(CancelWithdrawalError::BadCaller {
+                    message: format!("Caller is not the owner."),
+                });
+            }
+            withdrawal_request.icp_due
+        }
+        None => return Err(CancelWithdrawalError::RequestNotFound),
+    };
+
+    stop_dissolvement(neuron_id)
+        .await
+        .map_err(|error_msg| CancelWithdrawalError::StopDissolvementError { message: error_msg })?;
+
+    match merge_neuron_into_six_months(neuron_id)
+        .await
+        .map_err(|error_msg| CancelWithdrawalError::MergeNeuronError { message: error_msg })?
+        .command
+        .expect("Command should always be set.")
+    {
+        CommandResponse::Merge(response) => {
+            assert_eq!(
+                response
+                    .source_neuron
+                    .as_ref()
+                    .unwrap()
+                    .cached_neuron_stake_e8s,
+                0
+            );
+
+            assert_eq!(
+                response
+                    .target_neuron
+                    .as_ref()
+                    .unwrap()
+                    .cached_neuron_stake_e8s,
+                read_state(|s| s.tracked_6m_stake.0) + icp_due.0 - 2 * DEFAULT_LEDGER_FEE
+            );
+
+            mutate_state(|s| {
+                process_event(s, EventType::MergeNeuron { neuron_id });
+            });
+            schedule_now(TaskType::ProcessPendingTransfers);
+            schedule_now(TaskType::RefreshShortTerm);
+            Ok(*response)
+        }
+        CommandResponse::Error(e) => Err(CancelWithdrawalError::GovernanceError(e)),
+        other => Err(CancelWithdrawalError::BadCommand {
+            message: format!("Expected merge command got {other:?}"),
+        }),
+    }
+}
 
 pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, ConversionError> {
     let caller = ic_cdk::caller();

@@ -7,8 +7,8 @@ use crate::management::{
     spawn_all_maturity, split_neuron, start_dissolving, transfer,
 };
 use crate::nns_types::{
-    neuron::DissolveState, CommandResponse, ListNeurons, NeuronId, ProposalId, TOPIC_GOVERNANCE,
-    TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
+    neuron::DissolveState, CommandResponse, GovernanceError, ListNeurons, NeuronId, ProposalId,
+    TOPIC_GOVERNANCE, TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
 };
 use crate::numeric::{nICP, ICP};
 use crate::proposal::{mirror_proposals, vote_on_nns_proposals};
@@ -236,6 +236,21 @@ pub enum ConversionError {
     AmountTooLow { minimum_amount_e8s: u64 },
     GuardError { guard_error: GuardError },
     GenericError { code: i32, message: String },
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub enum CancelWithdrawalError {
+    GuardError { guard_error: GuardError },
+    GenericError { code: i32, message: String },
+    GovernanceError(GovernanceError),
+    BadCommand { message: String },
+    BadCaller { message: String },
+    RequestNotFound,
+    StopDissolvementError { message: String },
+    MergeNeuronError { message: String },
+    GetFullNeuronError { message: String },
+    TooLate,
+    UnknownTimeLeft,
 }
 
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This
