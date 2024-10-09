@@ -71,7 +71,10 @@ COPY --chown=ubuntu:ubuntu scripts/data/.vimrc /home/ubuntu/.vimrc
 RUN curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
+# Add file
+RUN touch /home/ubuntu/.gitconfig
+
 # Copy .gitconfig
-COPY --chown=ubuntu:ubuntu scripts/data/.gitconfig /waterneuron/.gitconfig
+COPY --chown=ubuntu:ubuntu scripts/data/.gitconfig /home/ubuntu/.gitconfig
 
 CMD ["/usr/bin/bash"]

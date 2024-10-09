@@ -17,7 +17,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-PODMAN_HASH=$(podman build -q -f Dockerfile)
+PODMAN_HASH=$(podman build -q -f Dockerfile .)
 
 PODMAN_ARGS=(
     -it
