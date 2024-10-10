@@ -207,7 +207,7 @@ pub struct State {
     pub principal_guards: BTreeSet<Principal>,
     pub active_tasks: BTreeSet<TaskType>,
 
-    // ICP Distribtuion
+    // ICP Distribution
     pub latest_distribution_icp_per_vp: Option<f64>,
     pub last_distribution_ts: u64,
 }
