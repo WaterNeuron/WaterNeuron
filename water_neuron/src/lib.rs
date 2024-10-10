@@ -779,6 +779,16 @@ async fn distribute_icp_to_sns_neurons() {
         return;
     }
 
+    let last_distribution_ts = read_state(|s| s.last_distribution_ts);
+    if last_distribution_ts + ONE_WEEK_NANOS > timestamp_nanos() {
+        log!(
+            INFO,
+            "[distribute_icp_to_sns_neurons] Distributed less than a week ago, last distribution ts: {}",
+            last_distribution_ts / SEC_NANOS
+        );
+        return;
+    }
+
     let sns_account = read_state(|s| s.get_sns_account());
 
     match balance_of(sns_account, ICP_LEDGER_ID).await {
