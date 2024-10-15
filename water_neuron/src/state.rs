@@ -3,8 +3,8 @@ use crate::numeric::{nICP, ICP, WTN};
 use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
-    compute_neuron_staking_subaccount_bytes, self_canister_id, InitArg, PendingTransfer, Unit,
-    UpgradeArg, DEFAULT_LEDGER_FEE, E8S, timestamp_nanos
+    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, InitArg,
+    PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
