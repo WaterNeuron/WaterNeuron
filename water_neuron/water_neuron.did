@@ -2,13 +2,16 @@ type Account = record { owner : principal; subaccount : opt blob };
 type BallotInfo = record { vote : int32; proposal_id : opt NeuronId };
 type CancelWithdrawalError = variant {
   GenericError : record { code : int32; message : text };
+  TooLate;
   BadCommand : record { message : text };
+  UnknownTimeLeft;
   BadCaller : record { message : text };
   MergeNeuronError : record { message : text };
   StopDissolvementError : record { message : text };
   RequestNotFound;
   GovernanceError : GovernanceError;
   GuardError : record { guard_error : GuardError };
+  GetFullNeuronError : record { message : text };
 };
 type CanisterInfo = record {
   neuron_6m_account : Account;
@@ -168,8 +171,9 @@ type PendingTransfer = record {
 };
 type Result = variant { Ok : MergeResponse; Err : CancelWithdrawalError };
 type Result_1 = variant { Ok : nat64; Err : ConversionError };
-type Result_2 = variant { Ok : DepositSuccess; Err : ConversionError };
-type Result_3 = variant { Ok : WithdrawalSuccess; Err : ConversionError };
+type Result_2 = variant { Ok : NeuronId; Err : NeuronId };
+type Result_3 = variant { Ok : DepositSuccess; Err : ConversionError };
+type Result_4 = variant { Ok : WithdrawalSuccess; Err : ConversionError };
 type TransferError = variant {
   GenericError : record { message : text; error_code : nat };
   TemporarilyUnavailable;
@@ -224,7 +228,6 @@ type WithdrawalSuccess = record {
   withdrawal_id : nat64;
   icp_amount : opt nat64;
 };
-type ProposalMirroredResult = variant { Ok : NeuronId; Err : NeuronId }
 service : (LiquidArg) -> {
   cancel_withdrawal : (NeuronId) -> (Result);
   claim_airdrop : () -> (Result_1);
@@ -233,7 +236,7 @@ service : (LiquidArg) -> {
   get_info : () -> (CanisterInfo) query;
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
   get_withdrawal_requests : (opt Account) -> (vec WithdrawalDetails) query;
-  get_wtn_proposal_id : (nat64) -> (ProposalMirroredResult) query;
-  icp_to_nicp : (ConversionArg) -> (Result_1);
-  nicp_to_icp : (ConversionArg) -> (Result_2);
+  get_wtn_proposal_id : (nat64) -> (Result_2) query;
+  icp_to_nicp : (ConversionArg) -> (Result_3);
+  nicp_to_icp : (ConversionArg) -> (Result_4);
 }
