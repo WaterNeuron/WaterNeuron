@@ -4,7 +4,7 @@ use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
     compute_neuron_staking_subaccount_bytes, self_canister_id, InitArg, PendingTransfer, Unit,
-    UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
+    UpgradeArg, DEFAULT_LEDGER_FEE, E8S, timestamp_nanos
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -207,8 +207,9 @@ pub struct State {
     pub principal_guards: BTreeSet<Principal>,
     pub active_tasks: BTreeSet<TaskType>,
 
-    // metrics
+    // ICP Distribution
     pub latest_distribution_icp_per_vp: Option<f64>,
+    pub last_distribution_ts: u64,
 }
 
 impl State {
@@ -247,6 +248,7 @@ impl State {
             active_tasks: BTreeSet::default(),
             latest_distribution_icp_per_vp: None,
             last_nns_proposal_seen: Default::default(),
+            last_distribution_ts: timestamp_nanos(),
         }
     }
 

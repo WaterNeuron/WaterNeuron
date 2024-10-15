@@ -2115,7 +2115,7 @@ fn should_distribute_icp_to_sns_neurons() {
         Nat::from(100 * E8S)
     );
 
-    water_neuron.advance_time_and_tick(60 * 60 * 24);
+    water_neuron.advance_time_and_tick(60 * 60 * 24 * 7);
 
     assert_eq!(
         water_neuron.balance_of(

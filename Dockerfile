@@ -11,7 +11,6 @@ RUN apt -yq update && \
         vim \
         gcc \
         lld \
-        fish \
         sudo \
         wget \
         tree \
@@ -65,14 +64,17 @@ RUN curl --fail https://sh.rustup.rs -sSf \
 # Install ripgrep
 RUN cargo install ripgrep ic-wasm tokei git-delta bat
 
-# Copy fish config
-COPY --chown=ubuntu:ubuntu scripts/data/config.fish /home/ubuntu/.config/fish/config.fish
-
 # Copy .vimrc
 COPY --chown=ubuntu:ubuntu scripts/data/.vimrc /home/ubuntu/.vimrc
 
-# Install Plug 
+# Install Plug
 RUN curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-CMD ["/usr/bin/fish"]
+# Add file
+RUN touch /home/ubuntu/.gitconfig
+
+# Copy .gitconfig
+COPY --chown=ubuntu:ubuntu scripts/data/.gitconfig /home/ubuntu/.gitconfig
+
+CMD ["/usr/bin/bash"]
