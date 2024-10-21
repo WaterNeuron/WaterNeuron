@@ -78,18 +78,6 @@ pub fn post_upgrade(args: LiquidArg) {
                 }
             });
 
-            #[cfg(not(feature = "self_check"))]
-            mutate_state(|s| {
-                process_event(
-                    s,
-                    EventType::MergeNeuron {
-                        neuron_id: NeuronId {
-                            id: 11074629139956452577,
-                        },
-                    },
-                );
-            });
-
             let end = ic_cdk::api::instruction_counter();
 
             let event_count = total_event_count();
