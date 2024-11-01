@@ -78,18 +78,6 @@ pub fn post_upgrade(args: LiquidArg) {
                 }
             });
 
-            #[cfg(not(feature = "self_check"))]
-            mutate_state(|s| {
-                process_event(
-                    s,
-                    EventType::MergeNeuron {
-                        neuron_id: NeuronId {
-                            id: 11074629139956452577,
-                        },
-                    },
-                );
-            });
-
             let end = ic_cdk::api::instruction_counter();
 
             let event_count = total_event_count();
@@ -357,13 +345,6 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 #[update]
 async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelWithdrawalError> {
     reject_anonymous_call();
-
-    #[cfg(not(feature = "self_check"))]
-    assert_eq!(
-        ic_cdk::caller(),
-        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
-    );
-
     check_postcondition(water_neuron::conversion::cancel_withdrawal(neuron_id).await)
 }
 
