@@ -200,6 +200,7 @@ type TransferStatus = variant {
   Unknown;
   Pending : PendingTransfer;
 };
+type TrustedOriginsResponse = record { trusted_origins : vec text };
 type Unit = variant { ICP; WTN; NICP };
 type UpgradeArg = record { governance_fee_share_percent : opt nat64 };
 type WithdrawalDetails = record {
@@ -229,15 +230,15 @@ type WithdrawalSuccess = record {
   icp_amount : opt nat64;
 };
 service : (LiquidArg) -> {
+  cancel_withdrawal : (NeuronId) -> (Result);
+  claim_airdrop : () -> (Result_1);
   get_airdrop_allocation : (opt principal) -> (nat64) query;
   get_events : (GetEventsArg) -> (GetEventsResult) query;
   get_info : () -> (CanisterInfo) query;
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
   get_withdrawal_requests : (opt Account) -> (vec WithdrawalDetails) query;
   get_wtn_proposal_id : (nat64) -> (Result_2) query;
-  
   icp_to_nicp : (ConversionArg) -> (Result_3);
+  icrc28_trusted_origins : () -> (TrustedOriginsResponse) query;
   nicp_to_icp : (ConversionArg) -> (Result_4);
-  cancel_withdrawal : (NeuronId) -> (Result);
-  claim_airdrop : () -> (Result_1);
 }

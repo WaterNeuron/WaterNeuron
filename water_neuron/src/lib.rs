@@ -149,6 +149,11 @@ pub struct CanisterInfo {
     pub governance_fee_share_percent: u64,
 }
 
+#[derive(CandidType, Serialize)]
+pub struct TrustedOriginsResponse {
+    pub trusted_origins: Vec<String>,
+}
+
 #[derive(CandidType, Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Encode, Decode)]
 pub enum Unit {
     #[n(0)]

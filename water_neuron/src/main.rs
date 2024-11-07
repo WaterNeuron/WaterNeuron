@@ -23,7 +23,7 @@ use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
     CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
-    Unit, UpgradeArg, WithdrawalSuccess,
+    TrustedOriginsResponse, Unit, UpgradeArg, WithdrawalSuccess,
 };
 
 fn reject_anonymous_call() {
@@ -346,6 +346,18 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelWithdrawalError> {
     reject_anonymous_call();
     check_postcondition(water_neuron::conversion::cancel_withdrawal(neuron_id).await)
+}
+
+#[query]
+fn icrc28_trusted_origins() -> TrustedOriginsResponse {
+    TrustedOriginsResponse {
+        trusted_origins: vec![
+            "https://47pxu-byaaa-aaaap-ahpsa-cai.icp0.io".to_string(),
+            "http://localhost:3001".to_string(),
+            "https://n3i53-gyaaa-aaaam-acfaq-cai.icp0.io".to_string(),
+            "https://waterneuron.fi".to_string(),
+        ],
+    }
 }
 
 #[query(hidden = true)]
