@@ -242,4 +242,4 @@ service : (LiquidArg) -> {
   nicp_to_icp : (ConversionArg) -> (Result_4);
   cancel_withdrawal : (NeuronId) -> (Result);
   claim_airdrop : () -> (Result_1);
-  }
+}
