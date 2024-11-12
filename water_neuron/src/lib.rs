@@ -166,7 +166,7 @@ pub enum Icrc21Function {
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct SupportedStandard {
+pub struct StandardRecord {
     pub url: String,
     pub name: String,
 }

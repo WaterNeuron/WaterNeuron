@@ -24,7 +24,7 @@ use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
     convert_amount_e8s_to_string_representation, CancelWithdrawalError, CanisterInfo, ConsentInfo,
     ConsentMessageMetadata, ConsentMessageRequest, ConversionArg, ConversionError, DepositSuccess,
-    ErrorInfo, Icrc21Error, Icrc21Function, LiquidArg, SupportedStandard,
+    ErrorInfo, Icrc21Error, Icrc21Function, LiquidArg, StandardRecord,
     Unit, UpgradeArg, WithdrawalSuccess, MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES, ConsentMessage
 };
 use strum::IntoEnumIterator;
@@ -174,9 +174,9 @@ fn get_wtn_proposal_id(nns_proposal_id: u64) -> Result<ProposalId, ProposalId> {
 }
 
 #[query]
-fn icrc10_supported_standards() -> Vec<SupportedStandard> {
+fn icrc10_supported_standards() -> Vec<StandardRecord> {
     vec![
-        SupportedStandard {
+        StandardRecord {
             name: "ICRC-21".to_string(),
             url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/ICRC-21/icrc_21_consent_msg.md".to_string(),
         }
