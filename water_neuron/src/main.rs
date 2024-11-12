@@ -4,6 +4,7 @@ use ic_canisters_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_cdk_macros::{init, post_upgrade, query, update};
 use ic_metrics_encoder::MetricsEncoder;
 use icrc_ledger_types::icrc1::account::Account;
+use strum::IntoEnumIterator;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
 use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
@@ -23,11 +24,10 @@ use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
     convert_amount_e8s_to_string_representation, CancelWithdrawalError, CanisterInfo, ConsentInfo,
-    ConsentMessageMetadata, ConsentMessageRequest, ConversionArg, ConversionError, DepositSuccess,
-    ErrorInfo, Icrc21Error, Icrc21Function, LiquidArg, StandardRecord,
-    Unit, UpgradeArg, WithdrawalSuccess, MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES, ConsentMessage
+    ConsentMessage, ConsentMessageMetadata, ConsentMessageRequest, ConversionArg, ConversionError,
+    DepositSuccess, ErrorInfo, Icrc21Error, Icrc21Function, LiquidArg, StandardRecord, Unit,
+    UpgradeArg, WithdrawalSuccess, MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES,
 };
-use strum::IntoEnumIterator;
 
 fn reject_anonymous_call() {
     if ic_cdk::caller() == Principal::anonymous() {
@@ -198,10 +198,7 @@ fn icrc21_canister_call_consent_message(
 
     let metadata = ConsentMessageMetadata {
         language: "en".to_string(),
-        utc_offset_minutes: request
-            .user_preferences
-            .metadata
-            .utc_offset_minutes,
+        utc_offset_minutes: request.user_preferences.metadata.utc_offset_minutes,
     };
 
     let message = match request.method.parse::<Icrc21Function>().map_err(|err| {
