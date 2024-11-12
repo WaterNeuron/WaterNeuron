@@ -1,4 +1,4 @@
-use candid::{Nat, Principal};
+use candid::{Decode, Nat, Principal};
 use ic_canister_log::log;
 use ic_canisters_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_cdk_macros::{init, post_upgrade, query, update};
@@ -22,9 +22,12 @@ use water_neuron::state::{
 use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
-    CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
-    TrustedOriginsResponse, Unit, UpgradeArg, WithdrawalSuccess,
+    convert_amount_e8s_to_string_representation, CancelWithdrawalError, CanisterInfo, ConsentInfo,
+    ConsentMessageMetadata, ConsentMessageRequest, ConversionArg, ConversionError, DepositSuccess,
+    ErrorInfo, Icrc21Error, Icrc21Function, LiquidArg, SupportedStandard,
+    Unit, UpgradeArg, WithdrawalSuccess, MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES, ConsentMessage
 };
+use strum::IntoEnumIterator;
 
 fn reject_anonymous_call() {
     if ic_cdk::caller() == Principal::anonymous() {
@@ -167,6 +170,89 @@ fn get_wtn_proposal_id(nns_proposal_id: u64) -> Result<ProposalId, ProposalId> {
             })
             .cloned()
             .ok_or_else(|| s.last_nns_proposal_seen.clone())
+    })
+}
+
+#[query]
+fn icrc10_supported_standards() -> Vec<SupportedStandard> {
+    vec![
+        SupportedStandard {
+            name: "ICRC-21".to_string(),
+            url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/ICRC-21/icrc_21_consent_msg.md".to_string(),
+        }
+    ]
+}
+
+#[update]
+fn icrc21_canister_call_consent_message(
+    request: ConsentMessageRequest,
+) -> Result<ConsentInfo, Icrc21Error> {
+    if request.arg.len() > MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES as usize {
+        return Err(Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
+            description: format!(
+                "The argument size is too large. The maximum allowed size is {} bytes.",
+                MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES
+            ),
+        }));
+    }
+
+    let metadata = ConsentMessageMetadata {
+        language: "en".to_string(),
+        utc_offset_minutes: request
+            .user_preferences
+            .metadata
+            .utc_offset_minutes,
+    };
+
+    let message = match request.method.parse::<Icrc21Function>().map_err(|err| {
+        Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
+            description: format!(
+                "The call provided is not supported: {}.\n Supported calls for ICRC-21 are {:?}. \n Error: {:?}", 
+                request.method,
+                Icrc21Function::iter().map(|f|f.to_string()).collect::<Vec<String>>(),
+                err
+            ),
+        })
+    })? {
+        Icrc21Function::Stake =>  {
+            let arg = Decode!(&request.arg, ConversionArg).map_err(|e| Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
+                description: format!("Failed to decode ConversionArg: {}", e)
+            }))?;
+            let icp_amount = convert_amount_e8s_to_string_representation(arg.amount_e8s, 8);
+            match arg.maybe_subaccount {
+                Some(subaccount) => format!("Convert {icp_amount} ICP to nICP at the current exchange rate. Specified subaccount: {subaccount:?}"),
+                None => format!("Convert {icp_amount} ICP to nICP at the current exchange rate.")
+            }
+        },
+        Icrc21Function::Unstake =>  {
+            let arg = Decode!(&request.arg, ConversionArg).map_err(|e| Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
+                description: format!("Failed to decode ConversionArg: {}", e),
+            }))?;
+            let nicp_amount = convert_amount_e8s_to_string_representation(arg.amount_e8s, 8);
+            match arg.maybe_subaccount {
+                Some(subaccount) => format!(
+                    "Convert {nicp_amount} nICP to ICP at the current exchange rate with a dissolve delay of 6 months. 
+                    Specified subaccount: {subaccount:?}"
+                ),
+                None => format!(
+                    "Convert {nicp_amount} nICP to ICP at the current exchange rate with a dissolve delay of 6 months."
+                )
+            }
+        },
+        Icrc21Function::CancelWithdrawal =>  {
+            let arg = Decode!(&request.arg, NeuronId).map_err(|e| Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
+                description: format!("Failed to decode NeuronId: {}", e),
+            }))?;
+            format!("Cancel the withdrawal associated to the neuron id: {}.", arg.id)
+        },
+        Icrc21Function::ClaimAirdrop =>  {
+            format!("Claim WTN tokens associated to your airdrop allocation. ")
+        }
+    };
+
+    Ok(ConsentInfo {
+        metadata,
+        consent_message: ConsentMessage::GenericDisplayMessage(message),
     })
 }
 

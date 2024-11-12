@@ -32,7 +32,8 @@ use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
 use std::fmt;
 use std::time::Duration;
-use strum::IntoEnumIterator;
+use strum::{self, IntoEnumIterator};
+use strum_macros::{Display, EnumIter, EnumString};
 
 pub mod cbor;
 pub mod conversion;
@@ -82,6 +83,9 @@ const MINIMUM_ICP_DISTRIBUTION: u64 = 100 * E8S;
 pub const INITIAL_NEURON_STAKE: u64 = E8S + 42;
 
 pub const SNS_DISTRIBUTION_MEMO: u64 = 83_78_83;
+
+// Maximum number of bytes for a WaterNeuron call argument passed to the ICRC-21 endpoint.
+pub const MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES: u16 = 500;
 
 #[cfg(target_arch = "wasm32")]
 pub fn timestamp_nanos() -> u64 {
@@ -147,6 +151,89 @@ pub struct CanisterInfo {
     pub minimum_deposit_amount: ICP,
     pub minimum_withdraw_amount: ICP,
     pub governance_fee_share_percent: u64,
+}
+
+#[derive(Debug, EnumString, EnumIter, Display)]
+pub enum Icrc21Function {
+    #[strum(serialize = "icp_to_nicp")]
+    Stake,
+    #[strum(serialize = "nicp_to_icp")]
+    Unstake,
+    #[strum(serialize = "cancel_withdrawal")]
+    CancelWithdrawal,
+    #[strum(serialize = "claim_airdrop")]
+    ClaimAirdrop,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct SupportedStandard {
+    pub url: String,
+    pub name: String,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ConsentMessageRequest {
+    pub arg: Vec<u8>,
+    pub method: String,
+    pub user_preferences: ConsentMessageSpec,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ConsentMessageSpec {
+    pub metadata: ConsentMessageMetadata,
+    pub device_spec: Option<DisplayMessageType>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ConsentMessageMetadata {
+    pub utc_offset_minutes: Option<u16>,
+    pub language: String,
+}
+
+#[derive(CandidType, Deserialize)]
+pub enum DisplayMessageType {
+    GenericDisplay,
+    LineDisplay {
+        characters_per_line: u16,
+        lines_per_page: u16,
+    },
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ConsentInfo {
+    pub metadata: ConsentMessageMetadata,
+    pub consent_message: ConsentMessage,
+}
+
+#[derive(CandidType, Deserialize)]
+pub enum ConsentMessage {
+    LineDisplayMessage { pages: Vec<LineDisplayPage> },
+    GenericDisplayMessage(String),
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct LineDisplayPage {
+    lines: Vec<String>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub enum Icrc21Error {
+    GenericError {
+        description: String,
+        error_code: u64,
+    },
+    InsufficientPayment(ErrorInfo),
+    UnsupportedCanisterCall(ErrorInfo),
+    ConsentMessageUnavailable(ErrorInfo),
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ErrorInfo {
+    pub description: String,
+}
+
+pub fn convert_amount_e8s_to_string_representation(amount_e8s: u64, decimals: i32) -> String {
+    format!("{}", (amount_e8s as f64) / 10_f64.powi(decimals))
 }
 
 #[derive(CandidType, Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Encode, Decode)]
