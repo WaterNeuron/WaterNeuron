@@ -83,6 +83,9 @@ pub const INITIAL_NEURON_STAKE: u64 = E8S + 42;
 
 pub const SNS_DISTRIBUTION_MEMO: u64 = 83_78_83;
 
+// Maximum number of bytes that an argument to a canister call can have when passed to the ICRC-21 endpoint.
+pub const MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES: u16 = 500;
+
 #[cfg(target_arch = "wasm32")]
 pub fn timestamp_nanos() -> u64 {
     ic_cdk::api::time()
@@ -147,11 +150,6 @@ pub struct CanisterInfo {
     pub minimum_deposit_amount: ICP,
     pub minimum_withdraw_amount: ICP,
     pub governance_fee_share_percent: u64,
-}
-
-#[derive(CandidType, Serialize)]
-pub struct TrustedOriginsResponse {
-    pub trusted_origins: Vec<String>,
 }
 
 #[derive(CandidType, Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Encode, Decode)]

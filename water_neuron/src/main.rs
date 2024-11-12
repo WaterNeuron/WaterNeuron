@@ -348,18 +348,6 @@ async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelW
     check_postcondition(water_neuron::conversion::cancel_withdrawal(neuron_id).await)
 }
 
-#[query]
-fn icrc28_trusted_origins() -> TrustedOriginsResponse {
-    TrustedOriginsResponse {
-        trusted_origins: vec![
-            "https://47pxu-byaaa-aaaap-ahpsa-cai.icp0.io".to_string(),
-            "http://localhost:3001".to_string(),
-            "https://n3i53-gyaaa-aaaam-acfaq-cai.icp0.io".to_string(),
-            "https://waterneuron.fi".to_string(),
-        ],
-    }
-}
-
 #[query(hidden = true)]
 fn http_request(req: HttpRequest) -> HttpResponse {
     if req.path() == "/dashboard" {
