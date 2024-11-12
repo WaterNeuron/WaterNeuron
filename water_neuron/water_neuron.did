@@ -236,8 +236,7 @@ service : (LiquidArg) -> {
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
   get_withdrawal_requests : (opt Account) -> (vec WithdrawalDetails) query;
   get_wtn_proposal_id : (nat64) -> (Result_2) query;
-  icrc28_trusted_origins : () -> (TrustedOriginsResponse) query;
-
+  
   icp_to_nicp : (ConversionArg) -> (Result_3);
   nicp_to_icp : (ConversionArg) -> (Result_4);
   cancel_withdrawal : (NeuronId) -> (Result);
