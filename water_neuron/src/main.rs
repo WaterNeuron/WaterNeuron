@@ -217,7 +217,7 @@ fn icrc21_canister_call_consent_message(
             }))?;
             let icp_amount = convert_amount_e8s_to_string_representation(arg.amount_e8s, 8);
             match arg.maybe_subaccount {
-                Some(subaccount) => format!("Convert {icp_amount} ICP to nICP at the current exchange rate. Specified subaccount: {subaccount:?}"),
+                Some(subaccount) => format!("Convert {icp_amount} ICP to nICP at the current exchange rate. Specified subaccount: {subaccount:?}."),
                 None => format!("Convert {icp_amount} ICP to nICP at the current exchange rate.")
             }
         },
@@ -228,11 +228,11 @@ fn icrc21_canister_call_consent_message(
             let nicp_amount = convert_amount_e8s_to_string_representation(arg.amount_e8s, 8);
             match arg.maybe_subaccount {
                 Some(subaccount) => format!(
-                    "Convert {nicp_amount} nICP to ICP at the current exchange rate with a dissolve delay of 6 months. 
-                    Specified subaccount: {subaccount:?}"
+                    "Convert {nicp_amount} nICP to ICP at the current exchange rate after a 6 months dissolve delay. 
+                    Specified subaccount: {subaccount:?}."
                 ),
                 None => format!(
-                    "Convert {nicp_amount} nICP to ICP at the current exchange rate with a dissolve delay of 6 months."
+                    "Convert {nicp_amount} nICP to ICP at the current exchange rate after a 6 months dissolve delay."
                 )
             }
         },
