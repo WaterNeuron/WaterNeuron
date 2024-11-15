@@ -74,7 +74,7 @@ pub fn post_upgrade(args: LiquidArg) {
 
             mutate_state(|s| {
                 if let Some(entry) = s.proposals.last_entry() {
-                    s.last_nns_proposal_seen = entry.key().clone();
+                    s.last_nns_proposal_processed = entry.key().clone();
                 }
             });
 
@@ -166,7 +166,7 @@ fn get_wtn_proposal_id(nns_proposal_id: u64) -> Result<ProposalId, ProposalId> {
                 id: nns_proposal_id,
             })
             .cloned()
-            .ok_or_else(|| s.last_nns_proposal_seen.clone())
+            .ok_or_else(|| s.last_nns_proposal_processed.clone())
     })
 }
 

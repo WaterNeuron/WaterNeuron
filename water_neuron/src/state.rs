@@ -161,7 +161,7 @@ pub struct State {
     // NNS Proposal Id to SNS Proposals ID
     pub proposals: BTreeMap<ProposalId, ProposalId>,
     pub voted_proposals: BTreeSet<ProposalId>,
-    pub last_nns_proposal_seen: ProposalId,
+    pub last_nns_proposal_processed: ProposalId,
 
     // Airdrop Map
     pub airdrop: BTreeMap<Principal, WTN>,
@@ -247,7 +247,7 @@ impl State {
             principal_guards: BTreeSet::default(),
             active_tasks: BTreeSet::default(),
             latest_distribution_icp_per_vp: None,
-            last_nns_proposal_seen: Default::default(),
+            last_nns_proposal_processed: Default::default(),
             last_distribution_ts: timestamp_nanos(),
         }
     }

@@ -105,6 +105,10 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             state
                 .proposals
                 .insert(nns_proposal_id.clone(), sns_proposal_id.clone());
+
+            if nns_proposal_id > state.last_nns_proposal_processed {
+                state.last_nns_proposal_processed = proposal_id.clone();
+            }
         }
     }
 }
