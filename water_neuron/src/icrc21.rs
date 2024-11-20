@@ -1,3 +1,4 @@
+use crate::dashboard::DisplayAmount;
 use crate::nns_types::NeuronId;
 use crate::ConversionArg;
 use candid::{CandidType, Decode, Deserialize};
@@ -86,8 +87,9 @@ pub struct ErrorInfo {
     pub description: String,
 }
 
-pub fn convert_amount_e8s_to_string_representation(amount_e8s: u64, decimals: i32) -> String {
-    format!("{}", (amount_e8s as f64) / 10_f64.powi(decimals))
+pub fn convert_amount_e8s_to_string_representation(amount_e8s: u64) -> String {
+    let amount_to_display = DisplayAmount(amount_e8s);
+    format!("{}", amount_to_display)
 }
 
 pub fn icrc10_supported_standards() -> Vec<StandardRecord> {
@@ -130,7 +132,7 @@ pub fn icrc21_canister_call_consent_message(
             let arg = Decode!(&request.arg, ConversionArg).map_err(|e| Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
                 description: format!("Failed to decode ConversionArg: {}", e)
             }))?;
-            let icp_amount = convert_amount_e8s_to_string_representation(arg.amount_e8s, 8);
+            let icp_amount = convert_amount_e8s_to_string_representation(arg.amount_e8s);
             match arg.maybe_subaccount {
                 Some(subaccount) => format!("Convert {icp_amount} ICP to nICP at the current exchange rate. Specified subaccount: {subaccount:?}."),
                 None => format!("Convert {icp_amount} ICP to nICP at the current exchange rate.")
@@ -140,7 +142,7 @@ pub fn icrc21_canister_call_consent_message(
             let arg = Decode!(&request.arg, ConversionArg).map_err(|e| Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
                 description: format!("Failed to decode ConversionArg: {}", e),
             }))?;
-            let nicp_amount = convert_amount_e8s_to_string_representation(arg.amount_e8s, 8);
+            let nicp_amount = convert_amount_e8s_to_string_representation(arg.amount_e8s);
             match arg.maybe_subaccount {
                 Some(subaccount) => format!(
                     "Convert {nicp_amount} nICP to ICP at the current exchange rate after a 6 months dissolve delay. 
