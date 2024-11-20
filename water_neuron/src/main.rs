@@ -25,8 +25,7 @@ use water_neuron::{
     CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
     Unit, UpgradeArg, WithdrawalSuccess,
 };
-
-pub mod icrc21;
+use water_neuron::icrc21::{Icrc21Error, ConsentInfo, ConsentMessageRequest, StandardRecord};
 
 fn reject_anonymous_call() {
     if ic_cdk::caller() == Principal::anonymous() {
@@ -348,6 +347,18 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelWithdrawalError> {
     reject_anonymous_call();
     check_postcondition(water_neuron::conversion::cancel_withdrawal(neuron_id).await)
+}
+
+#[query]
+fn icrc10_supported_standards() -> Vec<StandardRecord> {
+    water_neuron::icrc21::icrc10_supported_standards()
+}
+
+#[update]
+fn icrc21_canister_call_consent_message(
+    request: ConsentMessageRequest,
+) -> Result<ConsentInfo, Icrc21Error> {
+    water_neuron::icrc21::icrc21_canister_call_consent_message(request)
 }
 
 #[query(hidden = true)]

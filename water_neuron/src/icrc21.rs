@@ -1,9 +1,8 @@
 use candid::{CandidType, Decode, Deserialize};
-use ic_cdk_macros::{query, update};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
-use water_neuron::nns_types::NeuronId;
-use water_neuron::ConversionArg;
+use crate::nns_types::NeuronId;
+use crate::ConversionArg;
 
 // Maximum number of bytes for a WaterNeuron call argument passed to the ICRC-21 endpoint.
 pub const MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES: u16 = 500;
@@ -91,8 +90,7 @@ pub fn convert_amount_e8s_to_string_representation(amount_e8s: u64, decimals: i3
     format!("{}", (amount_e8s as f64) / 10_f64.powi(decimals))
 }
 
-#[query]
-fn icrc10_supported_standards() -> Vec<StandardRecord> {
+pub fn icrc10_supported_standards() -> Vec<StandardRecord> {
     vec![
         StandardRecord {
             name: "ICRC-21".to_string(),
@@ -101,8 +99,7 @@ fn icrc10_supported_standards() -> Vec<StandardRecord> {
     ]
 }
 
-#[update]
-fn icrc21_canister_call_consent_message(
+pub fn icrc21_canister_call_consent_message(
     request: ConsentMessageRequest,
 ) -> Result<ConsentInfo, Icrc21Error> {
     if request.arg.len() > MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES as usize {
