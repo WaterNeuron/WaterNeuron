@@ -127,10 +127,9 @@ pub fn icrc21_canister_call_consent_message(
             let arg = Decode!(&request.arg, ConversionArg).map_err(|e| Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
                 description: format!("Failed to decode ConversionArg: {}", e)
             }))?;
-            let icp_amount = format!("{}", DisplayAmount(arg.amount_e8s));
             match arg.maybe_subaccount {
-                Some(subaccount) => format!("Convert {icp_amount} ICP to nICP at the current exchange rate. Specified subaccount: {subaccount:?}."),
-                None => format!("Convert {icp_amount} ICP to nICP at the current exchange rate.")
+                Some(subaccount) => format!("Convert {} ICP to nICP at the current exchange rate. Specified subaccount: {}.", DisplayAmount(arg.amount_e8s), hex::encode(subaccount)),
+                None => format!("Convert {} ICP to nICP at the current exchange rate.", DisplayAmount(arg.amount_e8s))
             }
         },
         Icrc21Function::Unstake =>  {
