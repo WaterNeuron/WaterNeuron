@@ -32,7 +32,7 @@ use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
 use std::fmt;
 use std::time::Duration;
-use strum::{self, IntoEnumIterator};
+use strum::IntoEnumIterator;
 
 pub mod cbor;
 pub mod conversion;
