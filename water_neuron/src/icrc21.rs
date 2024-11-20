@@ -1,8 +1,8 @@
+use crate::nns_types::NeuronId;
+use crate::ConversionArg;
 use candid::{CandidType, Decode, Deserialize};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
-use crate::nns_types::NeuronId;
-use crate::ConversionArg;
 
 // Maximum number of bytes for a WaterNeuron call argument passed to the ICRC-21 endpoint.
 pub const MAX_CONSENT_MESSAGE_ARG_SIZE_BYTES: u16 = 500;

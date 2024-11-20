@@ -7,6 +7,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
 use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
+use water_neuron::icrc21::{ConsentInfo, ConsentMessageRequest, Icrc21Error, StandardRecord};
 use water_neuron::logs::INFO;
 use water_neuron::management::register_vote;
 use water_neuron::nns_types::{
@@ -25,7 +26,6 @@ use water_neuron::{
     CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
     Unit, UpgradeArg, WithdrawalSuccess,
 };
-use water_neuron::icrc21::{Icrc21Error, ConsentInfo, ConsentMessageRequest, StandardRecord};
 
 fn reject_anonymous_call() {
     if ic_cdk::caller() == Principal::anonymous() {
