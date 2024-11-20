@@ -128,7 +128,11 @@ pub fn icrc21_canister_call_consent_message(
                 description: format!("Failed to decode ConversionArg: {}", e)
             }))?;
             match arg.maybe_subaccount {
-                Some(subaccount) => format!("Convert {} ICP to nICP at the current exchange rate. Specified subaccount: {}.", DisplayAmount(arg.amount_e8s), hex::encode(subaccount)),
+                Some(subaccount) => format!("Convert {} ICP to nICP at the current exchange rate. 
+                    Specified subaccount: {}.", 
+                    DisplayAmount(arg.amount_e8s),
+                    hex::encode(subaccount)
+                ),
                 None => format!("Convert {} ICP to nICP at the current exchange rate.", DisplayAmount(arg.amount_e8s))
             }
         },
@@ -136,14 +140,16 @@ pub fn icrc21_canister_call_consent_message(
             let arg = Decode!(&request.arg, ConversionArg).map_err(|e| Icrc21Error::UnsupportedCanisterCall(ErrorInfo {
                 description: format!("Failed to decode ConversionArg: {}", e),
             }))?;
-            let nicp_amount = format!("{}", DisplayAmount(arg.amount_e8s));
             match arg.maybe_subaccount {
                 Some(subaccount) => format!(
-                    "Convert {nicp_amount} nICP to ICP at the current exchange rate after a 6 months dissolve delay. 
-                    Specified subaccount: {subaccount:?}."
+                    "Convert {} nICP to ICP at the current exchange rate after a 6 months dissolve delay. 
+                    Specified subaccount: {}.", 
+                    DisplayAmount(arg.amount_e8s),
+                    hex::encode(subaccount)
                 ),
                 None => format!(
-                    "Convert {nicp_amount} nICP to ICP at the current exchange rate after a 6 months dissolve delay."
+                    "Convert {} nICP to ICP at the current exchange rate after a 6 months dissolve delay.",
+                    DisplayAmount(arg.amount_e8s)
                 )
             }
         },
