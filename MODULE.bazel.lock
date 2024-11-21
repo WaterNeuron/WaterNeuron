@@ -658,7 +658,7 @@
     },
     "@@rules_rust~//rust:extensions.bzl%rust": {
       "general": {
-        "bzlTransitiveDigest": "oEc6C6WyXAaUFNrJ9x2alYrTMH8lDXLIoMmTdlekEr8=",
+        "bzlTransitiveDigest": "On2S1n4oTTFGUqpJkhIHlFTQsspqPBiMEugWLZhc4jc=",
         "usagesDigest": "66V66w6pUhkB9EhK2d+/X7Ef9LIkYB/h58TcEc+vPEI=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},

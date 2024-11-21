@@ -30,6 +30,27 @@ type CanisterInfo = record {
   total_icp_deposited : nat64;
   stakers_count : nat64;
 };
+type ConsentInfo = record {
+  metadata : ConsentMessageMetadata;
+  consent_message : ConsentMessage;
+};
+type ConsentMessage = variant {
+  LineDisplayMessage : record { pages : vec LineDisplayPage };
+  GenericDisplayMessage : text;
+};
+type ConsentMessageMetadata = record {
+  utc_offset_minutes : opt nat16;
+  language : text;
+};
+type ConsentMessageRequest = record {
+  arg : blob;
+  method : text;
+  user_preferences : ConsentMessageSpec;
+};
+type ConsentMessageSpec = record {
+  metadata : ConsentMessageMetadata;
+  device_spec : opt DisplayMessageType;
+};
 type ConversionArg = record { maybe_subaccount : opt blob; amount_e8s : nat64 };
 type ConversionError = variant {
   GenericError : record { code : int32; message : text };
@@ -43,10 +64,15 @@ type DepositSuccess = record {
   block_index : nat;
   transfer_id : nat64;
 };
+type DisplayMessageType = variant {
+  GenericDisplay;
+  LineDisplay : record { characters_per_line : nat16; lines_per_page : nat16 };
+};
 type DissolveState = variant {
   DissolveDelaySeconds : nat64;
   WhenDissolvedTimestampSeconds : nat64;
 };
+type ErrorInfo = record { description : text };
 type Event = record { timestamp : nat64; payload : EventType };
 type EventType = variant {
   ClaimedAirdrop : record { block_index : nat64; caller : principal };
@@ -101,12 +127,19 @@ type GetEventsArg = record { start : nat64; length : nat64 };
 type GetEventsResult = record { total_event_count : nat64; events : vec Event };
 type GovernanceError = record { error_message : text; error_type : int32 };
 type GuardError = variant { AlreadyProcessing; TooManyConcurrentRequests };
+type Icrc21Error = variant {
+  GenericError : record { description : text; error_code : nat64 };
+  InsufficientPayment : ErrorInfo;
+  UnsupportedCanisterCall : ErrorInfo;
+  ConsentMessageUnavailable : ErrorInfo;
+};
 type InitArg = record {
   wtn_ledger_id : principal;
   wtn_governance_id : principal;
   nicp_ledger_id : principal;
 };
 type KnownNeuronData = record { name : text; description : opt text };
+type LineDisplayPage = record { lines : vec text };
 type LiquidArg = variant { Upgrade : opt UpgradeArg; Init : InitArg };
 type MergeResponse = record {
   target_neuron : opt Neuron;
@@ -173,7 +206,9 @@ type Result = variant { Ok : MergeResponse; Err : CancelWithdrawalError };
 type Result_1 = variant { Ok : nat64; Err : ConversionError };
 type Result_2 = variant { Ok : NeuronId; Err : NeuronId };
 type Result_3 = variant { Ok : DepositSuccess; Err : ConversionError };
+type Result_5 = variant { Ok : ConsentInfo; Err : Icrc21Error };
 type Result_4 = variant { Ok : WithdrawalSuccess; Err : ConversionError };
+type StandardRecord = record { url : text; name : text };
 type TransferError = variant {
   GenericError : record { message : text; error_code : nat };
   TemporarilyUnavailable;
@@ -200,7 +235,6 @@ type TransferStatus = variant {
   Unknown;
   Pending : PendingTransfer;
 };
-type TrustedOriginsResponse = record { trusted_origins : vec text };
 type Unit = variant { ICP; WTN; NICP };
 type UpgradeArg = record { governance_fee_share_percent : opt nat64 };
 type WithdrawalDetails = record {
@@ -236,7 +270,9 @@ service : (LiquidArg) -> {
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
   get_withdrawal_requests : (opt Account) -> (vec WithdrawalDetails) query;
   get_wtn_proposal_id : (nat64) -> (Result_2) query;
-  
+  icrc10_supported_standards : () -> (vec StandardRecord) query;
+  icrc21_canister_call_consent_message : (ConsentMessageRequest) -> (Result_5);
+
   icp_to_nicp : (ConversionArg) -> (Result_3);
   nicp_to_icp : (ConversionArg) -> (Result_4);
   cancel_withdrawal : (NeuronId) -> (Result);

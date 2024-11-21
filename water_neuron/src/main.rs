@@ -7,6 +7,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
 use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
+use water_neuron::icrc21::{ConsentInfo, ConsentMessageRequest, Icrc21Error, StandardRecord};
 use water_neuron::logs::INFO;
 use water_neuron::management::register_vote;
 use water_neuron::nns_types::{
@@ -23,7 +24,7 @@ use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
     CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
-    TrustedOriginsResponse, Unit, UpgradeArg, WithdrawalSuccess,
+    Unit, UpgradeArg, WithdrawalSuccess,
 };
 
 fn reject_anonymous_call() {
@@ -346,6 +347,18 @@ async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionErr
 async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelWithdrawalError> {
     reject_anonymous_call();
     check_postcondition(water_neuron::conversion::cancel_withdrawal(neuron_id).await)
+}
+
+#[query]
+fn icrc10_supported_standards() -> Vec<StandardRecord> {
+    water_neuron::icrc21::icrc10_supported_standards()
+}
+
+#[update]
+fn icrc21_canister_call_consent_message(
+    request: ConsentMessageRequest,
+) -> Result<ConsentInfo, Icrc21Error> {
+    water_neuron::icrc21::icrc21_canister_call_consent_message(request)
 }
 
 #[query(hidden = true)]

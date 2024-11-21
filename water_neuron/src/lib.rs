@@ -38,6 +38,7 @@ pub mod cbor;
 pub mod conversion;
 pub mod dashboard;
 pub mod guards;
+pub mod icrc21;
 pub mod logs;
 pub mod management;
 pub mod nns_types;
