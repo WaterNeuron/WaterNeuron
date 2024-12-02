@@ -1,0 +1,15 @@
+type Result = variant { Ok : nat64; Err : TransferError };
+type TransferError = variant {
+  GenericError : record { message : text; error_code : nat };
+  TemporarilyUnavailable;
+  BadBurn : record { min_burn_amount : nat };
+  Duplicate : record { duplicate_of : nat };
+  BadFee : record { expected_fee : nat };
+  CreatedInFuture : record { ledger_time : nat64 };
+  TooOld;
+  InsufficientFunds : record { balance : nat };
+};
+service : {
+  get_icp_deposit_address : (principal) -> (text);
+  notify_icp_deposit : (principal, nat64) -> (Result);
+}

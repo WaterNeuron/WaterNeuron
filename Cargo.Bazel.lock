@@ -1,5 +1,5 @@
 {
-  "checksum": "19ea6304a85ad84abf9f1505a898e8fe0655c2df6864f6af7846632d96d4a9c8",
+  "checksum": "ef7a6da8eeb6316bea2c2e2283101ff041566910790e915856ad1c24a0898f07",
   "crates": {
     "addr2line 0.22.0": {
       "name": "addr2line",
@@ -8980,6 +8980,10 @@
             {
               "id": "ic-metrics-encoder 1.1.1",
               "target": "ic_metrics_encoder"
+            },
+            {
+              "id": "ic-nervous-system-common 0.9.0",
+              "target": "ic_nervous_system_common"
             },
             {
               "id": "ic-nns-constants 0.9.0",
@@ -56189,6 +56193,7 @@
     "ic-icrc1-ledger 0.9.0",
     "ic-management-canister-types 0.9.0",
     "ic-metrics-encoder 1.1.1",
+    "ic-nervous-system-common 0.9.0",
     "ic-nns-constants 0.9.0",
     "ic-nns-governance 0.9.0",
     "ic-sns-governance 0.9.0",

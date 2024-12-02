@@ -83,6 +83,10 @@ crates_repository(
             git = "https://github.com/dfinity/ic.git",
             rev = IC_VERSION,
         ),
+        "ic-nervous-system-common": crate.spec(
+            git = "https://github.com/dfinity/ic/",
+            rev = IC_VERSION,
+        ),
         "ic-sns-governance": crate.spec(
             git = "https://github.com/dfinity/ic/",
             rev = IC_VERSION,
