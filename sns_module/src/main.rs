@@ -1,13 +1,28 @@
 use candid::{Nat, Principal};
 use ic_base_types::PrincipalId;
-use ic_cdk::update;
+use ic_cdk::{query, update};
 use ic_nervous_system_common::ledger::compute_neuron_staking_subaccount;
 use icp_ledger::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use sns_module::memory::{deposit_icp, get_principal_to_wtn_owed, set_wtn_owed};
-use sns_module::{balance_of, derive_staking, dispatch_tokens, transfer};
+use sns_module::memory::{
+    deposit_icp, get_principal_to_icp, get_principal_to_wtn_owed, set_wtn_owed,
+};
+use sns_module::{
+    balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
+    transfer, Status, END_SWAP_TS,
+};
 
 fn main() {}
+
+#[query]
+fn get_status() -> Status {
+    let balances = get_principal_to_icp();
+    Status {
+        participants: balances.len(),
+        total_icp_deposited: balances.iter().map(|(_, b)| b).sum(),
+        time_left: END_SWAP_TS.saturating_sub(ic_cdk::api::time()),
+    }
+}
 
 #[update]
 fn get_icp_deposit_address(target: Principal) -> AccountIdentifier {
@@ -20,6 +35,7 @@ fn get_icp_deposit_address(target: Principal) -> AccountIdentifier {
 async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, TransferError> {
     assert!(amount >= 100_000_000);
     assert_ne!(ic_cdk::caller(), Principal::anonymous());
+    assert!(is_swap_available());
     let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     match transfer(
         Some(derive_staking(target)),
@@ -46,6 +62,7 @@ async fn distribute_tokens() -> Result<(), String> {
         Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
     );
     assert!(get_principal_to_wtn_owed().is_empty());
+    assert!(is_distribution_available());
 
     let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     let icp_balance = balance_of(ic_cdk::id(), icp_ledger).await?;

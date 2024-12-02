@@ -1,16 +1,36 @@
-use candid::{Nat, Principal};
+use candid::{CandidType, Nat, Principal};
 use ic_base_types::PrincipalId;
 use ic_nervous_system_common::ledger::compute_neuron_staking_subaccount;
 use icp_ledger::{AccountIdentifier, Subaccount};
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
-use icrc_ledger_types::icrc1::transfer::TransferError;
+use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
+use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
 pub mod memory;
 
 pub const E8S: u64 = 100_000_000;
+pub const END_SWAP_TS: u64 = 1735603211;
+pub const START_SWAP_TS: u64 = 1734739211;
+pub const NANOS: u64 = 1_000_000_000;
+
+#[derive(CandidType, Deserialize)]
+pub struct Status {
+    pub participants: usize,
+    pub total_icp_deposited: u64,
+    pub time_left: u64,
+}
+
+pub fn is_swap_available() -> bool {
+    let time = ic_cdk::api::time() / NANOS;
+    time > START_SWAP_TS && time < END_SWAP_TS
+}
+
+pub fn is_distribution_available() -> bool {
+    let time = ic_cdk::api::time() / NANOS;
+    time > END_SWAP_TS
+}
 
 pub async fn transfer(
     from_subaccount: Option<[u8; 32]>,

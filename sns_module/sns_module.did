@@ -1,5 +1,10 @@
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : nat64; Err : TransferError };
+type Status = record {
+  participants : nat64;
+  time_left : nat64;
+  total_icp_deposited : nat64;
+};
 type TransferError = variant {
   GenericError : record { message : text; error_code : nat };
   TemporarilyUnavailable;
@@ -13,5 +18,6 @@ type TransferError = variant {
 service : {
   distribute_tokens : () -> (Result);
   get_icp_deposit_address : (principal) -> (text);
+  get_status : () -> (Status) query;
   notify_icp_deposit : (principal, nat64) -> (Result_1);
 }
