@@ -46,3 +46,24 @@ thread_local! {
         RefCell::new(StableBTreeMap::init(mm.borrow().get(PRINCIPAL_TO_ICP_ID)))
     });
 }
+
+pub fn add_tokens(to: Principal, tokens: u64) {
+    PRINCIPAL_TO_ICP.with(|m| {
+        let current_balance = m.borrow().get(&to).unwrap_or(0);
+        let new_balance = current_balance.checked_add(tokens).unwrap();
+        m.borrow_mut().insert(to, new_balance);
+    });
+}
+
+pub fn get_tokens(of: Principal) -> u64 {
+    PRINCIPAL_TO_ICP.with(|m| m.borrow().get(&of).unwrap_or(0))
+}
+
+#[test]
+fn should_add_tokens() {
+    let p1 = Principal::anonymous();
+    add_tokens(p1, 100);
+    assert_eq!(get_tokens(p1), 100);
+    add_tokens(p1, 100);
+    assert_eq!(get_tokens(p1), 200);
+}

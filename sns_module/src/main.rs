@@ -5,6 +5,7 @@ use ic_nervous_system_common::ledger::compute_neuron_staking_subaccount;
 use icp_ledger::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use sns_module::{derive_staking, transfer};
+use sns_module::memory::add_tokens;
 
 fn main() {}
 
@@ -17,6 +18,7 @@ fn get_icp_deposit_address(target: Principal) -> AccountIdentifier {
 
 #[update]
 async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, TransferError> {
+    assert!(amount >= 100_000_000);
     let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     match transfer(
         Some(derive_staking(target)),
@@ -27,7 +29,11 @@ async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, Trans
     )
     .await
     {
-        Ok(block_index) => Ok(block_index),
+        Ok(block_index) => {
+            let received_tokens = amount.checked_sub(10_000).unwrap();
+            add_tokens(target, received_tokens);
+            Ok(block_index)
+        }    
         Err(e) => Err(e),
     }
 }
@@ -74,13 +80,13 @@ fn check_candid_interface_compatibility() {
     let new_interface = __export_service();
 
     // check the public interface against the actual one
-    let old_interface =
-        std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("sns2.did");
+    let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
+        .join("sns_module.did");
 
     check_service_equal(
         "actual cycles-manager candid interface",
         candid_parser::utils::CandidSource::Text(&new_interface),
-        "declared candid interface in sns2.did file",
+        "declared candid interface in sns_module.did file",
         candid_parser::utils::CandidSource::File(old_interface.as_path()),
     );
 }

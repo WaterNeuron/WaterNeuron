@@ -57,7 +57,7 @@ rust_test(
     ]),
     data = ["//sns_module:candid"],
     env = {
-        "sns_module_CANDID_PATH": "$(rootpath //sns_module:candid)",
+        "SNS_MODULE_CANDID_PATH": "$(rootpath //sns_module:candid)",
     },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
@@ -66,4 +66,17 @@ rust_test(
 filegroup(
     name = "candid",
     srcs = ["sns_module.did"],
+)
+
+rust_test(
+    name = "tests",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    crate_name = "sns_module",
+    data = [],
+    env = {},
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    tags = ["requires-network"],
+    deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
 )
