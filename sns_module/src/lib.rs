@@ -20,6 +20,8 @@ pub struct Status {
     pub participants: usize,
     pub total_icp_deposited: u64,
     pub time_left: u64,
+    pub start_at: u64,
+    pub end_at: u64,
 }
 
 pub fn is_swap_available() -> bool {

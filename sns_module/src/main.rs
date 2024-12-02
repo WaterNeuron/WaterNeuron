@@ -9,7 +9,7 @@ use sns_module::memory::{
 };
 use sns_module::{
     balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
-    transfer, Status, END_SWAP_TS,
+    transfer, Status, END_SWAP_TS, START_SWAP_TS,
 };
 
 fn main() {}
@@ -21,6 +21,8 @@ fn get_status() -> Status {
         participants: balances.len(),
         total_icp_deposited: balances.iter().map(|(_, b)| b).sum(),
         time_left: END_SWAP_TS.saturating_sub(ic_cdk::api::time()),
+        start_at: START_SWAP_TS,
+        end_at: END_SWAP_TS,
     }
 }
 

@@ -3,7 +3,9 @@ type Result_1 = variant { Ok : nat64; Err : TransferError };
 type Status = record {
   participants : nat64;
   time_left : nat64;
+  start_at : nat64;
   total_icp_deposited : nat64;
+  end_at : nat64;
 };
 type TransferError = variant {
   GenericError : record { message : text; error_code : nat };
