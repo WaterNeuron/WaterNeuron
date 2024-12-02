@@ -5,7 +5,7 @@ use ic_nervous_system_common::ledger::compute_neuron_staking_subaccount;
 use icp_ledger::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use sns_module::memory::{deposit_icp, get_principal_to_wtn_owed, set_wtn_owed};
-use sns_module::{balance_of, derive_staking, transfer};
+use sns_module::{balance_of, derive_staking, dispatch_tokens, transfer};
 
 fn main() {}
 
@@ -37,17 +37,6 @@ async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, Trans
         }
         Err(e) => Err(e),
     }
-}
-
-fn dispatch_tokens(wtn_tokens: u64, balances: Vec<(Principal, u64)>) -> Vec<(Principal, u64)> {
-    let total_tracked: u64 = balances.iter().map(|(_, tokens)| tokens).sum();
-    let mut result: Vec<(Principal, u64)> = vec![];
-    for (owner, balance) in balances {
-        let wtn_share = balance as f64 / total_tracked as f64;
-        let wtn_share_amount = (wtn_share * wtn_tokens as f64) as u64;
-        result.push((owner, wtn_share_amount));
-    }
-    result
 }
 
 #[update]

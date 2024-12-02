@@ -10,6 +10,8 @@ use sha2::{Digest, Sha256};
 
 pub mod memory;
 
+pub const E8S: u64 = 100_000_000;
+
 pub async fn transfer(
     from_subaccount: Option<[u8; 32]>,
     to: impl Into<Account>,
@@ -60,4 +62,64 @@ pub fn derive_staking(principal: Principal) -> [u8; 32] {
     hasher.update(DOMAIN);
     hasher.update(principal.as_slice());
     hasher.finalize().into()
+}
+
+pub fn dispatch_tokens(wtn_tokens: u64, balances: Vec<(Principal, u64)>) -> Vec<(Principal, u64)> {
+    let total_tracked: u64 = balances.iter().map(|(_, tokens)| tokens).sum();
+    let mut result: Vec<(Principal, u64)> = vec![];
+    for (owner, balance) in balances {
+        let wtn_share = balance as f64 / total_tracked as f64;
+        let wtn_share_amount = (wtn_share * wtn_tokens as f64) as u64;
+        result.push((owner, wtn_share_amount));
+    }
+    result
+}
+
+#[test]
+fn should_dispatch_tokens() {
+    let token_to_dispatch = 1_000_000 * E8S;
+    let balances = vec![
+        (
+            Principal::from_text("vkp32-xurde-i5td6-chrbx-2b5p2-bogyg-qbckl-74ebs-xwvzo-jrwib-mqe")
+                .unwrap(),
+            25,
+        ),
+        (
+            Principal::from_text("wlgcb-f7wlw-yvrlc-vvo7n-j7t4u-zair7-suih4-zvw7m-b7uwv-tapcl-sqe")
+                .unwrap(),
+            25,
+        ),
+        (
+            Principal::from_text("aqbuz-ghmx7-hsjcb-hudle-m2olh-xkueg-nwd35-fkj3a-ykwsy-eawp5-3qe")
+                .unwrap(),
+            50,
+        ),
+    ];
+
+    assert_eq!(
+        dispatch_tokens(token_to_dispatch, balances),
+        vec![
+            (
+                Principal::from_text(
+                    "vkp32-xurde-i5td6-chrbx-2b5p2-bogyg-qbckl-74ebs-xwvzo-jrwib-mqe"
+                )
+                .unwrap(),
+                250_000 * E8S
+            ),
+            (
+                Principal::from_text(
+                    "wlgcb-f7wlw-yvrlc-vvo7n-j7t4u-zair7-suih4-zvw7m-b7uwv-tapcl-sqe"
+                )
+                .unwrap(),
+                250_000 * E8S
+            ),
+            (
+                Principal::from_text(
+                    "aqbuz-ghmx7-hsjcb-hudle-m2olh-xkueg-nwd35-fkj3a-ykwsy-eawp5-3qe"
+                )
+                .unwrap(),
+                500_000 * E8S
+            ),
+        ]
+    )
 }
