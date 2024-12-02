@@ -1,6 +1,5 @@
 target/
 .dfx
-candid/
 
 # nix
 .direnv/
@@ -13,5 +12,9 @@ rust-project.json
 proptest-regressions
 
 artifacts/
+candid/
+canisters/
 
 *.bin
+
+msg.json
