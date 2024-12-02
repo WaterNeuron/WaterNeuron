@@ -1,15 +1,13 @@
 use candid::{Nat, Principal};
 use ic_base_types::PrincipalId;
 use ic_cdk::{query, update};
-use ic_nervous_system_common::ledger::compute_neuron_staking_subaccount;
 use icp_ledger::{AccountIdentifier, Subaccount};
-use icrc_ledger_types::icrc1::transfer::TransferError;
 use sns_module::memory::{
     deposit_icp, get_principal_to_icp, get_principal_to_wtn_owed, set_wtn_owed,
 };
 use sns_module::{
     balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
-    transfer, Status, END_SWAP_TS, START_SWAP_TS,
+    transfer, Status, END_SWAP_TS, START_SWAP_TS, MIN_DEPOSIT_AMOUNT, E8S
 };
 
 fn main() {}
@@ -23,6 +21,7 @@ fn get_status() -> Status {
         time_left: END_SWAP_TS.saturating_sub(ic_cdk::api::time()),
         start_at: START_SWAP_TS,
         end_at: END_SWAP_TS,
+        minimum_deposit_amount: MIN_DEPOSIT_AMOUNT
     }
 }
 
@@ -34,26 +33,27 @@ fn get_icp_deposit_address(target: Principal) -> AccountIdentifier {
 }
 
 #[update]
-async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, TransferError> {
-    assert!(amount >= 100_000_000);
-    assert_ne!(ic_cdk::caller(), Principal::anonymous());
-    assert!(is_swap_available());
+async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, String> {
+    if amount < MIN_DEPOSIT_AMOUNT {
+        return Err(format!("Amount lower than the minimum deposit: {} ICP", MIN_DEPOSIT_AMOUNT / E8S));
+    }
+    is_swap_available()?;
     let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+    let received_tokens = amount.checked_sub(10_000).unwrap();
     match transfer(
         Some(derive_staking(target)),
         ic_cdk::id(),
-        Nat::from(amount),
+        Nat::from(received_tokens),
         None,
         icp_ledger,
     )
     .await
     {
         Ok(block_index) => {
-            let received_tokens = amount.checked_sub(10_000).unwrap();
             deposit_icp(target, received_tokens);
             Ok(block_index)
         }
-        Err(e) => Err(e),
+        Err(e) => Err(format!("{e}")),
     }
 }
 

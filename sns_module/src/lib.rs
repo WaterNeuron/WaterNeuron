@@ -1,7 +1,4 @@
 use candid::{CandidType, Nat, Principal};
-use ic_base_types::PrincipalId;
-use ic_nervous_system_common::ledger::compute_neuron_staking_subaccount;
-use icp_ledger::{AccountIdentifier, Subaccount};
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
@@ -14,6 +11,7 @@ pub const E8S: u64 = 100_000_000;
 pub const END_SWAP_TS: u64 = 1735603211;
 pub const START_SWAP_TS: u64 = 1734739211;
 pub const NANOS: u64 = 1_000_000_000;
+pub const MIN_DEPOSIT_AMOUNT: u64 = 10 * E8S;
 
 #[derive(CandidType, Deserialize)]
 pub struct Status {
@@ -22,11 +20,18 @@ pub struct Status {
     pub time_left: u64,
     pub start_at: u64,
     pub end_at: u64,
+    pub minimum_deposit_amount: u64,
 }
 
-pub fn is_swap_available() -> bool {
+pub fn is_swap_available() -> Result<(), String> {
     let time = ic_cdk::api::time() / NANOS;
-    time > START_SWAP_TS && time < END_SWAP_TS
+    if time < START_SWAP_TS {
+        return Err("Swap didn't start yet, starting at {START_SWAP_TS}".to_string());
+    }
+    if time > END_SWAP_TS {
+        return Err("Swap ended at {END_SWAP_TS}".to_string());
+    }
+    Ok(())
 }
 
 pub fn is_distribution_available() -> bool {

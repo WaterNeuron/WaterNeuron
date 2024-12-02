@@ -2,7 +2,7 @@ use candid::Principal;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager as MM, VirtualMemory};
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::DefaultMemoryImpl;
-use ic_stable_structures::{DefaultMemoryImpl as DefMem, StableBTreeMap, StableLog, Storable};
+use ic_stable_structures::{DefaultMemoryImpl as DefMem, StableBTreeMap, Storable};
 use std::borrow::Cow;
 use std::cell::RefCell;
 

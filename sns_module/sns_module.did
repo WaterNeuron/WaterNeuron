@@ -1,21 +1,12 @@
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : nat64; Err : TransferError };
+type Result_1 = variant { Ok : nat64; Err : text };
 type Status = record {
   participants : nat64;
   time_left : nat64;
   start_at : nat64;
+  minimum_deposit_amount : nat64;
   total_icp_deposited : nat64;
   end_at : nat64;
-};
-type TransferError = variant {
-  GenericError : record { message : text; error_code : nat };
-  TemporarilyUnavailable;
-  BadBurn : record { min_burn_amount : nat };
-  Duplicate : record { duplicate_of : nat };
-  BadFee : record { expected_fee : nat };
-  CreatedInFuture : record { ledger_time : nat64 };
-  TooOld;
-  InsufficientFunds : record { balance : nat };
 };
 service : {
   distribute_tokens : () -> (Result);
