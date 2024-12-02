@@ -4,8 +4,8 @@ use ic_cdk::update;
 use ic_nervous_system_common::ledger::compute_neuron_staking_subaccount;
 use icp_ledger::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use sns_module::{derive_staking, transfer};
-use sns_module::memory::add_tokens;
+use sns_module::memory::{deposit_icp, get_principal_to_wtn_owed, set_wtn_owed};
+use sns_module::{balance_of, derive_staking, transfer};
 
 fn main() {}
 
@@ -19,6 +19,7 @@ fn get_icp_deposit_address(target: Principal) -> AccountIdentifier {
 #[update]
 async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, TransferError> {
     assert!(amount >= 100_000_000);
+    assert_ne!(ic_cdk::caller(), Principal::anonymous());
     let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     match transfer(
         Some(derive_staking(target)),
@@ -31,11 +32,49 @@ async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, Trans
     {
         Ok(block_index) => {
             let received_tokens = amount.checked_sub(10_000).unwrap();
-            add_tokens(target, received_tokens);
+            deposit_icp(target, received_tokens);
             Ok(block_index)
-        }    
+        }
         Err(e) => Err(e),
     }
+}
+
+fn dispatch_tokens(wtn_tokens: u64, balances: Vec<(Principal, u64)>) -> Vec<(Principal, u64)> {
+    let total_tracked: u64 = balances.iter().map(|(_, tokens)| tokens).sum();
+    let mut result: Vec<(Principal, u64)> = vec![];
+    for (owner, balance) in balances {
+        let wtn_share = balance as f64 / total_tracked as f64;
+        let wtn_share_amount = (wtn_share * wtn_tokens as f64) as u64;
+        result.push((owner, wtn_share_amount));
+    }
+    result
+}
+
+#[update]
+async fn distribute_tokens() -> Result<(), String> {
+    assert_eq!(
+        ic_cdk::caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+    assert!(get_principal_to_wtn_owed().is_empty());
+
+    let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+    let icp_balance = balance_of(ic_cdk::id(), icp_ledger).await?;
+
+    let wtn_ledger = Principal::from_text("jcmow-hyaaa-aaaaq-aadlq-cai").unwrap();
+    let wtn_balance = balance_of(ic_cdk::id(), wtn_ledger).await?;
+
+    let balances = sns_module::memory::get_principal_to_icp();
+    let total_tracked_icp: u64 = balances.iter().map(|(_, b)| b).sum();
+    assert!(icp_balance >= total_tracked_icp);
+
+    let wtn_map = dispatch_tokens(wtn_balance, balances);
+
+    for (owner, owed_wtn) in wtn_map {
+        set_wtn_owed(owner, owed_wtn);
+    }
+
+    Ok(())
 }
 
 /// Checks the real candid interface against the one declared in the did file

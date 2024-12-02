@@ -38,6 +38,21 @@ pub async fn transfer(
     Ok(block_index.0.try_into().unwrap())
 }
 
+pub async fn balance_of(
+    of: impl Into<Account>,
+    ledger_canister_id: Principal,
+) -> Result<u64, String> {
+    let client = ICRC1Client {
+        runtime: CdkRuntime,
+        ledger_canister_id,
+    };
+    let balance = client
+        .balance_of(of.into())
+        .await
+        .map_err(|(code, e)| format!("{code} - {e}"))?;
+    Ok(balance.0.try_into().unwrap())
+}
+
 pub fn derive_staking(principal: Principal) -> [u8; 32] {
     const DOMAIN: &[u8] = b"STAKE-ICP";
 

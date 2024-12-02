@@ -33,6 +33,7 @@ where
 // NOTE: ensure that all memory ids are unique and
 // do not change across upgrades!
 const PRINCIPAL_TO_ICP_ID: MemoryId = MemoryId::new(0);
+const PRINCIPAL_TO_WTN_ID: MemoryId = MemoryId::new(1);
 
 type VM = VirtualMemory<DefMem>;
 
@@ -45,9 +46,14 @@ thread_local! {
         MEMORY_MANAGER.with(|mm| {
         RefCell::new(StableBTreeMap::init(mm.borrow().get(PRINCIPAL_TO_ICP_ID)))
     });
+
+    static PRINCIPAL_TO_WTN: RefCell<StableBTreeMap<Principal, u64, VM>> =
+        MEMORY_MANAGER.with(|mm| {
+        RefCell::new(StableBTreeMap::init(mm.borrow().get(PRINCIPAL_TO_WTN_ID)))
+    });
 }
 
-pub fn add_tokens(to: Principal, tokens: u64) {
+pub fn deposit_icp(to: Principal, tokens: u64) {
     PRINCIPAL_TO_ICP.with(|m| {
         let current_balance = m.borrow().get(&to).unwrap_or(0);
         let new_balance = current_balance.checked_add(tokens).unwrap();
@@ -55,15 +61,42 @@ pub fn add_tokens(to: Principal, tokens: u64) {
     });
 }
 
-pub fn get_tokens(of: Principal) -> u64 {
+pub fn get_icp_deposited(of: Principal) -> u64 {
     PRINCIPAL_TO_ICP.with(|m| m.borrow().get(&of).unwrap_or(0))
+}
+
+pub fn get_principal_to_icp() -> Vec<(Principal, u64)> {
+    PRINCIPAL_TO_ICP.with(|m| m.borrow().iter().collect())
+}
+
+pub fn set_wtn_owed(to: Principal, tokens: u64) {
+    PRINCIPAL_TO_WTN.with(|m| {
+        m.borrow_mut().insert(to, tokens);
+    });
+}
+
+pub fn get_wtn_owed(of: Principal) -> u64 {
+    PRINCIPAL_TO_WTN.with(|m| m.borrow().get(&of).unwrap_or(0))
+}
+
+pub fn get_principal_to_wtn_owed() -> Vec<(Principal, u64)> {
+    PRINCIPAL_TO_WTN.with(|m| m.borrow().iter().collect())
 }
 
 #[test]
 fn should_add_tokens() {
     let p1 = Principal::anonymous();
-    add_tokens(p1, 100);
-    assert_eq!(get_tokens(p1), 100);
-    add_tokens(p1, 100);
-    assert_eq!(get_tokens(p1), 200);
+    deposit_icp(p1, 100);
+    assert_eq!(get_icp_deposited(p1), 100);
+    deposit_icp(p1, 200);
+    assert_eq!(get_icp_deposited(p1), 300);
+}
+
+#[test]
+fn should_set_wtn() {
+    let p1 = Principal::anonymous();
+    set_wtn_owed(p1, 100);
+    assert_eq!(get_wtn_owed(p1), 100);
+    set_wtn_owed(p1, 200);
+    assert_eq!(get_wtn_owed(p1), 200);
 }
