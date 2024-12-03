@@ -37,7 +37,9 @@ if [[ "$MODE" == "build" ]]; then
             sha256sum bazel-bin/water_neuron/canister_shrink.wasm.gz && \
             cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/waterneuron.wasm.gz && \
             sha256sum bazel-bin/boomerang/canister_shrink.wasm.gz && \
-            cp bazel-bin/boomerang/canister_shrink.wasm.gz /artifacts/boomerang.wasm.gz"
+            cp bazel-bin/boomerang/canister_shrink.wasm.gz /artifacts/boomerang.wasm.gz && \
+            sha256sum bazel-bin/sns_module/canister_shrink.wasm.gz && \
+            cp bazel-bin/sns_module/canister_shrink.wasm.gz /artifacts/sns_module.wasm.gz"
     )
 fi
 
