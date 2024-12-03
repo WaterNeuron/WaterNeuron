@@ -2,8 +2,9 @@ use crate::state::State;
 use candid::Principal;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager as MM, VirtualMemory};
 use ic_stable_structures::storable::Bound;
-use ic_stable_structures::{DefaultMemoryImpl, RestrictedMemory, StableCell};
-use ic_stable_structures::{DefaultMemoryImpl as DefMem, StableBTreeMap, Storable};
+use ic_stable_structures::{
+    DefaultMemoryImpl as DefMem, RestrictedMemory, StableBTreeMap, StableCell, Storable,
+};
 use std::borrow::Cow;
 use std::cell::RefCell;
 
@@ -38,8 +39,13 @@ const PRINCIPAL_TO_WTN_ID: MemoryId = MemoryId::new(1);
 
 const METADATA_PAGES: u64 = 16;
 
-type VM = VirtualMemory<DefMem>;
 type RM = RestrictedMemory<DefMem>;
+type VM = VirtualMemory<RM>;
+
+const WASM_PAGE_SIZE: u64 = 65536;
+
+/// The maximum number of stable memory pages a canister can address.
+const MAX_PAGES: u64 = u64::MAX / WASM_PAGE_SIZE;
 
 thread_local! {
     static METADATA: RefCell<StableCell<Cbor<Option<State>>, RM>> =
@@ -49,9 +55,9 @@ thread_local! {
         ).expect("failed to initialize the metadata cell")
     );
 
-    static MEMORY_MANAGER: RefCell<MM<DefaultMemoryImpl>> = RefCell::new(
-        MM::init(DefaultMemoryImpl::default())
-    );
+    static MEMORY_MANAGER: RefCell<MM<RM>> = RefCell::new(
+        MM::init(RM::new(DefMem::default(), METADATA_PAGES..MAX_PAGES))
+      );
 
     static PRINCIPAL_TO_ICP: RefCell<StableBTreeMap<Principal, u64, VM>> =
         MEMORY_MANAGER.with(|mm| {
@@ -94,10 +100,8 @@ pub fn get_principal_to_wtn_owed() -> Vec<(Principal, u64)> {
     PRINCIPAL_TO_WTN.with(|m| m.borrow().iter().collect())
 }
 
-pub fn get_state() -> State {
-    METADATA
-        .with(|m| m.borrow().get().0.clone())
-        .expect("state not init")
+pub fn get_state() -> Option<State> {
+    METADATA.with(|m| m.borrow().get().0.clone())
 }
 
 pub fn set_state(state: State) {

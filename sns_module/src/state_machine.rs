@@ -1,5 +1,6 @@
 use crate::state::InitArg as SnsModuleInitArg;
 use crate::E8S;
+use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
 use ic_state_machine_tests::{
@@ -294,6 +295,12 @@ impl SnsModuleEnv {
 fn e2e_basic() {
     let env = SnsModuleEnv::new();
 
+    assert_matches!(
+        env.env
+            .upgrade_canister(env.sns_module_id, sns_module_wasm(), Encode!().unwrap(),),
+        Ok(_)
+    );
+
     let nns_principal =
         Principal::from_text("wwyv5-q3sgh-tae7o-v2wq7-zd32d-mv4xa-xuaup-z3r5z-vmfcg-xsm6p-xqe")
             .unwrap();
@@ -314,6 +321,11 @@ fn e2e_basic() {
     assert_eq!(env.get_icp_deposited(nns_principal), 10_000 * E8S - 10_000);
 
     env.env.advance_time(Duration::from_secs(60));
+    assert_matches!(
+        env.env
+            .upgrade_canister(env.sns_module_id, sns_module_wasm(), Encode!().unwrap(),),
+        Ok(_)
+    );
 
     assert_eq!(env.icp_transfer(env.user, deposit_address, 10_000 * E8S), 4);
     env.notify_icp_deposit(nns_principal, 10_000 * E8S).unwrap();

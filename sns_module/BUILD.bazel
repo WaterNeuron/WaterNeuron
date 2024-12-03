@@ -17,7 +17,6 @@ DEPENDENCIES = [
     "@crate_index//:icrc-ledger-client-cdk",
     "@crate_index//:ic-sns-governance",
     "@crate_index//:ic-metrics-encoder",
-    "@crate_index//:ic-nervous-system-common",
     "@crate_index//:ic-stable-structures",
     "@crate_index//:minicbor",
     "@crate_index//:scopeguard",

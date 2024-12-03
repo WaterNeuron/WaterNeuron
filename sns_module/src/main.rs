@@ -16,12 +16,13 @@ fn main() {}
 #[init]
 fn init(args: InitArg) {
     sns_module::memory::set_state(State::new(args.clone()));
-    replace_state(State::new(args));
+    let state = sns_module::memory::get_state().unwrap();
+    replace_state(state);
 }
 
 #[post_upgrade]
 fn post_upgrade() {
-    let state = sns_module::memory::get_state();
+    let state = sns_module::memory::get_state().unwrap();
     replace_state(state);
 }
 
