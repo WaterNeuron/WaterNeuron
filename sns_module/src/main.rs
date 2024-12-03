@@ -7,7 +7,7 @@ use sns_module::memory::{
 };
 use sns_module::{
     balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
-    transfer, Status, END_SWAP_TS, START_SWAP_TS, MIN_DEPOSIT_AMOUNT, E8S
+    transfer, Status, E8S, END_SWAP_TS, MIN_DEPOSIT_AMOUNT, START_SWAP_TS,
 };
 
 fn main() {}
@@ -21,8 +21,28 @@ fn get_status() -> Status {
         time_left: END_SWAP_TS.saturating_sub(ic_cdk::api::time()),
         start_at: START_SWAP_TS,
         end_at: END_SWAP_TS,
-        minimum_deposit_amount: MIN_DEPOSIT_AMOUNT
+        minimum_deposit_amount: MIN_DEPOSIT_AMOUNT,
     }
+}
+
+#[query]
+fn get_principal_to_icp_deposited() -> Vec<(Principal, u64)> {
+    sns_module::memory::get_principal_to_icp()
+}
+
+#[query]
+fn get_icp_deposited(of: Principal) -> u64 {
+    sns_module::memory::get_icp_deposited(of)
+}
+
+#[query]
+fn get_principal_to_wtn_allocation() -> Vec<(Principal, u64)> {
+    sns_module::memory::get_principal_to_wtn_owed()
+}
+
+#[query]
+fn get_wtn_allocated(of: Principal) -> u64 {
+    sns_module::memory::get_wtn_owed(of)
 }
 
 #[update]
@@ -35,7 +55,10 @@ fn get_icp_deposit_address(target: Principal) -> AccountIdentifier {
 #[update]
 async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, String> {
     if amount < MIN_DEPOSIT_AMOUNT {
-        return Err(format!("Amount lower than the minimum deposit: {} ICP", MIN_DEPOSIT_AMOUNT / E8S));
+        return Err(format!(
+            "Amount lower than the minimum deposit: {} ICP",
+            MIN_DEPOSIT_AMOUNT / E8S
+        ));
     }
     is_swap_available()?;
     let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
@@ -71,6 +94,7 @@ async fn distribute_tokens() -> Result<(), String> {
 
     let wtn_ledger = Principal::from_text("jcmow-hyaaa-aaaaq-aadlq-cai").unwrap();
     let wtn_balance = balance_of(ic_cdk::id(), wtn_ledger).await?;
+    assert!(wtn_balance > 100_000_000);
 
     let balances = sns_module::memory::get_principal_to_icp();
     let total_tracked_icp: u64 = balances.iter().map(|(_, b)| b).sum();
@@ -83,6 +107,29 @@ async fn distribute_tokens() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[update]
+async fn claim_wtn(of: Principal) -> Result<u64, String> {
+    let wtn_amount = sns_module::memory::get_wtn_owed(of);
+    if wtn_amount < 100_000_000 {
+        return Err("Minimum claim amount of 1 WTN".to_string());
+    }
+    if get_principal_to_wtn_owed().is_empty() || !is_distribution_available() {
+        return Err("WTN not allocated yet or swap not ended".to_string());
+    }
+
+    let ledger_canister_id = Principal::from_text("jcmow-hyaaa-aaaaq-aadlq-cai").unwrap();
+
+    set_wtn_owed(of, 0);
+    let wtn_amount_minus_fee = wtn_amount.checked_sub(1_000_000).unwrap();
+    match transfer(None, of, Nat::from(wtn_amount), None, ledger_canister_id).await {
+        Ok(block_index) => Ok(block_index),
+        Err(e) => {
+            set_wtn_owed(of, wtn_amount_minus_fee);
+            Err(format!("{e}"))
+        }
+    }
 }
 
 /// Checks the real candid interface against the one declared in the did file

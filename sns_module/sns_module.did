@@ -1,5 +1,5 @@
-type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : nat64; Err : text };
+type Result = variant { Ok : nat64; Err : text };
+type Result_1 = variant { Ok; Err : text };
 type Status = record {
   participants : nat64;
   time_left : nat64;
@@ -9,8 +9,17 @@ type Status = record {
   end_at : nat64;
 };
 service : {
-  distribute_tokens : () -> (Result);
+  claim_wtn : (principal) -> (Result);
+  distribute_tokens : () -> (Result_1);
   get_icp_deposit_address : (principal) -> (text);
+  get_icp_deposited : (principal) -> (nat64) query;
+  get_principal_to_icp_deposited : () -> (
+      vec record { principal; nat64 },
+    ) query;
+  get_principal_to_wtn_allocation : () -> (
+      vec record { principal; nat64 },
+    ) query;
   get_status : () -> (Status) query;
-  notify_icp_deposit : (principal, nat64) -> (Result_1);
+  get_wtn_allocated : (principal) -> (nat64) query;
+  notify_icp_deposit : (principal, nat64) -> (Result);
 }
