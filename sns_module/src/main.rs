@@ -1,28 +1,41 @@
 use candid::{Nat, Principal};
 use ic_base_types::PrincipalId;
-use ic_cdk::{query, update};
+use ic_cdk::{init, post_upgrade, query, update};
 use icp_ledger::{AccountIdentifier, Subaccount};
 use sns_module::memory::{
     deposit_icp, get_principal_to_icp, get_principal_to_wtn_owed, set_wtn_owed,
 };
+use sns_module::state::{read_state, replace_state, InitArg, State};
 use sns_module::{
     balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
-    transfer, Status, E8S, END_SWAP_TS, MIN_DEPOSIT_AMOUNT, START_SWAP_TS,
+    transfer, Status, E8S, MIN_DEPOSIT_AMOUNT,
 };
 
 fn main() {}
 
+#[init]
+fn init(args: InitArg) {
+    sns_module::memory::set_state(State::new(args.clone()));
+    replace_state(State::new(args));
+}
+
+#[post_upgrade]
+fn post_upgrade() {
+    let state = sns_module::memory::get_state();
+    replace_state(state);
+}
+
 #[query]
 fn get_status() -> Status {
     let balances = get_principal_to_icp();
-    Status {
+    read_state(|s| Status {
         participants: balances.len(),
         total_icp_deposited: balances.iter().map(|(_, b)| b).sum(),
-        time_left: END_SWAP_TS.saturating_sub(ic_cdk::api::time()),
-        start_at: START_SWAP_TS,
-        end_at: END_SWAP_TS,
+        time_left: s.end_ts.saturating_sub(ic_cdk::api::time()),
+        start_at: s.start_ts,
+        end_at: s.end_ts,
         minimum_deposit_amount: MIN_DEPOSIT_AMOUNT,
-    }
+    })
 }
 
 #[query]
@@ -61,7 +74,7 @@ async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, Strin
         ));
     }
     is_swap_available()?;
-    let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+    let icp_ledger = read_state(|s| s.icp_ledger_id);
     let received_tokens = amount.checked_sub(10_000).unwrap();
     match transfer(
         Some(derive_staking(target)),
@@ -86,15 +99,19 @@ async fn distribute_tokens() -> Result<(), String> {
         ic_cdk::caller(),
         Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
     );
-    assert!(get_principal_to_wtn_owed().is_empty());
-    assert!(is_distribution_available());
+    if !get_principal_to_wtn_owed().is_empty() {
+        return Err("Already distributed WTN".to_string());
+    }
+    if !is_distribution_available() {
+        return Err("Distribution not available".to_string());
+    }
 
-    let icp_ledger = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+    let (icp_ledger, wtn_ledger) = read_state(|s| (s.icp_ledger_id, s.wtn_ledger_id));
     let icp_balance = balance_of(ic_cdk::id(), icp_ledger).await?;
-
-    let wtn_ledger = Principal::from_text("jcmow-hyaaa-aaaaq-aadlq-cai").unwrap();
     let wtn_balance = balance_of(ic_cdk::id(), wtn_ledger).await?;
-    assert!(wtn_balance > 100_000_000);
+    if wtn_balance < 100_000_000 {
+        return Err("Nothing to distribute".to_string());
+    }
 
     let balances = sns_module::memory::get_principal_to_icp();
     let total_tracked_icp: u64 = balances.iter().map(|(_, b)| b).sum();
@@ -119,11 +136,18 @@ async fn claim_wtn(of: Principal) -> Result<u64, String> {
         return Err("WTN not allocated yet or swap not ended".to_string());
     }
 
-    let ledger_canister_id = Principal::from_text("jcmow-hyaaa-aaaaq-aadlq-cai").unwrap();
-
+    let ledger_canister_id = read_state(|s| s.wtn_ledger_id);
     set_wtn_owed(of, 0);
     let wtn_amount_minus_fee = wtn_amount.checked_sub(1_000_000).unwrap();
-    match transfer(None, of, Nat::from(wtn_amount), None, ledger_canister_id).await {
+    match transfer(
+        None,
+        of,
+        Nat::from(wtn_amount_minus_fee),
+        None,
+        ledger_canister_id,
+    )
+    .await
+    {
         Ok(block_index) => Ok(block_index),
         Err(e) => {
             set_wtn_owed(of, wtn_amount_minus_fee);

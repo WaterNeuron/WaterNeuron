@@ -37,7 +37,10 @@ PROC_MACRO_DEPENDENCIES = [
 ]
 
 DEV_DEPENDENCIES = [
+    "@crate_index//:assert_matches",
     "@crate_index//:candid_parser",
+    "@crate_index//:ic-icrc1-ledger",
+    "@crate_index//:ic-state-machine-tests",
 ]
 
 rust_library(
@@ -48,6 +51,22 @@ rust_library(
     crate_name = "sns_module",
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     deps = DEPENDENCIES,
+)
+
+filegroup(
+    name = "candid",
+    srcs = ["sns_module.did"],
+)
+
+rust_canister(
+    name = "canister",
+    srcs = glob([
+        "src/**/*.rs",
+    ]),
+    crate_features = [],
+    proc_macro_deps = PROC_MACRO_DEPENDENCIES,
+    service_file = "sns_module.did",
+    deps = DEPENDENCIES + [":lib"],
 )
 
 rust_test(
@@ -63,19 +82,22 @@ rust_test(
     deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],
 )
 
-filegroup(
-    name = "candid",
-    srcs = ["sns_module.did"],
-)
-
 rust_test(
     name = "tests",
     srcs = glob([
         "src/**/*.rs",
     ]),
     crate_name = "sns_module",
-    data = [],
-    env = {},
+    data = [
+        "//sns_module:canister",
+        "@ic-icrc1-ledger-canister//:wasm",
+        "@ledger-canister//:wasm",
+    ],
+    env = {
+        "IC_ICRC1_LEDGER_WASM_PATH": "$(rootpath @ic-icrc1-ledger-canister//:wasm)",
+        "LEDGER_CANISTER_WASM_PATH": "$(rootpath @ledger-canister//:wasm)",
+        "SNS_MODULE_CANISTER_WASM_PATH": "$(rootpath //sns_module:canister)",
+    },
     proc_macro_deps = PROC_MACRO_DEPENDENCIES,
     tags = ["requires-network"],
     deps = DEPENDENCIES + DEV_DEPENDENCIES + [":lib"],

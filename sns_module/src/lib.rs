@@ -1,3 +1,4 @@
+use crate::state::read_state;
 use candid::{CandidType, Nat, Principal};
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
@@ -6,10 +7,12 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
 pub mod memory;
+pub mod state;
+
+#[cfg(test)]
+pub mod state_machine;
 
 pub const E8S: u64 = 100_000_000;
-pub const END_SWAP_TS: u64 = 1735603211;
-pub const START_SWAP_TS: u64 = 1734739211;
 pub const NANOS: u64 = 1_000_000_000;
 pub const MIN_DEPOSIT_AMOUNT: u64 = 10 * E8S;
 
@@ -25,18 +28,20 @@ pub struct Status {
 
 pub fn is_swap_available() -> Result<(), String> {
     let time = ic_cdk::api::time() / NANOS;
-    if time < START_SWAP_TS {
-        return Err("Swap didn't start yet, starting at {START_SWAP_TS}".to_string());
+    let (start_ts, end_ts) = read_state(|s| (s.start_ts, s.end_ts));
+    if time < start_ts {
+        return Err(format!("Swap didn't start yet, starting at {start_ts}"));
     }
-    if time > END_SWAP_TS {
-        return Err("Swap ended at {END_SWAP_TS}".to_string());
+    if time > end_ts {
+        return Err(format!("Swap ended at {end_ts}"));
     }
     Ok(())
 }
 
 pub fn is_distribution_available() -> bool {
     let time = ic_cdk::api::time() / NANOS;
-    time > END_SWAP_TS
+    let end_ts = read_state(|s| s.end_ts);
+    time > end_ts
 }
 
 pub async fn transfer(

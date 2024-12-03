@@ -1,7 +1,8 @@
+use crate::state::State;
 use candid::Principal;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager as MM, VirtualMemory};
 use ic_stable_structures::storable::Bound;
-use ic_stable_structures::DefaultMemoryImpl;
+use ic_stable_structures::{DefaultMemoryImpl, RestrictedMemory, StableCell};
 use ic_stable_structures::{DefaultMemoryImpl as DefMem, StableBTreeMap, Storable};
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -35,9 +36,19 @@ where
 const PRINCIPAL_TO_ICP_ID: MemoryId = MemoryId::new(0);
 const PRINCIPAL_TO_WTN_ID: MemoryId = MemoryId::new(1);
 
+const METADATA_PAGES: u64 = 16;
+
 type VM = VirtualMemory<DefMem>;
+type RM = RestrictedMemory<DefMem>;
 
 thread_local! {
+    static METADATA: RefCell<StableCell<Cbor<Option<State>>, RM>> =
+        RefCell::new(StableCell::init(
+            RM::new(DefMem::default(), 0..METADATA_PAGES),
+            Cbor::default(),
+        ).expect("failed to initialize the metadata cell")
+    );
+
     static MEMORY_MANAGER: RefCell<MM<DefaultMemoryImpl>> = RefCell::new(
         MM::init(DefaultMemoryImpl::default())
     );
@@ -81,6 +92,20 @@ pub fn get_wtn_owed(of: Principal) -> u64 {
 
 pub fn get_principal_to_wtn_owed() -> Vec<(Principal, u64)> {
     PRINCIPAL_TO_WTN.with(|m| m.borrow().iter().collect())
+}
+
+pub fn get_state() -> State {
+    METADATA
+        .with(|m| m.borrow().get().0.clone())
+        .expect("state not init")
+}
+
+pub fn set_state(state: State) {
+    METADATA.with(|m| {
+        m.borrow_mut()
+            .set(Cbor(Some(state)))
+            .expect("failed to set metadata")
+    });
 }
 
 #[test]
