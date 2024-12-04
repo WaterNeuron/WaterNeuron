@@ -8,7 +8,7 @@ use sns_module::memory::{
 use sns_module::state::{read_state, replace_state, InitArg, State};
 use sns_module::{
     balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
-    transfer, Status, E8S, MIN_DEPOSIT_AMOUNT,
+    transfer, Status, E8S, MIN_DEPOSIT_AMOUNT, NANOS,
 };
 
 fn main() {}
@@ -32,7 +32,7 @@ fn get_status() -> Status {
     read_state(|s| Status {
         participants: balances.len(),
         total_icp_deposited: balances.iter().map(|(_, b)| b).sum(),
-        time_left: s.end_ts.saturating_sub(ic_cdk::api::time()),
+        time_left: s.end_ts.saturating_sub(ic_cdk::api::time() / NANOS),
         start_at: s.start_ts,
         end_at: s.end_ts,
         minimum_deposit_amount: MIN_DEPOSIT_AMOUNT,
@@ -51,7 +51,7 @@ fn get_icp_deposited(of: Principal) -> u64 {
 
 #[query]
 fn get_principal_to_wtn_allocation() -> Vec<(Principal, u64)> {
-    sns_module::memory::get_principal_to_wtn_owed()
+    get_principal_to_wtn_owed()
 }
 
 #[query]

@@ -407,7 +407,10 @@ fn should_dispatch_tokens_accordingly() {
     assert_eq!(env.distribute_tokens(), Ok(2_600_000 * E8S));
     assert_eq!(env.get_wtn_allocated(nns_principal), 5_200_000 * E8S);
 
-    assert_eq!(env.distribute_tokens(), Err("Nothing to distribute".to_string()));
+    assert_eq!(
+        env.distribute_tokens(),
+        Err("Nothing to distribute".to_string())
+    );
 
     assert!(env.env.stop_canister(env.wtn_ledger_id).is_ok());
     assert_eq!(env.get_wtn_allocated(nns_principal), 5_200_000 * E8S);
