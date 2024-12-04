@@ -86,9 +86,19 @@ pub fn get_principal_to_icp() -> Vec<(Principal, u64)> {
     PRINCIPAL_TO_ICP.with(|m| m.borrow().iter().collect())
 }
 
-pub fn set_wtn_owed(to: Principal, tokens: u64) {
+pub fn add_wtn_owed(to: Principal, tokens: u64) {
     PRINCIPAL_TO_WTN.with(|m| {
-        m.borrow_mut().insert(to, tokens);
+        let current_balance = m.borrow().get(&to).unwrap_or(0);
+        let new_balance = current_balance.checked_add(tokens).unwrap();
+        m.borrow_mut().insert(to, new_balance);
+    });
+}
+
+pub fn decrease_wtn_owed(to: Principal, tokens: u64) {
+    PRINCIPAL_TO_WTN.with(|m| {
+        let current_balance = m.borrow().get(&to).unwrap_or(0);
+        let new_balance = current_balance.checked_sub(tokens).unwrap();
+        m.borrow_mut().insert(to, new_balance);
     });
 }
 
@@ -98,6 +108,10 @@ pub fn get_wtn_owed(of: Principal) -> u64 {
 
 pub fn get_principal_to_wtn_owed() -> Vec<(Principal, u64)> {
     PRINCIPAL_TO_WTN.with(|m| m.borrow().iter().collect())
+}
+
+pub fn total_wtn_allocated() -> u64 {
+    PRINCIPAL_TO_WTN.with(|m| m.borrow().iter().map(|(_, v)| v).sum())
 }
 
 pub fn get_state() -> Option<State> {
@@ -122,10 +136,12 @@ fn should_add_tokens() {
 }
 
 #[test]
-fn should_set_wtn() {
+fn should_add_wtn() {
     let p1 = Principal::anonymous();
-    set_wtn_owed(p1, 100);
+    add_wtn_owed(p1, 100);
     assert_eq!(get_wtn_owed(p1), 100);
-    set_wtn_owed(p1, 200);
-    assert_eq!(get_wtn_owed(p1), 200);
+    add_wtn_owed(p1, 200);
+    assert_eq!(get_wtn_owed(p1), 300);
+    decrease_wtn_owed(p1, 300);
+    assert_eq!(get_wtn_owed(p1), 0);
 }

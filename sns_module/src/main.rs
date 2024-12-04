@@ -3,7 +3,7 @@ use ic_base_types::PrincipalId;
 use ic_cdk::{init, post_upgrade, query, update};
 use icp_ledger::{AccountIdentifier, Subaccount};
 use sns_module::memory::{
-    deposit_icp, get_principal_to_icp, get_principal_to_wtn_owed, set_wtn_owed,
+    add_wtn_owed, decrease_wtn_owed, deposit_icp, get_principal_to_icp, get_principal_to_wtn_owed,
 };
 use sns_module::state::{read_state, replace_state, InitArg, State};
 use sns_module::{
@@ -95,36 +95,32 @@ async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, Strin
 }
 
 #[update]
-async fn distribute_tokens() -> Result<(), String> {
+async fn distribute_tokens() -> Result<u64, String> {
     assert_eq!(
         ic_cdk::caller(),
         Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
     );
-    if !get_principal_to_wtn_owed().is_empty() {
-        return Err("Already distributed WTN".to_string());
-    }
     if !is_distribution_available() {
         return Err("Distribution not available".to_string());
     }
 
-    let (icp_ledger, wtn_ledger) = read_state(|s| (s.icp_ledger_id, s.wtn_ledger_id));
-    let icp_balance = balance_of(ic_cdk::id(), icp_ledger).await?;
+    let wtn_ledger = read_state(|s| s.wtn_ledger_id);
     let wtn_balance = balance_of(ic_cdk::id(), wtn_ledger).await?;
-    if wtn_balance < 100_000_000 {
+    let total_wtn_allocated = sns_module::memory::total_wtn_allocated();
+    let wtn_to_allocate = wtn_balance.checked_sub(total_wtn_allocated).unwrap();
+    if wtn_to_allocate < 100_000_000 {
         return Err("Nothing to distribute".to_string());
     }
 
     let balances = sns_module::memory::get_principal_to_icp();
-    let total_tracked_icp: u64 = balances.iter().map(|(_, b)| b).sum();
-    assert!(icp_balance >= total_tracked_icp);
 
-    let wtn_map = dispatch_tokens(wtn_balance, balances);
+    let wtn_map = dispatch_tokens(wtn_to_allocate, balances);
 
     for (owner, owed_wtn) in wtn_map {
-        set_wtn_owed(owner, owed_wtn);
+        add_wtn_owed(owner, owed_wtn);
     }
 
-    Ok(())
+    Ok(wtn_to_allocate)
 }
 
 #[update]
@@ -138,7 +134,7 @@ async fn claim_wtn(of: Principal) -> Result<u64, String> {
     }
 
     let ledger_canister_id = read_state(|s| s.wtn_ledger_id);
-    set_wtn_owed(of, 0);
+    decrease_wtn_owed(of, wtn_amount);
     let wtn_amount_minus_fee = wtn_amount.checked_sub(1_000_000).unwrap();
     match transfer(
         None,
@@ -151,7 +147,7 @@ async fn claim_wtn(of: Principal) -> Result<u64, String> {
     {
         Ok(block_index) => Ok(block_index),
         Err(e) => {
-            set_wtn_owed(of, wtn_amount_minus_fee);
+            add_wtn_owed(of, wtn_amount);
             Err(format!("{e}"))
         }
     }

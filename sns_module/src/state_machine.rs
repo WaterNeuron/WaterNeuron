@@ -85,8 +85,8 @@ impl SnsModuleEnv {
 
         const SEC_NANOS: u64 = 1_000_000_000;
         let start_ts = env.get_time().as_nanos_since_unix_epoch() / SEC_NANOS;
-        const ONE_WEEK_NANOS: u64 = 7 * 24 * 60 * 60;
-        let end_ts = start_ts + ONE_WEEK_NANOS;
+        const ONE_WEEK: u64 = 7 * 24 * 60 * 60;
+        let end_ts = start_ts + ONE_WEEK;
 
         let sns_module_id = env.create_canister(None);
         let wtn_ledger_id = env.create_canister(None);
@@ -273,7 +273,7 @@ impl SnsModuleEnv {
         .unwrap()
     }
 
-    fn distribute_tokens(&self) -> Result<(), String> {
+    fn distribute_tokens(&self) -> Result<u64, String> {
         Decode!(
             &assert_reply(
                 self.env
@@ -285,7 +285,7 @@ impl SnsModuleEnv {
                     )
                     .unwrap()
             ),
-            Result<(), String>
+            Result<u64, String>
         )
         .unwrap()
     }
@@ -358,4 +358,67 @@ fn e2e_basic() {
     assert_eq!(env.get_wtn_allocated(nns_principal), 0);
 
     assert!(env.notify_icp_deposit(nns_principal, 10_000 * E8S).is_err());
+}
+
+#[test]
+fn should_dispatch_tokens_accordingly() {
+    let env = SnsModuleEnv::new();
+
+    let nns_principal =
+        Principal::from_text("wwyv5-q3sgh-tae7o-v2wq7-zd32d-mv4xa-xuaup-z3r5z-vmfcg-xsm6p-xqe")
+            .unwrap();
+    let deposit_address = env.get_icp_deposit_address(nns_principal);
+
+    assert_eq!(
+        deposit_address,
+        AccountIdentifier {
+            hash: [
+                62, 5, 142, 132, 57, 211, 102, 186, 74, 201, 225, 231, 72, 26, 180, 81, 56, 85, 99,
+                133, 3, 205, 15, 180, 118, 32, 83, 110,
+            ],
+        }
+    );
+
+    env.env.advance_time(Duration::from_secs(60));
+
+    assert_eq!(env.icp_transfer(env.user, deposit_address, 10_000 * E8S), 2);
+    env.notify_icp_deposit(nns_principal, 10_000 * E8S).unwrap();
+    assert_eq!(env.get_icp_deposited(nns_principal), 10_000 * E8S - 10_000);
+
+    env.transfer(
+        env.minter,
+        env.sns_module_id.get().0,
+        2_600_000 * E8S,
+        env.wtn_ledger_id,
+    );
+    assert_eq!(env.get_wtn_allocated(nns_principal), 0);
+
+    env.env.advance_time(Duration::from_secs(7 * 24 * 60 * 60));
+    assert_eq!(env.distribute_tokens(), Ok(2_600_000 * E8S));
+    assert_eq!(env.get_wtn_allocated(nns_principal), 2_600_000 * E8S);
+
+    env.transfer(
+        env.minter,
+        env.sns_module_id.get().0,
+        2_600_000 * E8S,
+        env.wtn_ledger_id,
+    );
+    assert_eq!(env.get_wtn_allocated(nns_principal), 2_600_000 * E8S);
+    assert_eq!(env.distribute_tokens(), Ok(2_600_000 * E8S));
+    assert_eq!(env.get_wtn_allocated(nns_principal), 5_200_000 * E8S);
+
+    assert_eq!(env.distribute_tokens(), Err("Nothing to distribute".to_string()));
+
+    assert!(env.env.stop_canister(env.wtn_ledger_id).is_ok());
+    assert_eq!(env.get_wtn_allocated(nns_principal), 5_200_000 * E8S);
+    assert!(env.claim_wtn(nns_principal).is_err());
+    assert_eq!(env.get_wtn_allocated(nns_principal), 5_200_000 * E8S);
+    assert!(env.env.start_canister(env.wtn_ledger_id).is_ok());
+
+    assert!(env.claim_wtn(nns_principal).is_ok());
+    assert!(env.claim_wtn(nns_principal).is_err());
+    assert_eq!(
+        env.balance_of(env.wtn_ledger_id, nns_principal),
+        5_200_000 * E8S - 1_000_000
+    );
 }

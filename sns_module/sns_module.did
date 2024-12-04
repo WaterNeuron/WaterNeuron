@@ -5,7 +5,7 @@ type InitArg = record {
   end_ts : nat64;
 };
 type Result = variant { Ok : nat64; Err : text };
-type Result_1 = variant { Ok; Err : text };
+type Result_1 = variant { Ok : nat64; Err : text };
 type Status = record {
   participants : nat64;
   time_left : nat64;
