@@ -30,10 +30,12 @@ pub fn is_swap_available() -> Result<(), String> {
     let time = ic_cdk::api::time() / NANOS;
     let (start_ts, end_ts) = read_state(|s| (s.start_ts, s.end_ts));
     if time < start_ts {
-        return Err(format!("Swap didn't start yet, starting at {start_ts}"));
+        return Err(format!(
+            "Swap didn't start yet, starting at {start_ts}, current time {time}"
+        ));
     }
     if time > end_ts {
-        return Err(format!("Swap ended at {end_ts}"));
+        return Err(format!("Swap ended at {end_ts}, current time {time}"));
     }
     Ok(())
 }
