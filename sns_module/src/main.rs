@@ -29,13 +29,20 @@ fn post_upgrade() {
 #[query]
 fn get_status() -> Status {
     let balances = get_principal_to_icp();
-    read_state(|s| Status {
-        participants: balances.len(),
-        total_icp_deposited: balances.iter().map(|(_, b)| b).sum(),
-        time_left: s.end_ts.saturating_sub(ic_cdk::api::time() / NANOS),
-        start_at: s.start_ts,
-        end_at: s.end_ts,
-        minimum_deposit_amount: MIN_DEPOSIT_AMOUNT,
+    let now = ic_cdk::api::time() / NANOS;
+    read_state(|s| {
+        let time_left = s
+            .start_ts
+            .checked_sub(now)
+            .and_then(|_| Some(s.end_ts.saturating_sub(now)));
+        Status {
+            participants: balances.len(),
+            total_icp_deposited: balances.iter().map(|(_, b)| b).sum(),
+            time_left,
+            start_at: s.start_ts,
+            end_at: s.end_ts,
+            minimum_deposit_amount: MIN_DEPOSIT_AMOUNT,
+        }
     })
 }
 

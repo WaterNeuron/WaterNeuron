@@ -20,7 +20,7 @@ pub const MIN_DEPOSIT_AMOUNT: u64 = 10 * E8S;
 pub struct Status {
     pub participants: usize,
     pub total_icp_deposited: u64,
-    pub time_left: u64,
+    pub time_left: Option<u64>,
     pub start_at: u64,
     pub end_at: u64,
     pub minimum_deposit_amount: u64,
