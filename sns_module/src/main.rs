@@ -181,6 +181,7 @@ async fn claim_wtn(of: Principal) -> Result<u64, String> {
         }
         Err(e) => {
             add_wtn_owed(of, wtn_amount);
+            remove_in_flight_wtn(wtn_amount);
             Err(format!("{e}"))
         }
     }
