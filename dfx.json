@@ -11,6 +11,11 @@
       "type": "custom",
       "wasm": "bazel-bin/boomerang/canister.wasm"
     },
+    "sns_module": {
+      "candid": "sns_module/sns_module.did",
+      "type": "custom",
+      "wasm": "artifacts/sns_module.wasm.gz"
+    },
     "wtn_governance": {
       "candid": "candid/sns_governance.did",
       "type": "custom",

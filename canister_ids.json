@@ -22,5 +22,8 @@
   },
   "wtn_ledger": {
     "ic": "jcmow-hyaaa-aaaaq-aadlq-cai"
+  },
+  "sns_module": {
+    "ic": "zftzm-qqaaa-aaaam-adxfa-cai"
   }
 }
