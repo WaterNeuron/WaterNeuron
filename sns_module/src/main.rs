@@ -2,10 +2,12 @@ use candid::{Nat, Principal};
 use ic_base_types::PrincipalId;
 use ic_cdk::{init, post_upgrade, query, update};
 use icp_ledger::{AccountIdentifier, Subaccount};
+use scopeguard::guard;
 use sns_module::memory::{
-    add_wtn_owed, decrease_wtn_owed, deposit_icp, get_principal_to_icp, get_principal_to_wtn_owed,
+    add_in_flight_wtn, add_wtn_owed, decrease_wtn_owed, deposit_icp, get_in_flight_wtn,
+    get_principal_to_icp, get_principal_to_wtn_owed, remove_in_flight_wtn,
 };
-use sns_module::state::{read_state, replace_state, InitArg, State};
+use sns_module::state::{mutate_state, read_state, replace_state, InitArg, State};
 use sns_module::{
     balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
     transfer, Status, E8S, MIN_DEPOSIT_AMOUNT, NANOS,
@@ -27,14 +29,18 @@ fn post_upgrade() {
 }
 
 #[query]
+fn get_state() -> State {
+    read_state(|s| s.clone())
+}
+
+#[query]
 fn get_status() -> Status {
     let balances = get_principal_to_icp();
     let now = ic_cdk::api::time() / NANOS;
     read_state(|s| {
-        let time_left = s
-            .start_ts
-            .checked_sub(now)
-            .and_then(|_| Some(s.end_ts.saturating_sub(now)));
+        let time_left = now
+            .checked_sub(s.start_ts)
+            .map(|_| s.end_ts.saturating_sub(now));
         Status {
             participants: balances.len(),
             total_icp_deposited: balances.iter().map(|(_, b)| b).sum(),
@@ -110,12 +116,25 @@ async fn distribute_tokens() -> Result<u64, String> {
     if !is_distribution_available() {
         return Err("Distribution not available".to_string());
     }
+    if read_state(|s| s.is_distributing) {
+        return Err("Already distributing".to_string());
+    }
+
+    mutate_state(|s| s.is_distributing = true);
+    let _enqueue_followup_guard = guard((), |_| {
+        mutate_state(|s| s.is_distributing = false);
+    });
 
     let wtn_ledger = read_state(|s| s.wtn_ledger_id);
     let wtn_balance = balance_of(ic_cdk::id(), wtn_ledger).await?;
+
     let total_wtn_allocated = sns_module::memory::total_wtn_allocated();
-    let wtn_to_allocate = wtn_balance.checked_sub(total_wtn_allocated).unwrap();
-    if wtn_to_allocate < 100_000_000 {
+    let wtn_to_allocate = wtn_balance
+        .checked_sub(total_wtn_allocated)
+        .unwrap()
+        .checked_sub(get_in_flight_wtn())
+        .unwrap();
+    if wtn_to_allocate < E8S {
         return Err("Nothing to distribute".to_string());
     }
 
@@ -133,15 +152,19 @@ async fn distribute_tokens() -> Result<u64, String> {
 #[update]
 async fn claim_wtn(of: Principal) -> Result<u64, String> {
     let wtn_amount = sns_module::memory::get_wtn_owed(of);
-    if wtn_amount < 100_000_000 {
+    if wtn_amount < E8S {
         return Err("Minimum claim amount of 1 WTN".to_string());
     }
-    if get_principal_to_wtn_owed().is_empty() || !is_distribution_available() {
-        return Err("WTN not allocated yet or swap not ended".to_string());
+    if get_principal_to_wtn_owed().is_empty() {
+        return Err("WTN not allocated yet".to_string());
+    }
+    if !is_distribution_available() {
+        return Err("swap not over".to_string());
     }
 
     let ledger_canister_id = read_state(|s| s.wtn_ledger_id);
     decrease_wtn_owed(of, wtn_amount);
+    add_in_flight_wtn(wtn_amount);
     let wtn_amount_minus_fee = wtn_amount.checked_sub(1_000_000).unwrap();
     match transfer(
         None,
@@ -152,7 +175,10 @@ async fn claim_wtn(of: Principal) -> Result<u64, String> {
     )
     .await
     {
-        Ok(block_index) => Ok(block_index),
+        Ok(block_index) => {
+            remove_in_flight_wtn(wtn_amount);
+            Ok(block_index)
+        }
         Err(e) => {
             add_wtn_owed(of, wtn_amount);
             Err(format!("{e}"))

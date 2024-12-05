@@ -5,7 +5,13 @@ type InitArg = record {
   end_ts : nat64;
 };
 type Result = variant { Ok : nat64; Err : text };
-type Result_1 = variant { Ok : nat64; Err : text };
+type State = record {
+  icp_ledger_id : principal;
+  start_ts : nat64;
+  is_distributing : bool;
+  wtn_ledger_id : principal;
+  end_ts : nat64;
+};
 type Status = record {
   participants : nat64;
   time_left : opt nat64;
@@ -16,7 +22,7 @@ type Status = record {
 };
 service : (InitArg) -> {
   claim_wtn : (principal) -> (Result);
-  distribute_tokens : () -> (Result_1);
+  distribute_tokens : () -> (Result);
   get_icp_deposit_address : (principal) -> (text);
   get_icp_deposited : (principal) -> (nat64) query;
   get_principal_to_icp_deposited : () -> (
@@ -25,6 +31,7 @@ service : (InitArg) -> {
   get_principal_to_wtn_allocation : () -> (
       vec record { principal; nat64 },
     ) query;
+  get_state : () -> (State) query;
   get_status : () -> (Status) query;
   get_wtn_allocated : (principal) -> (nat64) query;
   notify_icp_deposit : (principal, nat64) -> (Result);

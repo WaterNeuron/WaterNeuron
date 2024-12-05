@@ -36,6 +36,7 @@ where
 // do not change across upgrades!
 const PRINCIPAL_TO_ICP_ID: MemoryId = MemoryId::new(0);
 const PRINCIPAL_TO_WTN_ID: MemoryId = MemoryId::new(1);
+const IN_FLIGHT_WTN_ID: MemoryId = MemoryId::new(2);
 
 const METADATA_PAGES: u64 = 16;
 
@@ -67,6 +68,11 @@ thread_local! {
     static PRINCIPAL_TO_WTN: RefCell<StableBTreeMap<Principal, u64, VM>> =
         MEMORY_MANAGER.with(|mm| {
         RefCell::new(StableBTreeMap::init(mm.borrow().get(PRINCIPAL_TO_WTN_ID)))
+    });
+
+    static IN_FLIGHT_WTN: RefCell<StableCell<u64, VM>> =
+        MEMORY_MANAGER.with(|mm| {
+        RefCell::new(StableCell::init(mm.borrow().get(IN_FLIGHT_WTN_ID), 0_u64).expect("failed to initialize the cell"))
     });
 }
 
@@ -126,6 +132,26 @@ pub fn set_state(state: State) {
     });
 }
 
+pub fn add_in_flight_wtn(amount: u64) {
+    IN_FLIGHT_WTN.with(|b| {
+        let balance = b.borrow().get().clone();
+        let new_balance = balance.checked_add(amount).unwrap();
+        b.borrow_mut().set(new_balance).unwrap();
+    });
+}
+
+pub fn remove_in_flight_wtn(amount: u64) {
+    IN_FLIGHT_WTN.with(|b| {
+        let balance = b.borrow().get().clone();
+        let new_balance = balance.checked_sub(amount).unwrap();
+        b.borrow_mut().set(new_balance).unwrap();
+    });
+}
+
+pub fn get_in_flight_wtn() -> u64 {
+    IN_FLIGHT_WTN.with(|m| m.borrow().get().clone())
+}
+
 #[test]
 fn should_add_tokens() {
     let p1 = Principal::anonymous();
@@ -144,4 +170,17 @@ fn should_add_wtn() {
     assert_eq!(get_wtn_owed(p1), 300);
     decrease_wtn_owed(p1, 300);
     assert_eq!(get_wtn_owed(p1), 0);
+}
+
+#[test]
+fn should_apply_algebra() {
+    assert_eq!(get_in_flight_wtn(), 0);
+    add_in_flight_wtn(100);
+    assert_eq!(get_in_flight_wtn(), 100);
+    add_in_flight_wtn(200);
+    assert_eq!(get_in_flight_wtn(), 300);
+    remove_in_flight_wtn(100);
+    assert_eq!(get_in_flight_wtn(), 200);
+    remove_in_flight_wtn(200);
+    assert_eq!(get_in_flight_wtn(), 00);
 }
