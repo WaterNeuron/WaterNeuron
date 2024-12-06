@@ -123,8 +123,6 @@ rust_test(
     ]
 ]
 
-
-
 rust_test(
     name = "test-main",
     srcs = glob([
