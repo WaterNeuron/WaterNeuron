@@ -1,11 +1,12 @@
 use candid::{Nat, Principal};
 use ic_base_types::PrincipalId;
+use ic_canisters_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_cdk::{init, post_upgrade, query, update};
 use icp_ledger::{AccountIdentifier, Subaccount};
 use scopeguard::guard;
 use sns_module::memory::{
     add_in_flight_wtn, add_wtn_owed, decrease_wtn_owed, deposit_icp, get_in_flight_wtn,
-    get_principal_to_icp, get_principal_to_wtn_owed, remove_in_flight_wtn,
+    get_principal_to_icp, get_principal_to_wtn_owed, remove_in_flight_wtn, total_wtn_allocated,
 };
 use sns_module::state::{mutate_state, read_state, replace_state, InitArg, State};
 use sns_module::{
@@ -183,6 +184,66 @@ async fn claim_wtn(of: Principal) -> Result<u64, String> {
             add_wtn_owed(of, wtn_amount);
             remove_in_flight_wtn(wtn_amount);
             Err(format!("{e}"))
+        }
+    }
+}
+
+#[query(hidden = true)]
+fn http_request(_req: HttpRequest) -> HttpResponse {
+    use ic_metrics_encoder::MetricsEncoder;
+    if ic_cdk::api::data_certificate().is_none() {
+        ic_cdk::trap("update call rejected");
+    };
+    let mut writer = MetricsEncoder::new(vec![], ic_cdk::api::time() as i64 / 1_000_000);
+
+    fn encode_metrics(w: &mut MetricsEncoder<Vec<u8>>) -> std::io::Result<()> {
+        const WASM_PAGE_SIZE_IN_BYTES: f64 = 65536.0;
+        let balances = get_principal_to_icp();
+
+        w.encode_gauge(
+            "cycle_balance",
+            ic_cdk::api::canister_balance128() as f64,
+            "Cycle balance.",
+        )?;
+        w.encode_gauge(
+            "stable_memory_bytes",
+            ic_cdk::api::stable::stable_size() as f64 * WASM_PAGE_SIZE_IN_BYTES,
+            "Size of the stable memory allocated by this canister.",
+        )?;
+        w.encode_gauge(
+            "total_icp_deposited",
+            balances.iter().map(|(_, b)| b).sum::<u64>() as f64,
+            "Total ICP deposited",
+        )?;
+        w.encode_gauge(
+            "participant_count",
+            balances.len() as f64,
+            "Count of participant.",
+        )?;
+        w.encode_gauge(
+            "total_wtn_allocated",
+            total_wtn_allocated() as f64,
+            "Total WTN allocated.",
+        )?;
+        w.encode_gauge(
+            "in_flight_wtn",
+            get_in_flight_wtn() as f64,
+            "WTN in flight.",
+        )?;
+
+        Ok(())
+    }
+
+    match encode_metrics(&mut writer) {
+        Ok(()) => {
+            return HttpResponseBuilder::ok()
+                .header("Content-Type", "text/plain; version=0.0.4")
+                .with_body_and_content_length(writer.into_inner())
+                .build()
+        }
+        Err(err) => {
+            return HttpResponseBuilder::server_error(format!("Failed to encode metrics: {}", err))
+                .build();
         }
     }
 }
