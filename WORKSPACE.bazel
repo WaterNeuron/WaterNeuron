@@ -2,17 +2,26 @@ workspace(
     name = "waterneuron",
 )
 
-IC_VERSION = "7eace38b7580dc35af53b9180ea40480af4977dc"
+IC_VERSION = "f9636c623c1331f1e75934f6fcad7da187a71603"
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
 
+load("//third_party/lmdb:repository.bzl", "lmdb_repository")
+
 rules_rust_dependencies()
+
+lmdb_repository()
 
 rust_register_toolchains(
     edition = "2021",
     versions = [
-        "1.76.0",
+        "1.82.0",
+        # Use the nightly version from the day before the branch.
+        # -
+        # NB! Due to a regression in the compiler https://github.com/rust-lang/rust/issues/128895, that's
+        # only back-ported to stable, we use a more recent version.
+        "nightly/2024-09-23",
     ],
 )
 
@@ -35,6 +44,20 @@ crates_repository(
             data = [
                 "@ic-icrc1-ledger-canister//:wasm",
             ],
+        )],
+        "lmdb-rkv-sys": [crate.annotation(
+            # patch our fork of the lmdb-rkv-sys to allow specifying the path
+            # to the built static archive
+            patch_args = ["-p1"],
+            patches = ["@@//bazel:lmdb_rkv_sys.patch"],
+            build_script_data = [
+                "@lmdb//:liblmdb",
+                "@lmdb//:lmdb.h",
+            ],
+            build_script_env = {
+                "LMDB_OVERRIDE": "$(location @lmdb//:liblmdb)",
+                "LMDB_H_PATH": "$(location @lmdb//:lmdb.h)",
+            },
         )],
     },
     cargo_lockfile = "//:Cargo.lock",
@@ -125,6 +148,15 @@ crates_repository(
             git = "https://github.com/dfinity/ic/",
             rev = IC_VERSION,
         ),
+        "lmdb-rkv": crate.spec(
+            git = "https://github.com/dfinity-lab/lmdb-rs",
+            rev = "4d952c8f1dca79de855af892b444d7112567b58d",
+        ),
+        "lmdb-rkv-sys": crate.spec(
+            git = "https://github.com/dfinity-lab/lmdb-rs",
+            rev = "4d952c8f1dca79de855af892b444d7112567b58d",
+            default_features = False,
+        ),
         "lazy_static": crate.spec(version = "^1.5.0"),
         "log": crate.spec(version = "^0.4.14"),
         "minicbor": crate.spec(
@@ -136,18 +168,18 @@ crates_repository(
         ),
         "minicbor-derive": crate.spec(version = "^0.15.0"),
         "mockall": crate.spec(version = "^0.12.1"),
-        "num-bigint": crate.spec(version = "^0.4.4"),
+        "num-bigint": crate.spec(version = "^0.4.6"),
         "num-traits": crate.spec(version = "^0.2.18"),
         "proptest": crate.spec(version = "^1.5.0"),
         "prost": crate.spec(version = "^0.12.6"),
         "regex": crate.spec(version = "^1.10.5"),
-        "rust_decimal": crate.spec(version = "^1.35.0"),
+        "rust_decimal": crate.spec(version = "^1.36.0"),
         "rust_decimal_macros": crate.spec(version = "^1.34.2"),
         "scopeguard": crate.spec(version = "^1.2.0"),
-        "serde": crate.spec(version = "^1.0.203"),
+        "serde": crate.spec(version = "^1.0.215"),
         "serde_bytes": crate.spec(version = "^0.11.15"),
         "serde_cbor": crate.spec(version = "^0.11.2"),
-        "serde_json": crate.spec(version = "^1.0.120"),
+        "serde_json": crate.spec(version = "^1.0.133"),
         "sha2": crate.spec(version = "^0.10.8"),
         "strum": crate.spec(version = "^0.26.3"),
         "strum_macros": crate.spec(version = "^0.26.4"),
