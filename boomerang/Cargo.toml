@@ -1,0 +1,46 @@
+[package]
+name = "boomerang"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "boomerang"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "boomerang"
+path = "src/main.rs"
+
+[features]
+default = []
+self_check = []
+
+[dependencies]
+candid.workspace = true
+ic-canister-log.workspace = true
+ic-cdk.workspace = true
+icrc-ledger-types.workspace = true
+icrc-ledger-client-cdk.workspace = true
+serde.workspace = true
+serde_bytes.workspace = true
+serde_cbor.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+candid_parser.workspace = true
+ic-icrc1-ledger.workspace = true
+ic-management-canister-types.workspace = true
+ic-nns-constants.workspace = true
+ic-nns-governance.workspace = true
+ic-sns-governance.workspace = true
+ic-sns-init.workspace = true
+ic-sns-root.workspace = true
+ic-sns-swap.workspace = true
+ic-state-machine-tests.workspace = true
+icp-ledger.workspace = true
+lazy_static.workspace = true
+num-traits.workspace = true
+prost.workspace = true
+water_neuron = { path = "../water_neuron" }

@@ -1,0 +1,6 @@
+[package]
+name = "ic_wasm_utils"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]

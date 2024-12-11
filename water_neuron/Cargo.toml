@@ -1,0 +1,67 @@
+[package]
+name = "water_neuron"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "water_neuron"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "water_neuron"
+path = "src/main.rs"
+
+
+[features]
+default = []
+self_check = []
+
+[dependencies]
+async-trait.workspace = true
+candid.workspace = true
+ciborium.workspace = true
+hex.workspace = true
+ic0.workspace = true
+ic-canister-log.workspace = true
+ic-cdk.workspace = true
+ic-cdk-macros.workspace = true
+ic-canisters-http-types.workspace = true
+ic-metrics-encoder.workspace = true
+ic-sns-governance.workspace = true
+ic-stable-structures.workspace = true
+ic-utils-ensure.workspace = true
+icp-ledger.workspace = true
+icrc-ledger-types.workspace = true
+icrc-ledger-client-cdk.workspace = true
+minicbor.workspace = true
+minicbor-derive.workspace = true
+rust_decimal.workspace = true
+rust_decimal_macros.workspace = true
+scopeguard.workspace = true
+serde.workspace = true
+serde_bytes.workspace = true
+serde_cbor.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+strum.workspace = true
+strum_macros.workspace = true
+
+[dev-dependencies]
+assert_matches.workspace = true
+candid_parser.workspace = true
+cycles-minting-canister.workspace = true
+ic-icrc1-ledger.workspace = true
+ic-nns-constants.workspace = true
+ic-nns-governance.workspace = true
+ic-sns-init.workspace = true
+ic-sns-root.workspace = true
+ic-sns-swap.workspace = true
+ic-state-machine-tests.workspace = true
+lazy_static.workspace = true
+mockall.workspace = true
+num-bigint.workspace = true
+num-traits.workspace = true
+proptest.workspace = true
+prost.workspace = true
+tokio.workspace = true
