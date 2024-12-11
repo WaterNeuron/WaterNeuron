@@ -1,0 +1,4 @@
+[env]
+LMDB_NO_BUILD = "1"
+LMDB_H_PATH = "/usr/include/lmdb.h"
+LMDB_OVERRIDE = "/usr/lib/x86_64-linux-gnu/liblmdb.a"
