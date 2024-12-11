@@ -19,6 +19,7 @@ self_check = []
 [dependencies]
 candid.workspace = true
 ic-canister-log.workspace = true
+ic-base-types.workspace = true
 ic-cdk.workspace = true
 icrc-ledger-types.workspace = true
 icrc-ledger-client-cdk.workspace = true

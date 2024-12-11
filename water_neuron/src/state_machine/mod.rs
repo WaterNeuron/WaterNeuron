@@ -41,9 +41,10 @@ use ic_sns_init::SnsCanisterInitPayloads;
 use ic_sns_root::pb::v1::SnsRootCanister;
 use ic_sns_swap::pb::v1::{Init as SwapInit, NeuronBasketConstructionParameters};
 use ic_state_machine_tests::{
-    CanisterId, CanisterInstallMode, ErrorCode::CanisterCalledTrap, PrincipalId, StateMachine,
+    CanisterInstallMode, ErrorCode::CanisterCalledTrap, StateMachine,
     UserError, WasmResult,
 };
+use ic_base_types::{CanisterId, PrincipalId };
 use icp_ledger::{AccountIdentifier, LedgerCanisterInitPayload, Tokens};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};

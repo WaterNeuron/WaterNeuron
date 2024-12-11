@@ -4,12 +4,14 @@ use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
 use ic_state_machine_tests::{
-    CanisterId, CanisterInstallMode, PrincipalId, StateMachine, WasmResult,
+   StateMachine, WasmResult,
 };
 use icp_ledger::{
     AccountIdentifier, LedgerCanisterInitPayload, TimeStamp, Tokens,
     TransferArgs as ICPTransferArgs, TransferError as ICPTransferError,
 };
+ic_cdk::api::management_canister::main::CanisterInstallMode;
+use ic_base_types::{PrincipalId, CanisterId};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use std::collections::HashMap;

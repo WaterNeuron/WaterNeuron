@@ -2,7 +2,7 @@ use crate::state_machine::{
     BoomerangSetup, DEFAULT_PRINCIPAL_ID, ONE_MONTH_SECONDS, USER_PRINCIPAL_ID,
 };
 use crate::{E8S, TRANSFER_FEE};
-use ic_state_machine_tests::PrincipalId;
+use ic_base_types::PrincipalId;
 use icp_ledger::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::account::Account;
 

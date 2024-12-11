@@ -598,6 +598,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_parser",
+ "ic-base-types",
  "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ic-cdk 0.16.0",
  "ic-icrc1-ledger",
@@ -11025,6 +11026,7 @@ dependencies = [
  "ciborium",
  "cycles-minting-canister",
  "hex",
+ "ic-base-types",
  "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ic-canisters-http-types",
  "ic-cdk 0.16.0",
