@@ -2,3 +2,14 @@
 LMDB_NO_BUILD = "1"
 LMDB_H_PATH = "/usr/include/lmdb.h"
 LMDB_OVERRIDE = "/usr/lib/x86_64-linux-gnu/liblmdb.a"
+
+[alias]
+# Build canister with canister-release profile
+canister = "build --target wasm32-unknown-unknown --features canister --profile canister-release"
+
+# Optional aliases for other profiles
+release-stripped = "build --profile release-stripped"
+release-lto = "build --profile release-lto"
+
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-args=-z stack-size=3145728"]

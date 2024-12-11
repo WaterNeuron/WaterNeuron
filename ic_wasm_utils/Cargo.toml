@@ -4,3 +4,10 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+thiserror.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+toml.workspace = true
+sha2.workspace = true
+dirs.workspace = true
+once_cell.workspace = true
