@@ -5,7 +5,8 @@ use ic_nns_constants::GOVERNANCE_CANISTER_ID;
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::pb::v1::neuron::DissolveState;
 use ic_sns_governance::pb::v1::{Neuron, NeuronId, NeuronPermission, NeuronPermissionType};
-use ic_state_machine_tests::{CanisterInstallMode, StateMachine};
+use ic_state_machine_tests::StateMachine;
+use ic_management_canister_types::CanisterInstallMode;
 use ic_base_types::{PrincipalId, CanisterId};
 use icp_ledger::{
     AccountIdentifier, LedgerCanisterInitPayload, Memo, Subaccount, Tokens, TransferArgs,

@@ -10,7 +10,7 @@ use icp_ledger::{
     AccountIdentifier, LedgerCanisterInitPayload, TimeStamp, Tokens,
     TransferArgs as ICPTransferArgs, TransferError as ICPTransferError,
 };
-ic_cdk::api::management_canister::main::CanisterInstallMode;
+use ic_management_canister_types::CanisterInstallMode;
 use ic_base_types::{PrincipalId, CanisterId};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};

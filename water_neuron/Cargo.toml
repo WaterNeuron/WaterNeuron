@@ -18,6 +18,7 @@ default = []
 self_check = []
 
 [dependencies]
+ic-management-canister-types.workspace = true
 ic-base-types.workspace = true
 async-trait.workspace = true
 candid.workspace = true
