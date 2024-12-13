@@ -4,8 +4,15 @@ use std::collections::BTreeMap;
 
 const URL_TEMPLATE: &str = "https://download.dfinity.systems/ic/{}/canisters/{}";
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Ord, PartialOrd)]
+#[serde(rename_all = "snake_case")]
+enum CanisterName {
+    Ledger,
+    NnsGovernance,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-struct Canister {
+struct CanisterInfo {
     sha256: String,
     version: String,
     wasm_file: String,
@@ -13,7 +20,7 @@ struct Canister {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 struct Config {
-    canisters: BTreeMap<String, Canister>,
+    canisters: BTreeMap<CanisterName, CanisterInfo>,
 }
 
 // this is a comment
