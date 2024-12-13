@@ -616,6 +616,7 @@ dependencies = [
  "ic-sns-root",
  "ic-sns-swap",
  "ic-state-machine-tests",
+ "ic_wasm_utils",
  "icp-ledger",
  "icrc-ledger-client-cdk",
  "icrc-ledger-types",

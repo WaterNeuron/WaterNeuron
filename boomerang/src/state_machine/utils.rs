@@ -16,43 +16,41 @@ use icp_ledger::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+use ic_wasm_utils::ExternalWasm;
 
 const NEURON_LEDGER_FEE: u64 = 1_000_000;
 
-pub fn get_wasm(env: &str) -> Vec<u8> {
-    std::fs::read(std::env::var(env).unwrap()).unwrap()
-}
-
 pub fn boomerang_wasm() -> Vec<u8> {
-    get_wasm("BOOMERANG_CANISTER_WASM_PATH")
+    ExternalWasm::get("boomerange")
 }
 
 pub fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm("LEDGER_CANISTER_WASM_PATH")
+    ExternalWasm::get("icp-ledger")
 }
 
 pub fn governance_wasm() -> Vec<u8> {
-    get_wasm("GOVERNANCE_CANISTER_WASM_PATH")
+    ExternalWasm::get("governance")
 }
 
 pub fn water_neuron_wasm() -> Vec<u8> {
-    get_wasm("WATER_NEURON_CANISTER_WASM_PATH")
+    ExternalWasm::get("waterneuron")
 }
 
 pub fn ledger_wasm() -> Vec<u8> {
-    get_wasm("IC_ICRC1_LEDGER_WASM_PATH")
+    ExternalWasm::get("ledger")
 }
 
 pub fn sns_governance() -> Vec<u8> {
-    get_wasm("SNS_GOVERNANCE_CANISTER_WASM_PATH")
+    ExternalWasm::get("sns-governance")
 }
 
 pub fn sns_root() -> Vec<u8> {
-    get_wasm("SNS_ROOT_CANISTER_WASM_PATH")
+    ExternalWasm::get("sns-root")
+
 }
 
 pub fn sns_swap() -> Vec<u8> {
-    get_wasm("SNS_SWAP_CANISTER_WASM_PATH")
+    ExternalWasm::get("sns-swap")
 }
 
 /// Builder to help create the initial payloads for the SNS canisters in tests.

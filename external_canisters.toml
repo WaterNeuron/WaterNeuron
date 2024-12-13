@@ -1,19 +1,8 @@
-url_template = "https://download.dfinity.systems/ic/{version}/canisters/{wasm_file}"
 
 [canisters]
 
 [canisters.ledger]
 wasm_file = "ledger-canister.wasm"
-version = "LATEST_VERSION"
-sha256 = "YOUR_HASH_HERE"
-
-[canisters.icrc1_ledger]
-wasm_file = "ic-icrc1-ledger.wasm"
-version = "LATEST_VERSION"
-sha256 = "YOUR_HASH_HERE"
-
-[canisters.icrc2_ledger]
-wasm_file = "ic-icrc2-ledger.wasm"
 version = "LATEST_VERSION"
 sha256 = "YOUR_HASH_HERE"
 
