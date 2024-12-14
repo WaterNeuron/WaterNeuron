@@ -16,23 +16,20 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use std::collections::HashMap;
 use std::time::Duration;
+use ic_wasm_utils::{get_wasm, CanisterName, Error};
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 
-fn get_wasm(env: &str) -> Vec<u8> {
-    std::fs::read(std::env::var(env).expect(env)).expect(env)
-}
-
 fn sns_module_wasm() -> Vec<u8> {
-    get_wasm("SNS_MODULE_CANISTER_WASM_PATH")
+    get_wasm(CanisterName::Sns).unwrap()
 }
 
 fn ledger_wasm() -> Vec<u8> {
-    get_wasm("IC_ICRC1_LEDGER_WASM_PATH")
+    get_wasm(CanisterName::Icrc1Ledger).unwrap()
 }
 
 fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm("LEDGER_CANISTER_WASM_PATH")
+    get_wasm(CanisterName::Ledger).unwrap()
 }
 
 fn assert_reply(result: WasmResult) -> Vec<u8> {

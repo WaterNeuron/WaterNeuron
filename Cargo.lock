@@ -9774,6 +9774,7 @@ dependencies = [
  "ic-stable-structures",
  "ic-state-machine-tests",
  "ic0 0.23.0",
+ "ic_wasm_utils",
  "icp-ledger",
  "icrc-ledger-client-cdk",
  "icrc-ledger-types",

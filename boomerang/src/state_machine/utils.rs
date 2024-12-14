@@ -16,7 +16,8 @@ use icp_ledger::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
-use ic_wasm_utils::ExternalWasm;
+use ic_wasm_utils::{get_wasm, CanisterName, Error};
+let wasm = get_wasm(CanisterName::Sns)?;
 
 const NEURON_LEDGER_FEE: u64 = 1_000_000;
 

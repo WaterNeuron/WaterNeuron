@@ -47,6 +47,7 @@ ic-cdk-macros.workspace = true
 minicbor-derive.workspace = true
 rust_decimal_macros.workspace = true
 strum_macros.workspace = true
+ic_wasm_utils = { version = "0.1.0", path = "../ic_wasm_utils" }
 
 [dev-dependencies]
 assert_matches.workspace = true
