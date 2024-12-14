@@ -21,3 +21,4 @@ toml.workspace = true
 sha2.workspace = true
 dirs.workspace = true
 once_cell.workspace = true
+cargo_metadata = "0.19.1"

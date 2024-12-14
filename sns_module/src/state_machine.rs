@@ -20,6 +20,7 @@ use ic_wasm_utils::{get_wasm, CanisterName, Error};
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 
+// this is the local canister that we need to compile and then expose
 fn sns_module_wasm() -> Vec<u8> {
     get_wasm(CanisterName::Sns).unwrap()
 }
