@@ -2,6 +2,16 @@
 name = "ic_wasm_utils"
 version.workspace = true
 edition.workspace = true
+description = "Utility for fetching and managing IC WASM canisters"
+
+[[bin]]
+name = "ic-wasm-utils"
+path = "src/main.rs"
+
+[lib]
+name = "ic_wasm_utils"
+path = "src/lib.rs"
+
 
 [dependencies]
 thiserror.workspace = true
