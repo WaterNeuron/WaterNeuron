@@ -2,7 +2,7 @@
 name = "ic_wasm_utils"
 version.workspace = true
 edition.workspace = true
-description = "Utility for fetching and managing IC WASM canisters"
+description = "Utility for fetching and compiling canisters"
 
 [[bin]]
 name = "ic-wasm-utils"
@@ -12,7 +12,6 @@ path = "src/main.rs"
 name = "ic_wasm_utils"
 path = "src/lib.rs"
 
-
 [dependencies]
 thiserror.workspace = true
 reqwest.workspace = true
@@ -21,4 +20,4 @@ toml.workspace = true
 sha2.workspace = true
 dirs.workspace = true
 once_cell.workspace = true
-cargo_metadata = "0.19.1"
+cargo_metadata.workspace = true
