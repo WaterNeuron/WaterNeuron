@@ -4,7 +4,7 @@ LMDB_H_PATH = "/usr/include/lmdb.h"
 LMDB_OVERRIDE = "/usr/lib/x86_64-linux-gnu/liblmdb.a"
 
 [alias]
-canister = "build --target wasm32-unknown-unknown --profile canister-release"
+canister = "build --target wasm32-unknown-unknown" 
 
 [target.wasm32-unknown-unknown]
 rustflags = [
@@ -13,5 +13,8 @@ rustflags = [
     "-C", "opt-level=3",
     "-C", "debug-assertions=no",
     "-C", "debuginfo=0",
-    "-C", "lto"
 ]
+
+[toolchain]
+channel = "stable"
+targets = ["wasm32-unknown-unknown"]

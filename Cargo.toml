@@ -84,15 +84,3 @@ ic-management-canister-types = { git = "https://github.com/dfinity/ic", rev = "c
 #    ".cargo/lmdb-patch.diff",
 #] }
 #
-
-[profile.release]
-# Add debug information to the release build (does NOT reduce the level of optimization!)
-# Makes flamegraphs more readable.
-# https://doc.rust-lang.org/cargo/reference/manifest.html#the-profile-sections
-debug = true
-
-[profile.canister-release]
-inherits = "release"
-debug = false
-lto = true
-opt-level = 'z'
