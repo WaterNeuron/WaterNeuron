@@ -19,12 +19,12 @@ use crate::{
 };
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
-use cycles_minting_canister::CyclesCanisterInitPayload;
+use cycles_minting_canister::{CyclesCanisterInitPayload, CYCLES_LEDGER_CANISTER_ID};
 use ic_icrc1_ledger::{
     ArchiveOptions, InitArgs as LedgerInitArgs, InitArgsBuilder as LedgerInitArgsBuilder,
     LedgerArgument,
 };
-use ic_nns_constants::{GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID, CYCLES_LEDGER_CANISTER_ID};
+use ic_nns_constants::{GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::init::GovernanceCanisterInitPayloadBuilder;
 use ic_sns_governance::pb::v1::{
@@ -41,11 +41,9 @@ use ic_sns_init::SnsCanisterInitPayloads;
 use ic_sns_root::pb::v1::SnsRootCanister;
 use ic_sns_swap::pb::v1::{Init as SwapInit, NeuronBasketConstructionParameters};
 use ic_state_machine_tests::{
-    ErrorCode::CanisterCalledTrap, StateMachine,
+    CanisterId, CanisterInstallMode, ErrorCode::CanisterCalledTrap, PrincipalId, StateMachine,
     UserError, WasmResult,
 };
-use ic_management_canister_types::CanisterInstallMode;
-use ic_base_types::{CanisterId, PrincipalId };
 use icp_ledger::{AccountIdentifier, LedgerCanisterInitPayload, Tokens};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
@@ -375,6 +373,7 @@ impl SnsTestsInitPayloadBuilder {
                 dissolve_delay_interval_seconds: 10_001,
             }),
             nns_proposal_id: Some(10),
+            neurons_fund_participants: None,
             neurons_fund_participation: Some(false),
             neurons_fund_participation_constraints: None,
             ..Default::default()

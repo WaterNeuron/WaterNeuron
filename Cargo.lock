@@ -409,7 +409,7 @@ dependencies = [
  "candid_parser",
  "ic-base-types",
  "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ic-cdk 0.16.0",
+ "ic-cdk 0.15.1",
  "ic-icrc1-ledger",
  "ic-management-canister-types",
  "ic-nns-constants",
@@ -425,7 +425,7 @@ dependencies = [
  "icrc-ledger-types",
  "lazy_static",
  "num-traits",
- "prost 0.13.4",
+ "prost",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -1149,7 +1149,7 @@ dependencies = [
  "icrc-ledger-types",
  "lazy_static",
  "on_wire",
- "prost 0.12.6",
+ "prost",
  "rand",
  "serde",
  "serde_cbor",
@@ -1306,7 +1306,7 @@ version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
  "on_wire",
- "prost 0.12.6",
+ "prost",
 ]
 
 [[package]]
@@ -2099,7 +2099,7 @@ name = "ic-adapter-metrics-service"
 version = "0.1.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
- "prost 0.12.6",
+ "prost",
  "prost-build",
  "tonic",
  "tonic-build",
@@ -2135,7 +2135,7 @@ dependencies = [
  "ic-protobuf",
  "ic-stable-structures",
  "phantom_newtype",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -2304,12 +2304,12 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.16.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd8ecacd682fa05a985253592963306cb9799622d7b1cce4b1edb89c6ec85be1"
+checksum = "038ff230bf0fc8630943e3c52e989d248a7c89834ccb65da408fabc5817a475b"
 dependencies = [
  "candid",
- "ic-cdk-macros 0.16.0",
+ "ic-cdk-macros 0.15.0",
  "ic0 0.23.0",
  "serde",
  "serde_bytes",
@@ -2331,23 +2331,9 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.9.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fde5ca6ef1e69825c68916ff1bf7256b8f7ed69ac5ea3f1756f6e57f1503e27"
-dependencies = [
- "candid",
- "proc-macro2",
- "quote",
- "serde",
- "serde_tokenstream 0.1.7",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "ic-cdk-macros"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d4d857135deef20cc7ea8f3869a30cd9cfeb1392b3a81043790b2cd82adc3e0"
+checksum = "3af44fb4ec3a4b18831c9d3303ca8fa2ace846c4022d50cb8df4122635d3782e"
 dependencies = [
  "candid",
  "proc-macro2",
@@ -2773,7 +2759,7 @@ dependencies = [
  "ic-sys",
  "ic-types",
  "parking_lot",
- "prost 0.12.6",
+ "prost",
  "rand",
  "rand_chacha",
  "rayon",
@@ -3567,7 +3553,7 @@ dependencies = [
  "ic-types",
  "ic-wasm-types",
  "phantom_newtype",
- "prost 0.12.6",
+ "prost",
  "serde",
  "thiserror 1.0.69",
  "tower",
@@ -3596,7 +3582,7 @@ version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
  "ic-types",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -3821,7 +3807,7 @@ dependencies = [
  "mockall 0.11.4",
  "num-traits",
  "priority-queue",
- "prost 0.12.6",
+ "prost",
  "rust_decimal",
  "serde",
  "serde_json",
@@ -3864,7 +3850,7 @@ dependencies = [
  "candid",
  "comparable",
  "ic-base-types",
- "prost 0.12.6",
+ "prost",
  "rust_decimal",
  "serde",
 ]
@@ -3944,7 +3930,7 @@ dependencies = [
  "lazy_static",
  "num-traits",
  "on_wire",
- "prost 0.12.6",
+ "prost",
  "serde",
  "sha2 0.9.9",
 ]
@@ -4007,7 +3993,7 @@ dependencies = [
  "num-traits",
  "on_wire",
  "pretty_assertions",
- "prost 0.12.6",
+ "prost",
  "rand",
  "rand_chacha",
  "registry-canister",
@@ -4048,7 +4034,7 @@ dependencies = [
  "candid",
  "erased-serde",
  "maplit",
- "prost 0.12.6",
+ "prost",
  "serde",
  "serde_json",
  "slog",
@@ -4104,7 +4090,7 @@ name = "ic-registry-common-proto"
 version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
- "prost 0.12.6",
+ "prost",
 ]
 
 [[package]]
@@ -4184,7 +4170,7 @@ dependencies = [
  "candid",
  "ic-base-types",
  "ic-protobuf",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -4277,7 +4263,7 @@ dependencies = [
  "lazy_static",
  "maplit",
  "num-traits",
- "prost 0.12.6",
+ "prost",
  "prost-build",
  "rand",
  "rand_chacha",
@@ -4350,7 +4336,7 @@ dependencies = [
  "isocountry",
  "lazy_static",
  "maplit",
- "prost 0.12.6",
+ "prost",
  "serde",
  "serde_yaml",
 ]
@@ -4380,7 +4366,7 @@ dependencies = [
  "ic-nervous-system-runtime",
  "ic-sns-swap",
  "icrc-ledger-types",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -4414,7 +4400,7 @@ dependencies = [
  "itertools 0.12.1",
  "lazy_static",
  "maplit",
- "prost 0.12.6",
+ "prost",
  "rust_decimal",
  "serde",
 ]
@@ -4428,7 +4414,7 @@ dependencies = [
  "comparable",
  "ic-base-types",
  "ic-nervous-system-proto",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -4461,7 +4447,7 @@ dependencies = [
  "ic-types",
  "icrc-ledger-types",
  "maplit",
- "prost 0.12.6",
+ "prost",
  "serde",
  "serde_json",
 ]
@@ -4494,7 +4480,7 @@ dependencies = [
  "ic-wasm-types",
  "libc",
  "prometheus",
- "prost 0.12.6",
+ "prost",
  "scoped_threadpool",
  "slog",
 ]
@@ -4595,7 +4581,7 @@ dependencies = [
  "nix",
  "parking_lot",
  "prometheus",
- "prost 0.12.6",
+ "prost",
  "rand",
  "rand_chacha",
  "scoped_threadpool",
@@ -4621,7 +4607,7 @@ dependencies = [
  "libc",
  "nix",
  "phantom_newtype",
- "prost 0.12.6",
+ "prost",
  "rand",
  "thiserror 1.0.69",
  "tokio",
@@ -4726,7 +4712,7 @@ dependencies = [
  "parking_lot",
  "phantom_newtype",
  "proptest",
- "prost 0.12.6",
+ "prost",
  "rand",
  "rand_chacha",
  "serde",
@@ -4824,7 +4810,7 @@ dependencies = [
  "maplit",
  "once_cell",
  "phantom_newtype",
- "prost 0.12.6",
+ "prost",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -4864,7 +4850,7 @@ version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
  "hex",
- "prost 0.12.6",
+ "prost",
  "scoped_threadpool",
  "serde",
 ]
@@ -5041,7 +5027,7 @@ dependencies = [
  "reqwest",
  "serde",
  "sha2 0.10.8",
- "thiserror 2.0.6",
+ "thiserror 1.0.69",
  "toml",
 ]
 
@@ -5066,8 +5052,8 @@ dependencies = [
  "lazy_static",
  "num-traits",
  "on_wire",
- "prost 0.12.6",
- "prost-derive 0.12.6",
+ "prost",
+ "prost-derive",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -5338,15 +5324,6 @@ name = "itertools"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]
@@ -5640,22 +5617,22 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "minicbor"
-version = "0.19.1"
+version = "0.24.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7005aaf257a59ff4de471a9d5538ec868a21586534fff7f85dd97d4043a6139"
+checksum = "29be4f60e41fde478b36998b88821946aafac540e53591e76db53921a0cc225b"
 dependencies = [
  "minicbor-derive",
 ]
 
 [[package]]
 name = "minicbor-derive"
-version = "0.13.0"
+version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1154809406efdb7982841adb6311b3d095b46f78342dd646736122fe6b19e267"
+checksum = "bd2209fff77f705b00c737016a48e73733d7fbccb8b007194db148f03561fb70"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.90",
 ]
 
 [[package]]
@@ -6441,17 +6418,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "deb1435c188b76130da55f17a466d252ff7b1418b2ad3e037d127b94e3411f29"
 dependencies = [
  "bytes",
- "prost-derive 0.12.6",
-]
-
-[[package]]
-name = "prost"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c0fef6c4230e4ccf618a35c59d7ede15dea37de8427500f50aff708806e42ec"
-dependencies = [
- "bytes",
- "prost-derive 0.13.4",
+ "prost-derive",
 ]
 
 [[package]]
@@ -6468,7 +6435,7 @@ dependencies = [
  "once_cell",
  "petgraph",
  "prettyplease",
- "prost 0.12.6",
+ "prost",
  "prost-types",
  "regex",
  "syn 2.0.90",
@@ -6489,25 +6456,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "prost-derive"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "157c5a9d7ea5c2ed2d9fb8f495b64759f7816c7eaea54ba3978f0d63000162e3"
-dependencies = [
- "anyhow",
- "itertools 0.13.0",
- "proc-macro2",
- "quote",
- "syn 2.0.90",
-]
-
-[[package]]
 name = "prost-types"
 version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9091c90b0a32608e984ff2fa4091273cbdd755d54935c51d520887f4a1dbd5b0"
 dependencies = [
- "prost 0.12.6",
+ "prost",
 ]
 
 [[package]]
@@ -6752,7 +6706,7 @@ dependencies = [
  "lazy_static",
  "leb128",
  "on_wire",
- "prost 0.12.6",
+ "prost",
  "serde",
  "url",
 ]
@@ -7400,8 +7354,8 @@ dependencies = [
  "ic-base-types",
  "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ic-canisters-http-types",
- "ic-cdk 0.16.0",
- "ic-cdk-macros 0.9.0",
+ "ic-cdk 0.15.1",
+ "ic-cdk-macros 0.15.0",
  "ic-icrc1-ledger",
  "ic-management-canister-types",
  "ic-metrics-encoder",
@@ -8032,7 +7986,7 @@ dependencies = [
  "hyper-timeout",
  "percent-encoding",
  "pin-project",
- "prost 0.12.6",
+ "prost",
  "tokio",
  "tokio-stream",
  "tower",
@@ -8668,8 +8622,8 @@ dependencies = [
  "ic-base-types",
  "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ic-canisters-http-types",
- "ic-cdk 0.16.0",
- "ic-cdk-macros 0.9.0",
+ "ic-cdk 0.15.1",
+ "ic-cdk-macros 0.15.0",
  "ic-icrc1-ledger",
  "ic-management-canister-types",
  "ic-metrics-encoder",
@@ -8694,7 +8648,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-traits",
  "proptest",
- "prost 0.13.4",
+ "prost",
  "rust_decimal",
  "rust_decimal_macros",
  "scopeguard",
