@@ -77,7 +77,6 @@ pub struct ExternalCanister {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Config {
-    pub cache_directory: PathBuf,
     pub external: BTreeMap<CanisterName, ExternalCanister>,
 }
 
@@ -87,24 +86,20 @@ impl ExternalCanister {
             .replace("{version}", &self.version)
             .replace("{wasm_file}", &self.wasm_file)
     }
-
-    fn cache_filename(&self) -> String {
+    
+    fn versioned_filename(&self) -> String {
         let parts: Vec<&str> = self.wasm_file.split(".wasm").collect();
         format!("{}_{}.wasm{}", parts[0], self.version, parts[1])
     }
+
 }
 
 impl Config {
     pub fn load() -> Result<Self> {
-        let content = std::fs::read_to_string("canisters.toml")?;
+        let metadata = MetadataCommand::new().no_deps().exec()?;
+        let config_path = metadata.workspace_root.join("canisters.toml");
+        let content = std::fs::read_to_string(config_path)?;
         let config: Self = toml::from_str(&content)?;
-
-        let cache_path = dirs::home_dir()
-            .unwrap_or_else(|| PathBuf::from("."))
-            .join(&config.cache_directory);
-
-        std::fs::create_dir_all(cache_path)?;
-
         Ok(config)
     }
 }
@@ -112,15 +107,15 @@ impl Config {
 /// Get the WASM binary for a given canister.
 pub fn get_wasm(name: CanisterName) -> Result<Vec<u8>> {
     let config = Config::load()?;
+    let metadata = MetadataCommand::new().no_deps().exec()?;
+    let artifacts_dir = metadata.workspace_root.join("artifacts");
+    std::fs::create_dir_all(&artifacts_dir)?;
 
     if let Some(info) = config.external.get(&name) {
-        let cache_file = dirs::home_dir()
-            .unwrap_or_else(|| PathBuf::from("."))
-            .join(&config.cache_directory)
-            .join(info.cache_filename());
+        let wasm_file = artifacts_dir.join(info.versioned_filename());
 
-        if cache_file.exists() {
-            let data = std::fs::read(&cache_file)?;
+        if wasm_file.exists() {
+            let data = std::fs::read(&wasm_file)?;
             if verify_hash(&data, &info.sha256)? {
                 return Ok(data);
             }
@@ -128,7 +123,7 @@ pub fn get_wasm(name: CanisterName) -> Result<Vec<u8>> {
 
         let data = reqwest::blocking::get(&info.url())?.bytes()?.to_vec();
         verify_hash(&data, &info.sha256)?;
-        std::fs::write(&cache_file, &data)?;
+        std::fs::write(&wasm_file, &data)?;
 
         return Ok(data);
     }

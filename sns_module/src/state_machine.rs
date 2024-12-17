@@ -16,13 +16,12 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use std::collections::HashMap;
 use std::time::Duration;
-use ic_wasm_utils::{get_wasm, CanisterName, Error};
+use ic_wasm_utils::{get_wasm, CanisterName};
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 
-// this is the local canister that we need to compile and then expose
 fn sns_module_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Sns).unwrap()
+    get_wasm(CanisterName::Local("sns_module".to_string())).unwrap()
 }
 
 fn ledger_wasm() -> Vec<u8> {

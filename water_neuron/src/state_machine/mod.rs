@@ -62,10 +62,6 @@ lazy_static! {
     static ref CARGO_BUILD_RESULT: Result<(), std::io::Error> = cargo_build();
 }
 
-fn get_wasm(env: &str) -> Vec<u8> {
-    std::fs::read(std::env::var(env).unwrap()).unwrap()
-}
-
 fn water_neuron_wasm() -> Vec<u8> {
     get_wasm("WATER_NEURON_CANISTER_WASM_PATH")
 }
