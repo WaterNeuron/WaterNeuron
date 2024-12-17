@@ -174,9 +174,75 @@ impl CargoWasmBuilder {
             .find(|p| p.name == binary_name)
             .ok_or_else(|| Error::PackageNotFound(binary_name.to_string()))?;
 
-        let manifest_dir = package.manifest_path.parent().unwrap();
-        let build_dir = PathBuf::from(DEFAULT_BUILD_DIR);
-        
-        Ok(build_dir)
+        let workspace_root = &self.metadata.workspace_root;
+        std::fs::create_dir_all(workspace_root.join("artifacts"))?;
+
+        // Step 1: Build with cargo
+        let status = Command::new("cargo")
+            .current_dir(workspace_root)
+            .args(["canister", "-p", binary_name, "--release", "--bin", binary_name])
+            .status()?;
+
+        if !status.success() {
+            return Err(Error::Build(format!("Failed to build package {}", binary_name)));
+        }
+
+        // Step 2: Add candid
+        let status = Command::new("ic-wasm")
+            .current_dir(workspace_root)
+            .arg(format!("target/wasm32-unknown-unknown/release/{}.wasm", binary_name))
+            .args(["-o", &format!("artifacts/{}_with_candid.wasm", binary_name)])
+            .args(["metadata", "candid:service", "-f"])
+            .arg(format!("{}/{}.did", binary_name, binary_name))
+            .args(["-v", "public"])
+            .status()?;
+
+        if !status.success() {
+            return Err(Error::Build("Failed to add Candid metadata".into()));
+        }
+
+        // Step 3: Add git commit
+        let git_commit = Command::new("git")
+            .current_dir(workspace_root)
+            .args(["rev-parse", "HEAD"])
+            .output()?;
+
+        let status = Command::new("ic-wasm")
+            .current_dir(workspace_root)
+            .arg(format!("artifacts/{}_with_candid.wasm", binary_name))
+            .args(["-o", &format!("artifacts/{}_with_candid_and_git.wasm", binary_name)])
+            .args(["metadata", "git_commit_id", "-d"])
+            .arg(String::from_utf8_lossy(&git_commit.stdout).trim())
+            .args(["-v", "public"])
+            .status()?;
+
+        if !status.success() {
+            return Err(Error::Build("Failed to add git metadata".into()));
+        }
+
+        // Step 4: Shrink
+        let status = Command::new("ic-wasm")
+            .current_dir(workspace_root)
+            .arg(format!("artifacts/{}_with_candid_and_git.wasm", binary_name))
+            .args(["-o", &format!("artifacts/{}_candid_git_shrink.wasm", binary_name)])
+            .arg("shrink")
+            .status()?;
+
+        if !status.success() {
+            return Err(Error::Build("Failed to shrink wasm".into()));
+        }
+
+        // Step 5: Gzip
+        let status = Command::new("gzip")
+            .current_dir(workspace_root)
+            .args(["-n", "--force"])
+            .arg(format!("artifacts/{}_candid_git_shrink.wasm", binary_name))
+            .status()?;
+
+        if !status.success() {
+            return Err(Error::Build("Failed to gzip wasm".into()));
+        }
+
+        Ok(workspace_root.join(format!("artifacts/{}_candid_git_shrink.wasm.gz", binary_name)).into())
     }
 }
