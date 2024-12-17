@@ -30,6 +30,9 @@ fn ledger_wasm() -> Vec<u8> {
 
 fn icp_ledger_wasm() -> Vec<u8> {
     get_wasm(CanisterName::Ledger).unwrap()
+    //let path = std::path::PathBuf::from("/home/enzo/code/WaterNeuron/artifacts/ledger-canister_de29a1a55b589428d173b31cdb8cec0923245657.wasm");
+
+    //std::fs::read_to_string(path).unwrap().into()
 }
 
 fn assert_reply(result: WasmResult) -> Vec<u8> {

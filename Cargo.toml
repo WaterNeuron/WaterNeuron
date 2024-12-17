@@ -62,22 +62,22 @@ tokio = { version = "1.42.0", features = ["full"] }
 cargo_metadata = "0.19.1"
 
 # DFINITY IC dependencies
-cycles-minting-canister = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-canisters-http-types = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-icrc1-ledger = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-nns-constants = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-nns-governance = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-sns-init = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-sns-root = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-sns-swap = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic.git", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-utils-ensure = { git = "https://github.com/dfinity/ic", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-icp-ledger = { git = "https://github.com/dfinity/ic", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-icrc-ledger-client-cdk = { git = "https://github.com/dfinity/ic", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-icrc-ledger-types = { git = "https://github.com/dfinity/ic", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
-ic-management-canister-types = { git = "https://github.com/dfinity/ic", rev = "c58e00fe2271d77ede9ccab5a6b317689859ea98" }
+cycles-minting-canister = { git = "https://github.com/dfinity/ic.git", rev = "7eace38b7580dc35af53b9180ea40480af4977dc" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "7eace38b7580dc35af53b9180ea40480af4977dc" }
+ic-canisters-http-types = { git = "https://github.com/dfinity/ic.git", rev = "7eace38b7580dc35af53b9180ea40480af4977dc" }
+ic-icrc1-ledger = { git = "https://github.com/dfinity/ic.git", rev = "7eace38b7580dc35af53b9180ea40480af4977dc" }
+ic-nns-constants = { git = "https://github.com/dfinity/ic.git", rev = "7eace38b7580dc35af53b9180ea40480af4977dc" }
+ic-nns-governance = { git = "https://github.com/dfinity/ic.git", rev = "7eace38b7580dc35af53b9180ea40480af4977dc" }
+ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "7eace38b7580dc35af53b9180ea40480af4977dc" }
+ic-sns-init = { git = "https://github.com/dfinity/ic.git", rev =  "7eace38b7580dc35af53b9180ea40480af4977dc"}
+ic-sns-root = { git = "https://github.com/dfinity/ic.git", rev =  "7eace38b7580dc35af53b9180ea40480af4977dc"}
+ic-sns-swap = { git = "https://github.com/dfinity/ic.git", rev = "7eace38b7580dc35af53b9180ea40480af4977dc" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic.git", rev = "7eace38b7580dc35af53b9180ea40480af4977dc"}
+ic-utils-ensure = { git = "https://github.com/dfinity/ic", rev = "7eace38b7580dc35af53b9180ea40480af4977dc"}
+icp-ledger = { git = "https://github.com/dfinity/ic", rev =  "7eace38b7580dc35af53b9180ea40480af4977dc"}
+icrc-ledger-client-cdk = { git = "https://github.com/dfinity/ic", rev =  "7eace38b7580dc35af53b9180ea40480af4977dc"}
+icrc-ledger-types = { git = "https://github.com/dfinity/ic", rev =  "7eace38b7580dc35af53b9180ea40480af4977dc"}
+ic-management-canister-types = { git = "https://github.com/dfinity/ic", rev =  "7eace38b7580dc35af53b9180ea40480af4977dc"}
 
 #[patch.crates-io]
 #lmdb-rkv-sys = { git = "https://github.com/dfinity-lab/lmdb-rs", rev = "f62018b2deb79ea0d53914d5502389433fc3e6da", patches = [
