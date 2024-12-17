@@ -17,11 +17,17 @@ use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use std::collections::HashMap;
 use std::time::Duration;
 use ic_wasm_utils::{get_wasm, CanisterName};
+use lazy_static::lazy_static;
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 
+lazy_static! {
+    static ref SNS_MODULE_WASM: Vec<u8> = get_wasm(CanisterName::Local("sns_module".to_string())).unwrap();
+
+}
+
 fn sns_module_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Local("sns_module".to_string())).unwrap()
+    SNS_MODULE_WASM.to_vec()
 }
 
 fn ledger_wasm() -> Vec<u8> {
@@ -30,9 +36,6 @@ fn ledger_wasm() -> Vec<u8> {
 
 fn icp_ledger_wasm() -> Vec<u8> {
     get_wasm(CanisterName::Ledger).unwrap()
-    //let path = std::path::PathBuf::from("/home/enzo/code/WaterNeuron/artifacts/ledger-canister_de29a1a55b589428d173b31cdb8cec0923245657.wasm");
-
-    //std::fs::read_to_string(path).unwrap().into()
 }
 
 fn assert_reply(result: WasmResult) -> Vec<u8> {

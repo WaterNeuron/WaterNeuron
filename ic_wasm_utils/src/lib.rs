@@ -10,7 +10,6 @@ use thiserror::Error;
 
 const CANISTER_URL_TEMPLATE: &str =
     "https://download.dfinity.systems/ic/{version}/canisters/{wasm_file}";
-const DEFAULT_BUILD_DIR: &str = "target/wasm32-unknown-unknown/release/";
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -162,7 +161,7 @@ impl CargoWasmBuilder {
     }
 
     fn compile_wasm(&self, binary_name: &str) -> Result<PathBuf> {
-        let package = self
+        let _package = self
             .metadata
             .packages
             .iter()
@@ -210,6 +209,8 @@ impl CargoWasmBuilder {
             .arg(String::from_utf8_lossy(&git_commit.stdout).trim())
             .args(["-v", "public"])
             .status()?;
+        
+        std::thread::sleep(std::time::Duration::from_secs(3));
 
         if !status.success() {
             return Err(Error::Build("Failed to add git metadata".into()));
@@ -222,6 +223,8 @@ impl CargoWasmBuilder {
             .args(["-o", &format!("artifacts/{}_candid_git_shrink.wasm", binary_name)])
             .arg("shrink")
             .status()?;
+        
+        std::thread::sleep(std::time::Duration::from_secs(3));
 
         if !status.success() {
             return Err(Error::Build("Failed to shrink wasm".into()));
@@ -234,8 +237,12 @@ impl CargoWasmBuilder {
             .arg(format!("artifacts/{}_candid_git_shrink.wasm", binary_name))
             .status()?;
 
+        std::thread::sleep(std::time::Duration::from_secs(3));
+
         if !status.success() {
-            return Err(Error::Build("Failed to gzip wasm".into()));
+            println!("Exit code: {:?}", status.code());
+            println!("Full status: {:?}", status);
+            return Err(Error::Build(format!("Failed to gzip wasm {:?}", status)));
         }
 
         Ok(workspace_root.join(format!("artifacts/{}_candid_git_shrink.wasm.gz", binary_name)).into())

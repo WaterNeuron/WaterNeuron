@@ -27,26 +27,6 @@ use water_neuron::{InitArg, LiquidArg, ONE_MONTH_SECONDS};
 pub mod tests;
 pub mod utils;
 
-lazy_static! {
-    static ref CARGO_BUILD_RESULT: Result<(), std::io::Error> = cargo_build();
-}
-
-fn cargo_build() -> Result<(), std::io::Error> {
-    Command::new("cargo")
-        .args(&[
-            "build",
-            "--target",
-            "wasm32-unknown-unknown",
-            "--release",
-            "-p",
-            "boomerang",
-            "--locked",
-        ])
-        .spawn()?
-        .wait()?;
-    Ok(())
-}
-
 #[derive(Debug)]
 pub struct BoomerangSetup {
     pub env: StateMachine,
@@ -86,9 +66,8 @@ impl BoomerangSetup {
             neuron_management_voting_period_seconds: Some(60 * 60 * 48), // 48 hours
             ..Default::default()
         };
-        let _governance_id = env
-            .install_canister(governance_wasm(), arg.encode_to_vec(), None)
-            .unwrap();
+
+        let _ = env.create_canister(None);
 
         let icp_ledger_id = env.create_canister(None);
         env.install_existing_canister(

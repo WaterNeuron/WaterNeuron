@@ -67,3 +67,4 @@ num-traits.workspace = true
 proptest.workspace = true
 prost.workspace = true
 tokio.workspace = true
+ic_wasm_utils = { path = "../ic_wasm_utils" }

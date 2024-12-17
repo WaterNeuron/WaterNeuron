@@ -55,43 +55,44 @@ use prost::Message;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
+use ic_wasm_utils::{get_wasm, CanisterName};
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 
 lazy_static! {
-    static ref CARGO_BUILD_RESULT: Result<(), std::io::Error> = cargo_build();
+    static ref W_MODULE_WASM: Vec<u8> = get_wasm(CanisterName::Local("water_neuron".to_string())).unwrap();
 }
 
-fn water_neuron_wasm() -> Vec<u8> {
-    get_wasm("WATER_NEURON_CANISTER_WASM_PATH")
+pub fn icp_ledger_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Ledger).unwrap()
 }
 
-fn ledger_wasm() -> Vec<u8> {
-    get_wasm("IC_ICRC1_LEDGER_WASM_PATH")
+pub fn governance_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::NnsGovernance).unwrap()
 }
 
-fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm("LEDGER_CANISTER_WASM_PATH")
+pub fn water_neuron_wasm() -> Vec<u8> {
+    W_MODULE_WASM.to_vec()
 }
 
-fn cmc_wasm() -> Vec<u8> {
-    get_wasm("CYCLES_MINTING_CANISTER_WASM_PATH")
+pub fn ledger_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Icrc1Ledger).unwrap()
 }
 
-fn governance_wasm() -> Vec<u8> {
-    get_wasm("GOVERNANCE_CANISTER_WASM_PATH")
+pub fn sns_governance() -> Vec<u8> {
+    get_wasm(CanisterName::SnsGovernance).unwrap()
 }
 
-fn sns_root() -> Vec<u8> {
-    get_wasm("SNS_ROOT_CANISTER_WASM_PATH")
+pub fn sns_root() -> Vec<u8> {
+    get_wasm(CanisterName::Sns).unwrap()
 }
 
-fn sns_governance() -> Vec<u8> {
-    get_wasm("SNS_GOVERNANCE_CANISTER_WASM_PATH")
+pub fn sns_swap() -> Vec<u8> {
+    get_wasm(CanisterName::SnsSwap).unwrap()
 }
 
-fn sns_swap() -> Vec<u8> {
-    get_wasm("SNS_SWAP_CANISTER_WASM_PATH")
+pub fn cmc_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Cmc).unwrap()
 }
 
 pub fn sha256_hash(data: Vec<u8>) -> Vec<u8> {

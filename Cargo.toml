@@ -1,7 +1,4 @@
 [workspace]
-authors = ["WaterNeuron"]
-description = "ICP Liquid Staking"
-documentation = "https://docs.waterneuron.fi/"
 members = ["sns_module", "boomerang", "ic_wasm_utils", "water_neuron"]
 resolver = "2"
 
@@ -11,7 +8,7 @@ edition = "2021"
 
 [workspace.dependencies]
 assert_matches = "1.5.0"
-async-trait = "0.1.83"
+async-trait = "0.1.80"
 candid = "0.10.6"
 candid_parser = "0.1.2"
 ciborium = "0.2.1"
