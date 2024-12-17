@@ -1,250 +1,232 @@
-use cargo_metadata::MetadataCommand;
-use serde::{Deserialize, Serialize};
+use lazy_static::lazy_static;
 use sha2::{Digest, Sha256};
-use std::collections::BTreeMap;
-use std::fmt;
-use std::path::PathBuf;
-use std::process::Command;
-use std::result;
+use std::{collections::BTreeMap, path::PathBuf};
 use thiserror::Error;
 
-const CANISTER_URL_TEMPLATE: &str =
-    "https://download.dfinity.systems/ic/{version}/canisters/{wasm_file}";
-
-pub type Result<T> = result::Result<T, Error>;
-
-#[derive(Error, Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
-    #[error("Network error: {0}")]
-    Network(#[from] reqwest::Error),
-    #[error("Config error: {0}")]
-    Config(#[from] toml::de::Error),
-    #[error("Hash mismatch - expected: {expected}, got: {got}")]
-    HashMismatch { expected: String, got: String },
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("Network error: {0}")]
+    Network(#[from] reqwest::Error),
     #[error("Metadata error: {0}")]
     Metadata(#[from] cargo_metadata::Error),
-    #[error("Package {0} not found in workspace")]
-    PackageNotFound(String),
+    #[error("Hash mismatch")]
+    HashMismatch,
+    #[error("Unknown canister")]
+    UnknownCanister,
     #[error("Build failed: {0}")]
-    Build(String),
-    #[error("Candid processing failed: {0}")]
-    Candid(String),
-    #[error("Canister {0} not found")]
-    CanisterNotFound(String),
+    BuildFailed(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Ord, PartialOrd, Hash)]
-#[serde(rename_all = "snake_case")]
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Debug, Clone, Hash, Eq, PartialOrd, Ord, PartialEq)]
 pub enum CanisterName {
     Ledger,
     NnsGovernance,
-    Cmc,
+    Icrc1Ledger,
     SnsGovernance,
     SnsSwap,
     Sns,
     SnsRoot,
-    Icrc1Ledger,
+    Cmc,
     Icrc1IndexNg,
     Local(String),
 }
 
-impl fmt::Display for CanisterName {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Ledger => write!(f, "ledger"),
-            Self::NnsGovernance => write!(f, "nns_governance"),
-            Self::Cmc => write!(f, "cmc"),
-            Self::SnsGovernance => write!(f, "sns_governance"),
-            Self::SnsSwap => write!(f, "sns_swap"),
-            Self::Sns => write!(f, "sns"),
-            Self::SnsRoot => write!(f, "sns_root"),
-            Self::Icrc1Ledger => write!(f, "icrc1_ledger"),
-            Self::Icrc1IndexNg => write!(f, "icrc1_index_ng"),
-            Self::Local(inner) => write!(f, "{}", inner),
+struct WasmBinary {
+    hash: &'static str,
+    ic_version: &'static str,
+    name: &'static str,
+}
+
+lazy_static! {
+    static ref DFINITY_CANISTERS: BTreeMap<CanisterName, WasmBinary> = {
+        let mut map = BTreeMap::new();
+        map.insert(
+            CanisterName::Ledger,
+            WasmBinary {
+                hash: "e31a3b38bbb3704876d8825bb826101d6f1f1843ad99c21a0d563e80bdd6e2f6",
+                ic_version: "de29a1a55b589428d173b31cdb8cec0923245657",
+                name: "ledger-canister.wasm.gz",
+            },
+        );
+        map.insert(
+            CanisterName::NnsGovernance,
+            WasmBinary {
+                hash: "8f76b2de37197b3ff0ae188f1ef99ddd5bd75cb8f83fb87c2889822ece0b5576",
+                ic_version: "ad5629caa17ac8a4545bc2e3cf0ecc990c9f681e",
+                name: "governance-canister.wasm.gz",
+            },
+        );
+        map.insert(
+            CanisterName::Cmc,
+            WasmBinary {
+                hash: "d33b381e3de4cb3a35493ba0398b3c7f7b7165306400b25fe9129b9f28d08774",
+                ic_version: "0abc8efa13a533576dbd9b652e37e4a817e6051c",
+                name: "cycles-minting-canister.wasm.gz",
+            },
+        );
+        map.insert(
+            CanisterName::SnsGovernance,
+            WasmBinary {
+                hash: "e6b285a50237a46d7cf72eb27ae4840222b98ecc02c20954a7946d039cab59f0",
+                ic_version: "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+                name: "sns-governance-canister.wasm.gz",
+            },
+        );
+        map.insert(
+            CanisterName::SnsSwap,
+            WasmBinary {
+                hash: "2bbaf53b7cbb8f20cdd6b30bf709f461a47d10b02b38cb1d54d52789c907f202",
+                ic_version: "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+                name: "sns-swap-canister.wasm.gz",
+            },
+        );
+        map.insert(
+            CanisterName::Sns,
+            WasmBinary {
+                hash: "a6ffc60e50d7c59ce5b3bfbfa1a234287891e9396c85be312c8e725a2510fb35",
+                ic_version: "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+                name: "sns-wasm-canister.wasm.gz",
+            },
+        );
+        map.insert(
+            CanisterName::SnsRoot,
+            WasmBinary {
+                hash: "dd0b6dfe7a25852ed6d421ce71382f30f7275046aed7c64d870c8e0bb4bba6ea",
+                ic_version: "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+                name: "sns-root-canister.wasm.gz",
+            },
+        );
+        map.insert(
+            CanisterName::Icrc1Ledger,
+            WasmBinary {
+                hash: "4264ce2952c4e9ff802d81a11519d5e3ffdaed4215d5831a6634e59efd72f7d8",
+                ic_version: "a3831c87440df4821b435050c8a8fcb3745d86f6",
+                name: "ic-icrc1-ledger.wasm.gz",
+            },
+        );
+        map.insert(
+            CanisterName::Icrc1IndexNg,
+            WasmBinary {
+                hash: "cac207cf438df8c9fba46d4445c097f05fd8228a1eeacfe0536b7e9ddefc5f1c",
+                ic_version: "a3831c87440df4821b435050c8a8fcb3745d86f6",
+                name: "ic-icrc1-index-ng.wasm.gz",
+            },
+        );
+        map
+    };
+    static ref WORKSPACE_ROOT: PathBuf = cargo_metadata::MetadataCommand::new()
+        .no_deps()
+        .exec()
+        .expect("Failed to get workspace root")
+        .workspace_root
+        .into();
+    static ref BOOMERANG_WASM: Vec<u8> = get_wasm(CanisterName::Local("boomerang".into())).unwrap();
+    static ref WATER_NEURON_WASM: Vec<u8> =
+        get_wasm(CanisterName::Local("water_neuron".into())).unwrap();
+    static ref SNS_MODULE_WASM: Vec<u8> =
+        get_wasm(CanisterName::Local("sns_module".into())).unwrap();
+}
+
+fn get_wasm(name: CanisterName) -> Result<Vec<u8>> {
+    match name {
+        CanisterName::Local(name) => build_local_wasm(&name),
+        remote => fetch_remote_wasm(&remote),
+    }
+}
+
+fn build_local_wasm(name: &str) -> Result<Vec<u8>> {
+    std::fs::create_dir_all(WORKSPACE_ROOT.join("artifacts"))?;
+
+    let build_steps = [
+        format!("cargo canister -p {0} --release --bin {0} --locked --features=self_check", name),
+        format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}_final.wasm metadata candid:service -f {0}/{0}.did -v public", name),
+        format!("ic-wasm artifacts/{0}_final.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
+        format!("ic-wasm artifacts/{0}_final.wasm shrink", name),
+        format!("gzip -nf9v artifacts/{0}_final.wasm", name),
+    ];
+
+    for cmd in &build_steps {
+        if !std::process::Command::new("sh")
+            .current_dir(&*WORKSPACE_ROOT)
+            .args(["-c", cmd])
+            .status()?
+            .success()
+        {
+            return Err(Error::BuildFailed(cmd.to_string()));
         }
     }
+
+    Ok(std::fs::read(
+        WORKSPACE_ROOT.join(format!("artifacts/{}_final.wasm.gz", name)),
+    )?)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ExternalCanister {
-    pub sha256: String,
-    pub version: String,
-    pub wasm_file: String,
-}
+fn fetch_remote_wasm(canister: &CanisterName) -> Result<Vec<u8>> {
+    let wasm = DFINITY_CANISTERS
+        .get(canister)
+        .ok_or(Error::UnknownCanister)?;
+    let cache_path = WORKSPACE_ROOT
+        .join("artifacts")
+        .join(format!("{}_{}.wasm", wasm.name, wasm.ic_version));
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Config {
-    pub external: BTreeMap<CanisterName, ExternalCanister>,
-}
-
-impl ExternalCanister {
-    fn url(&self) -> String {
-        CANISTER_URL_TEMPLATE
-            .replace("{version}", &self.version)
-            .replace("{wasm_file}", &self.wasm_file)
-    }
-    
-    fn versioned_filename(&self) -> String {
-        let parts: Vec<&str> = self.wasm_file.split(".wasm").collect();
-        format!("{}_{}.wasm{}", parts[0], self.version, parts[1])
-    }
-
-}
-
-impl Config {
-    pub fn load() -> Result<Self> {
-        let metadata = MetadataCommand::new().no_deps().exec()?;
-        let config_path = metadata.workspace_root.join("canisters.toml");
-        let content = std::fs::read_to_string(config_path)?;
-        let config: Self = toml::from_str(&content)?;
-        Ok(config)
-    }
-}
-
-/// Get the WASM binary for a given canister.
-pub fn get_wasm(name: CanisterName) -> Result<Vec<u8>> {
-    let config = Config::load()?;
-    let metadata = MetadataCommand::new().no_deps().exec()?;
-    let artifacts_dir = metadata.workspace_root.join("artifacts");
-    std::fs::create_dir_all(&artifacts_dir)?;
-
-    if let Some(info) = config.external.get(&name) {
-        let wasm_file = artifacts_dir.join(info.versioned_filename());
-
-        if wasm_file.exists() {
-            let data = std::fs::read(&wasm_file)?;
-            if verify_hash(&data, &info.sha256)? {
-                return Ok(data);
-            }
+    if let Ok(data) = std::fs::read(&cache_path) {
+        let mut hasher = Sha256::new();
+        hasher.update(&data);
+        if format!("{:x}", hasher.finalize()) == wasm.hash {
+            return Ok(data);
         }
-
-        let data = reqwest::blocking::get(&info.url())?.bytes()?.to_vec();
-        verify_hash(&data, &info.sha256)?;
-        std::fs::write(&wasm_file, &data)?;
-
-        return Ok(data);
     }
 
-    let builder = CargoWasmBuilder::new()?;
-    match builder.compile_wasm(&name.to_string().to_lowercase()) {
-        Ok(path) => Ok(std::fs::read(path)?),
-        Err(Error::PackageNotFound(_)) => Err(Error::CanisterNotFound(name.to_string())),
-        Err(e) => Err(e),
-    }
-}
+    std::fs::create_dir_all(cache_path.parent().unwrap())?;
+    let data = reqwest::blocking::get(format!(
+        "https://download.dfinity.systems/ic/{}/canisters/{}",
+        wasm.ic_version, wasm.name
+    ))?
+    .bytes()?
+    .to_vec();
 
-fn verify_hash(data: &[u8], expected: &str) -> Result<bool> {
     let mut hasher = Sha256::new();
-    hasher.update(data);
-    let got = format!("{:x}", hasher.finalize());
-
-    if got != expected {
-        return Err(Error::HashMismatch {
-            expected: expected.to_string(),
-            got,
-        });
+    hasher.update(&data);
+    if format!("{:x}", hasher.finalize()) != wasm.hash {
+        return Err(Error::HashMismatch);
     }
 
-    Ok(true)
+    std::fs::write(&cache_path, &data)?;
+    Ok(data)
 }
 
-struct CargoWasmBuilder {
-    metadata: cargo_metadata::Metadata,
+pub fn boomerang_wasm() -> Vec<u8> {
+    BOOMERANG_WASM.to_vec()
+}
+pub fn water_neuron_wasm() -> Vec<u8> {
+    WATER_NEURON_WASM.to_vec()
+}
+pub fn sns_module_wasm() -> Vec<u8> {
+    SNS_MODULE_WASM.to_vec()
 }
 
-impl CargoWasmBuilder {
-    fn new() -> Result<Self> {
-        let metadata = MetadataCommand::new().no_deps().exec()?;
-        Ok(Self { metadata })
-    }
-
-    fn compile_wasm(&self, binary_name: &str) -> Result<PathBuf> {
-        let _package = self
-            .metadata
-            .packages
-            .iter()
-            .find(|p| p.name == binary_name)
-            .ok_or_else(|| Error::PackageNotFound(binary_name.to_string()))?;
-
-        let workspace_root = &self.metadata.workspace_root;
-        std::fs::create_dir_all(workspace_root.join("artifacts"))?;
-
-        // Step 1: Build with cargo
-        let status = Command::new("cargo")
-            .current_dir(workspace_root)
-            .args(["canister", "-p", binary_name, "--release", "--bin", binary_name])
-            .status()?;
-
-        if !status.success() {
-            return Err(Error::Build(format!("Failed to build package {}", binary_name)));
-        }
-
-        // Step 2: Add candid
-        let status = Command::new("ic-wasm")
-            .current_dir(workspace_root)
-            .arg(format!("target/wasm32-unknown-unknown/release/{}.wasm", binary_name))
-            .args(["-o", &format!("artifacts/{}_with_candid.wasm", binary_name)])
-            .args(["metadata", "candid:service", "-f"])
-            .arg(format!("{}/{}.did", binary_name, binary_name))
-            .args(["-v", "public"])
-            .status()?;
-
-        if !status.success() {
-            return Err(Error::Build("Failed to add Candid metadata".into()));
-        }
-
-        // Step 3: Add git commit
-        let git_commit = Command::new("git")
-            .current_dir(workspace_root)
-            .args(["rev-parse", "HEAD"])
-            .output()?;
-
-        let status = Command::new("ic-wasm")
-            .current_dir(workspace_root)
-            .arg(format!("artifacts/{}_with_candid.wasm", binary_name))
-            .args(["-o", &format!("artifacts/{}_with_candid_and_git.wasm", binary_name)])
-            .args(["metadata", "git_commit_id", "-d"])
-            .arg(String::from_utf8_lossy(&git_commit.stdout).trim())
-            .args(["-v", "public"])
-            .status()?;
-        
-        std::thread::sleep(std::time::Duration::from_secs(3));
-
-        if !status.success() {
-            return Err(Error::Build("Failed to add git metadata".into()));
-        }
-
-        // Step 4: Shrink
-        let status = Command::new("ic-wasm")
-            .current_dir(workspace_root)
-            .arg(format!("artifacts/{}_with_candid_and_git.wasm", binary_name))
-            .args(["-o", &format!("artifacts/{}_candid_git_shrink.wasm", binary_name)])
-            .arg("shrink")
-            .status()?;
-        
-        std::thread::sleep(std::time::Duration::from_secs(3));
-
-        if !status.success() {
-            return Err(Error::Build("Failed to shrink wasm".into()));
-        }
-
-        // Step 5: Gzip
-        let status = Command::new("gzip")
-            .current_dir(workspace_root)
-            .args(["-n", "--force"])
-            .arg(format!("artifacts/{}_candid_git_shrink.wasm", binary_name))
-            .status()?;
-
-        std::thread::sleep(std::time::Duration::from_secs(3));
-
-        if !status.success() {
-            println!("Exit code: {:?}", status.code());
-            println!("Full status: {:?}", status);
-            return Err(Error::Build(format!("Failed to gzip wasm {:?}", status)));
-        }
-
-        Ok(workspace_root.join(format!("artifacts/{}_candid_git_shrink.wasm.gz", binary_name)).into())
-    }
+pub fn icp_ledger_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Ledger).unwrap()
+}
+pub fn governance_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::NnsGovernance).unwrap()
+}
+pub fn ledger_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Icrc1Ledger).unwrap()
+}
+pub fn sns_governance_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::SnsGovernance).unwrap()
+}
+pub fn sns_root_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Sns).unwrap()
+}
+pub fn sns_swap_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::SnsSwap).unwrap()
+}
+pub fn cmc_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Cmc).unwrap()
 }

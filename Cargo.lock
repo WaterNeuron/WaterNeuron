@@ -5023,6 +5023,7 @@ version = "0.1.0"
 dependencies = [
  "cargo_metadata 0.19.1",
  "dirs",
+ "lazy_static",
  "once_cell",
  "reqwest",
  "serde",

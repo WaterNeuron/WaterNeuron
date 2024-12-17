@@ -1,27 +1,24 @@
 use crate::{BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess, E8S, TRANSFER_FEE};
 use candid::{Decode, Encode, Nat, Principal};
+use ic_base_types::{CanisterId, PrincipalId};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
+use ic_management_canister_types::CanisterInstallMode;
 use ic_nns_constants::GOVERNANCE_CANISTER_ID;
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::pb::v1::neuron::DissolveState;
 use ic_sns_governance::pb::v1::{Neuron, NeuronId, NeuronPermission, NeuronPermissionType};
 use ic_state_machine_tests::StateMachine;
-use ic_management_canister_types::CanisterInstallMode;
-use ic_base_types::{PrincipalId, CanisterId};
+use ic_wasm_utils::{boomerang_wasm, icp_ledger_wasm, ledger_wasm, water_neuron_wasm};
+
+use utils::{assert_reply, compute_neuron_staking_subaccount_bytes, setup_sns_canisters};
+
 use icp_ledger::{
     AccountIdentifier, LedgerCanisterInitPayload, Memo, Subaccount, Tokens, TransferArgs,
     TransferError,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError as IcrcTransferError};
-use lazy_static::lazy_static;
-use prost::Message;
 use std::collections::HashMap;
-use std::process::Command;
-use utils::{
-    assert_reply, boomerang_wasm, compute_neuron_staking_subaccount_bytes, governance_wasm,
-    icp_ledger_wasm, ledger_wasm, setup_sns_canisters, water_neuron_wasm,
-};
 use water_neuron::{InitArg, LiquidArg, ONE_MONTH_SECONDS};
 
 pub mod tests;
@@ -59,7 +56,7 @@ impl BoomerangSetup {
 
         let nicp_ledger_id = env.create_canister(None);
 
-        let arg = Governance {
+        let _arg = Governance {
             economics: Some(NetworkEconomics::with_default_values()),
             wait_for_quiet_threshold_seconds: 60 * 60 * 24 * 4, // 4 days
             short_voting_period_seconds: 60 * 60 * 12,          // 12 hours
