@@ -33,7 +33,7 @@ wasm_file = "sns-wasm-canister.wasm.gz"
 
 [external.sns_root]
 sha256 = "dd0b6dfe7a25852ed6d421ce71382f30f7275046aed7c64d870c8e0bb4bba6ea"
-version = "80e0363393ea26a36b77e8c75f7f183cb521f67f"
+version = "7eace38b7580dc35af53b9180ea40480af4977dc"
 wasm_file = "sns-root-canister.wasm.gz"
 
 # https://sourcegraph.com/github.com/dfinity/ic@ad5629caa17ac8a4545bc2e3cf0ecc990c9f681e

@@ -222,7 +222,7 @@ pub fn sns_governance_wasm() -> Vec<u8> {
     get_wasm(CanisterName::SnsGovernance).unwrap()
 }
 pub fn sns_root_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Sns).unwrap()
+    get_wasm(CanisterName::SnsRoot).unwrap()
 }
 pub fn sns_swap_wasm() -> Vec<u8> {
     get_wasm(CanisterName::SnsSwap).unwrap()

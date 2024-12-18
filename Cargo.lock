@@ -425,7 +425,7 @@ dependencies = [
  "icrc-ledger-types",
  "lazy_static",
  "num-traits",
- "prost 0.13.4",
+ "prost",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -1149,7 +1149,7 @@ dependencies = [
  "icrc-ledger-types",
  "lazy_static",
  "on_wire",
- "prost 0.12.6",
+ "prost",
  "rand",
  "serde",
  "serde_cbor",
@@ -1306,7 +1306,7 @@ version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
  "on_wire",
- "prost 0.12.6",
+ "prost",
 ]
 
 [[package]]
@@ -2099,7 +2099,7 @@ name = "ic-adapter-metrics-service"
 version = "0.1.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
- "prost 0.12.6",
+ "prost",
  "prost-build",
  "tonic",
  "tonic-build",
@@ -2135,7 +2135,7 @@ dependencies = [
  "ic-protobuf",
  "ic-stable-structures",
  "phantom_newtype",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -2759,7 +2759,7 @@ dependencies = [
  "ic-sys",
  "ic-types",
  "parking_lot",
- "prost 0.12.6",
+ "prost",
  "rand",
  "rand_chacha",
  "rayon",
@@ -3553,7 +3553,7 @@ dependencies = [
  "ic-types",
  "ic-wasm-types",
  "phantom_newtype",
- "prost 0.12.6",
+ "prost",
  "serde",
  "thiserror 1.0.69",
  "tower",
@@ -3582,7 +3582,7 @@ version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
  "ic-types",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -3807,7 +3807,7 @@ dependencies = [
  "mockall 0.11.4",
  "num-traits",
  "priority-queue",
- "prost 0.12.6",
+ "prost",
  "rust_decimal",
  "serde",
  "serde_json",
@@ -3850,7 +3850,7 @@ dependencies = [
  "candid",
  "comparable",
  "ic-base-types",
- "prost 0.12.6",
+ "prost",
  "rust_decimal",
  "serde",
 ]
@@ -3930,7 +3930,7 @@ dependencies = [
  "lazy_static",
  "num-traits",
  "on_wire",
- "prost 0.12.6",
+ "prost",
  "serde",
  "sha2 0.9.9",
 ]
@@ -3993,7 +3993,7 @@ dependencies = [
  "num-traits",
  "on_wire",
  "pretty_assertions",
- "prost 0.12.6",
+ "prost",
  "rand",
  "rand_chacha",
  "registry-canister",
@@ -4034,7 +4034,7 @@ dependencies = [
  "candid",
  "erased-serde",
  "maplit",
- "prost 0.12.6",
+ "prost",
  "serde",
  "serde_json",
  "slog",
@@ -4090,7 +4090,7 @@ name = "ic-registry-common-proto"
 version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
- "prost 0.12.6",
+ "prost",
 ]
 
 [[package]]
@@ -4170,7 +4170,7 @@ dependencies = [
  "candid",
  "ic-base-types",
  "ic-protobuf",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -4263,7 +4263,7 @@ dependencies = [
  "lazy_static",
  "maplit",
  "num-traits",
- "prost 0.12.6",
+ "prost",
  "prost-build",
  "rand",
  "rand_chacha",
@@ -4336,7 +4336,7 @@ dependencies = [
  "isocountry",
  "lazy_static",
  "maplit",
- "prost 0.12.6",
+ "prost",
  "serde",
  "serde_yaml",
 ]
@@ -4366,7 +4366,7 @@ dependencies = [
  "ic-nervous-system-runtime",
  "ic-sns-swap",
  "icrc-ledger-types",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -4400,7 +4400,7 @@ dependencies = [
  "itertools 0.12.1",
  "lazy_static",
  "maplit",
- "prost 0.12.6",
+ "prost",
  "rust_decimal",
  "serde",
 ]
@@ -4414,7 +4414,7 @@ dependencies = [
  "comparable",
  "ic-base-types",
  "ic-nervous-system-proto",
- "prost 0.12.6",
+ "prost",
  "serde",
 ]
 
@@ -4447,7 +4447,7 @@ dependencies = [
  "ic-types",
  "icrc-ledger-types",
  "maplit",
- "prost 0.12.6",
+ "prost",
  "serde",
  "serde_json",
 ]
@@ -4480,7 +4480,7 @@ dependencies = [
  "ic-wasm-types",
  "libc",
  "prometheus",
- "prost 0.12.6",
+ "prost",
  "scoped_threadpool",
  "slog",
 ]
@@ -4581,7 +4581,7 @@ dependencies = [
  "nix",
  "parking_lot",
  "prometheus",
- "prost 0.12.6",
+ "prost",
  "rand",
  "rand_chacha",
  "scoped_threadpool",
@@ -4607,7 +4607,7 @@ dependencies = [
  "libc",
  "nix",
  "phantom_newtype",
- "prost 0.12.6",
+ "prost",
  "rand",
  "thiserror 1.0.69",
  "tokio",
@@ -4712,7 +4712,7 @@ dependencies = [
  "parking_lot",
  "phantom_newtype",
  "proptest",
- "prost 0.12.6",
+ "prost",
  "rand",
  "rand_chacha",
  "serde",
@@ -4810,7 +4810,7 @@ dependencies = [
  "maplit",
  "once_cell",
  "phantom_newtype",
- "prost 0.12.6",
+ "prost",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -4850,7 +4850,7 @@ version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=7eace38b7580dc35af53b9180ea40480af4977dc#7eace38b7580dc35af53b9180ea40480af4977dc"
 dependencies = [
  "hex",
- "prost 0.12.6",
+ "prost",
  "scoped_threadpool",
  "serde",
 ]
@@ -5053,8 +5053,8 @@ dependencies = [
  "lazy_static",
  "num-traits",
  "on_wire",
- "prost 0.12.6",
- "prost-derive 0.12.6",
+ "prost",
+ "prost-derive",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -6419,17 +6419,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "deb1435c188b76130da55f17a466d252ff7b1418b2ad3e037d127b94e3411f29"
 dependencies = [
  "bytes",
- "prost-derive 0.12.6",
-]
-
-[[package]]
-name = "prost"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c0fef6c4230e4ccf618a35c59d7ede15dea37de8427500f50aff708806e42ec"
-dependencies = [
- "bytes",
- "prost-derive 0.13.4",
+ "prost-derive",
 ]
 
 [[package]]
@@ -6446,7 +6436,7 @@ dependencies = [
  "once_cell",
  "petgraph",
  "prettyplease",
- "prost 0.12.6",
+ "prost",
  "prost-types",
  "regex",
  "syn 2.0.90",
@@ -6467,25 +6457,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "prost-derive"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "157c5a9d7ea5c2ed2d9fb8f495b64759f7816c7eaea54ba3978f0d63000162e3"
-dependencies = [
- "anyhow",
- "itertools 0.10.5",
- "proc-macro2",
- "quote",
- "syn 2.0.90",
-]
-
-[[package]]
 name = "prost-types"
 version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9091c90b0a32608e984ff2fa4091273cbdd755d54935c51d520887f4a1dbd5b0"
 dependencies = [
- "prost 0.12.6",
+ "prost",
 ]
 
 [[package]]
@@ -6730,7 +6707,7 @@ dependencies = [
  "lazy_static",
  "leb128",
  "on_wire",
- "prost 0.12.6",
+ "prost",
  "serde",
  "url",
 ]
@@ -8010,7 +7987,7 @@ dependencies = [
  "hyper-timeout",
  "percent-encoding",
  "pin-project",
- "prost 0.12.6",
+ "prost",
  "tokio",
  "tokio-stream",
  "tower",
@@ -8672,7 +8649,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-traits",
  "proptest",
- "prost 0.13.4",
+ "prost",
  "rust_decimal",
  "rust_decimal_macros",
  "scopeguard",

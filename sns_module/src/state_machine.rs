@@ -45,7 +45,9 @@ impl SnsModuleEnv {
         println!("1");
         // let env = StateMachine::new();
 
-        let env = StateMachineBuilder::new().with_default_canister_range().build();
+        let env = StateMachineBuilder::new()
+            .with_default_canister_range()
+            .build();
         println!("2");
 
         let mut initial_balances = HashMap::new();
