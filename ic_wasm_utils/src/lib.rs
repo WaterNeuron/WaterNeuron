@@ -171,7 +171,7 @@ fn fetch_remote_wasm(canister: &CanisterName) -> Result<Vec<u8>> {
         .ok_or(Error::UnknownCanister)?;
     let cache_path = WORKSPACE_ROOT
         .join("artifacts")
-        .join(format!("{}_{}.wasm", wasm.name, wasm.ic_version));
+        .join(format!("{}", wasm.name));
 
     if let Ok(data) = std::fs::read(&cache_path) {
         let mut hasher = Sha256::new();
