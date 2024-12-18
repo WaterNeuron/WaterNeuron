@@ -5,7 +5,6 @@ use candid::{Decode, Encode, Nat, Principal};
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
 use ic_management_canister_types::CanisterInstallMode;
-use ic_state_machine_tests::StateMachineBuilder;
 use ic_state_machine_tests::{StateMachine, WasmResult};
 use ic_wasm_utils::{icp_ledger_wasm, ledger_wasm, sns_module_wasm};
 use icp_ledger::{
@@ -42,13 +41,7 @@ impl SnsModuleEnv {
         let minter = PrincipalId::new_user_test_id(DEFAULT_PRINCIPAL_ID);
         let user = PrincipalId::new_user_test_id(42);
 
-        println!("1");
-        // let env = StateMachine::new();
-
-        let env = StateMachineBuilder::new()
-            .with_default_canister_range()
-            .build();
-        println!("2");
+        let env = StateMachine::new();
 
         let mut initial_balances = HashMap::new();
         initial_balances.insert(
