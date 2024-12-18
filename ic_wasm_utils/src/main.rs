@@ -25,18 +25,20 @@ fn main() {
     let mut sums = vec![];
 
     for (name, path) in CANISTER_PATHS.iter() {
-        println!("\n{}", name);
+        println!("Building {}...", name);
         let data = std::fs::read(path).unwrap();
         let mut hasher = Sha256::new();
         hasher.update(&data);
         let sum = format!("{:x}", hasher.finalize());
-        sums.push((path, sum));
-        println!("{} canister compiled", name);
+        sums.push((name, path, sum));
     }
 
-    println!("\n=== Summary ===");
-    for (path, sum) in sums {
-        println!("{:?}: {}", path, sum);
+    println!("\nSHA256 Checksums:");
+    println!("─────────────────────────────────────────────");
+    for (name, path, sum) in sums {
+        println!("{:<12} {}", name, sum);
+        println!("           → {:?}", path);
+        println!();
     }
 
     let commit = String::from_utf8(
@@ -47,5 +49,5 @@ fn main() {
             .stdout,
     )
     .unwrap();
-    println!("\ncommit: {}", commit.trim());
+    println!("Git commit:   {}", commit.trim());
 }
