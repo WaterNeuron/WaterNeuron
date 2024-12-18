@@ -26,7 +26,7 @@ fn main() {
 
     for (name, path) in CANISTER_PATHS.iter() {
         println!("Building {}...", name);
-        let data = std::fs::read(path).unwrap();
+        let data = std::fs::read(path).expect(&format!("Could not read {:?}", path));
         let mut hasher = Sha256::new();
         hasher.update(&data);
         let sum = format!("{:x}", hasher.finalize());
