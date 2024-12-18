@@ -33,7 +33,7 @@ if [[ "$MODE" == "build" ]]; then
     PODMAN_ARGS+=(
         /usr/bin/bash
         -c
-        "cargo canister --release -p water_neuron -p boomerang -p sns_module --bin water_neuron --bin boomerang --bin sns_module"
+        "cargo canisters"
     )
 fi
 
