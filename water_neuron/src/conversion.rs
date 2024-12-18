@@ -45,12 +45,12 @@ pub async fn cancel_withdrawal(
     let icp_due = match read_state(|s| {
         s.neuron_id_to_withdrawal_id
             .get(&neuron_id)
-            .and_then(|withdrawal_id| s.withdrawal_id_to_request.get(&withdrawal_id).cloned())
+            .and_then(|withdrawal_id| s.withdrawal_id_to_request.get(withdrawal_id).cloned())
     }) {
         Some(withdrawal_request) => {
             if withdrawal_request.receiver != caller.into() {
                 return Err(CancelWithdrawalError::BadCaller {
-                    message: format!("Caller is not the owner."),
+                    message: "Caller is not the owner.".to_string(),
                 });
             }
             withdrawal_request.icp_due

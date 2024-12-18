@@ -190,7 +190,7 @@ pub async fn vote_on_nns_proposals() {
 }
 
 async fn vote_on_proposal(proposal_id: ProposalId, vote: bool) {
-    if read_state(|s| s.voted_proposals.get(&proposal_id).is_some()) {
+    if read_state(|s| s.voted_proposals.contains(&proposal_id)) {
         log!(
             INFO,
             "[VoteOnProposal] Already voted {vote} on proposal {}",

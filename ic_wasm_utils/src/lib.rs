@@ -169,9 +169,7 @@ fn fetch_remote_wasm(canister: &CanisterName) -> Result<Vec<u8>> {
     let wasm = DFINITY_CANISTERS
         .get(canister)
         .ok_or(Error::UnknownCanister)?;
-    let cache_path = WORKSPACE_ROOT
-        .join("artifacts")
-        .join(format!("{}", wasm.name));
+    let cache_path = WORKSPACE_ROOT.join("artifacts").join(wasm.name);
 
     if let Ok(data) = std::fs::read(&cache_path) {
         let mut hasher = Sha256::new();
