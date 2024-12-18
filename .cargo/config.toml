@@ -4,15 +4,21 @@ LMDB_H_PATH = "/usr/include/lmdb.h"
 LMDB_OVERRIDE = "/usr/lib/x86_64-linux-gnu/liblmdb.a"
 
 [alias]
-canister = "build --target wasm32-unknown-unknown" 
+canister = "build --target wasm32-unknown-unknown"
+canisters = "run -p ic_wasm_utils"
 
 [target.wasm32-unknown-unknown]
 rustflags = [
-    "-C", "link-args=-z stack-size=3145728",
-    "-C", "linker-plugin-lto",
-    "-C", "opt-level=3",
-    "-C", "debug-assertions=no",
-    "-C", "debuginfo=0",
+    "-C",
+    "link-args=-z stack-size=3145728",
+    "-C",
+    "linker-plugin-lto",
+    "-C",
+    "opt-level=3",
+    "-C",
+    "debug-assertions=no",
+    "-C",
+    "debuginfo=0",
 ]
 
 [toolchain]

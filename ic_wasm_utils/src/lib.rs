@@ -22,7 +22,7 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, Hash, Eq, PartialOrd, Ord, PartialEq)]
-pub enum CanisterName {
+pub enum CanisterName<'a> {
     Ledger,
     NnsGovernance,
     Icrc1Ledger,
@@ -32,7 +32,7 @@ pub enum CanisterName {
     SnsRoot,
     Cmc,
     Icrc1IndexNg,
-    Local(String),
+    Local(&'a str),
 }
 
 struct WasmBinary {
@@ -42,7 +42,7 @@ struct WasmBinary {
 }
 
 lazy_static! {
-    static ref DFINITY_CANISTERS: BTreeMap<CanisterName, WasmBinary> = {
+    static ref DFINITY_CANISTERS: BTreeMap<CanisterName<'static>, WasmBinary> = {
         let mut map = BTreeMap::new();
         map.insert(
             CanisterName::Ledger,
@@ -124,29 +124,41 @@ lazy_static! {
         .expect("Failed to get workspace root")
         .workspace_root
         .into();
-    static ref BOOMERANG_WASM: Vec<u8> = get_wasm(CanisterName::Local("boomerang".into())).unwrap();
+    static ref BOOMERANG_WASM: Vec<u8> =
+        get_wasm(CanisterName::Local("boomerang".into()), true).unwrap();
     static ref WATER_NEURON_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("water_neuron".into())).unwrap();
+        get_wasm(CanisterName::Local("water_neuron".into()), true).unwrap();
     static ref SNS_MODULE_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("sns_module".into())).unwrap();
+        get_wasm(CanisterName::Local("sns_module".into()), true).unwrap();
 }
 
-fn get_wasm(name: CanisterName) -> Result<Vec<u8>> {
+pub fn get_wasm_path(name: CanisterName, self_check: bool) -> Result<PathBuf> {
     match name {
-        CanisterName::Local(name) => build_local_wasm(&name),
+        CanisterName::Local(name) => build_local_wasm(&name, self_check),
         remote => fetch_remote_wasm(&remote),
     }
 }
 
-fn build_local_wasm(name: &str) -> Result<Vec<u8>> {
+fn get_wasm(name: CanisterName, self_check: bool) -> Result<Vec<u8>> {
+    Ok(std::fs::read(get_wasm_path(name, self_check)?)?)
+}
+
+fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
     std::fs::create_dir_all(WORKSPACE_ROOT.join("artifacts"))?;
 
+    let self_check_flag = if self_check {
+        "--features=self_check"
+    } else {
+        ""
+    };
+
     let build_steps = [
-        format!("cargo canister -p {0} --release --bin {0} --locked --features=self_check", name),
-        format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}_final.wasm metadata candid:service -f {0}/{0}.did -v public", name),
-        format!("ic-wasm artifacts/{0}_final.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
-        format!("ic-wasm artifacts/{0}_final.wasm shrink", name),
-        format!("gzip -nf9v artifacts/{0}_final.wasm", name),
+        format!("cargo canister -p {0} --release --bin {0} --locked {1}", name, self_check_flag),
+        format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}_candid.wasm metadata candid:service -f {0}/{0}.did -v public", name),
+        format!("ic-wasm artifacts/{0}_candid.wasm -o artifacts/{0}_candid_git.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
+        format!("ic-wasm artifacts/{0}_candid_git.wasm -o artifacts/{0}_candid_git_shrink.wasm shrink", name),
+        format!("gzip -nf9v artifacts/{0}_candid_git_shrink.wasm", name),
+        format!("mv artifacts/{0}_candid_git_shrink.wasm.gz artifacts/{0}.wasm.gz", name),
     ];
 
     for cmd in &build_steps {
@@ -160,12 +172,10 @@ fn build_local_wasm(name: &str) -> Result<Vec<u8>> {
         }
     }
 
-    Ok(std::fs::read(
-        WORKSPACE_ROOT.join(format!("artifacts/{}_final.wasm.gz", name)),
-    )?)
+    Ok(WORKSPACE_ROOT.join(format!("artifacts/{}.wasm.gz", name)))
 }
 
-fn fetch_remote_wasm(canister: &CanisterName) -> Result<Vec<u8>> {
+fn fetch_remote_wasm(canister: &CanisterName) -> Result<PathBuf> {
     let wasm = DFINITY_CANISTERS
         .get(canister)
         .ok_or(Error::UnknownCanister)?;
@@ -175,7 +185,7 @@ fn fetch_remote_wasm(canister: &CanisterName) -> Result<Vec<u8>> {
         let mut hasher = Sha256::new();
         hasher.update(&data);
         if format!("{:x}", hasher.finalize()) == wasm.hash {
-            return Ok(data);
+            return Ok(cache_path);
         }
     }
 
@@ -194,7 +204,7 @@ fn fetch_remote_wasm(canister: &CanisterName) -> Result<Vec<u8>> {
     }
 
     std::fs::write(&cache_path, &data)?;
-    Ok(data)
+    Ok(cache_path)
 }
 
 pub fn boomerang_wasm() -> Vec<u8> {
@@ -208,23 +218,23 @@ pub fn sns_module_wasm() -> Vec<u8> {
 }
 
 pub fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Ledger).unwrap()
+    get_wasm(CanisterName::Ledger, false).unwrap()
 }
 pub fn governance_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::NnsGovernance).unwrap()
+    get_wasm(CanisterName::NnsGovernance, false).unwrap()
 }
 pub fn ledger_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Icrc1Ledger).unwrap()
+    get_wasm(CanisterName::Icrc1Ledger, false).unwrap()
 }
 pub fn sns_governance_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::SnsGovernance).unwrap()
+    get_wasm(CanisterName::SnsGovernance, false).unwrap()
 }
 pub fn sns_root_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::SnsRoot).unwrap()
+    get_wasm(CanisterName::SnsRoot, false).unwrap()
 }
 pub fn sns_swap_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::SnsSwap).unwrap()
+    get_wasm(CanisterName::SnsSwap, false).unwrap()
 }
 pub fn cmc_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Cmc).unwrap()
+    get_wasm(CanisterName::Cmc, false).unwrap()
 }
