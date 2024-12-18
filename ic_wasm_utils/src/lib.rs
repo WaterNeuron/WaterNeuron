@@ -157,7 +157,7 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
         format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}_candid.wasm metadata candid:service -f {0}/{0}.did -v public", name),
         format!("ic-wasm artifacts/{0}_candid.wasm -o artifacts/{0}_candid_git.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
         format!("ic-wasm artifacts/{0}_candid_git.wasm -o artifacts/{0}_candid_git_shrink.wasm shrink", name),
-        format!("gzip -ncf9v artifacts/{0}_candid_git_shrink.wasm > artifacts/{0}.wasm.gz", name),
+        format!("gzip -c9 artifacts/{0}_candid_git_shrink.wasm > artifacts/{0}.wasm.gz", name),
     ];
 
     for cmd in &build_steps {
