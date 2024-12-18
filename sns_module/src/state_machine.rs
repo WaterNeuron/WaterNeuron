@@ -2,10 +2,11 @@ use crate::state::InitArg as SnsModuleInitArg;
 use crate::E8S;
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
+use ic_base_types::{CanisterId, PrincipalId};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
-use ic_state_machine_tests::{
-    CanisterId, CanisterInstallMode, PrincipalId, StateMachine, WasmResult,
-};
+use ic_management_canister_types::CanisterInstallMode;
+use ic_state_machine_tests::{StateMachine, WasmResult};
+use ic_wasm_utils::{icp_ledger_wasm, ledger_wasm, sns_module_wasm};
 use icp_ledger::{
     AccountIdentifier, LedgerCanisterInitPayload, TimeStamp, Tokens,
     TransferArgs as ICPTransferArgs, TransferError as ICPTransferError,
@@ -16,22 +17,6 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
-
-fn get_wasm(env: &str) -> Vec<u8> {
-    std::fs::read(std::env::var(env).expect(env)).expect(env)
-}
-
-fn sns_module_wasm() -> Vec<u8> {
-    get_wasm("SNS_MODULE_CANISTER_WASM_PATH")
-}
-
-fn ledger_wasm() -> Vec<u8> {
-    get_wasm("IC_ICRC1_LEDGER_WASM_PATH")
-}
-
-fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm("LEDGER_CANISTER_WASM_PATH")
-}
 
 fn assert_reply(result: WasmResult) -> Vec<u8> {
     match result {
@@ -55,6 +40,7 @@ impl SnsModuleEnv {
     fn new() -> Self {
         let minter = PrincipalId::new_user_test_id(DEFAULT_PRINCIPAL_ID);
         let user = PrincipalId::new_user_test_id(42);
+
         let env = StateMachine::new();
 
         let mut initial_balances = HashMap::new();

@@ -33,13 +33,7 @@ if [[ "$MODE" == "build" ]]; then
     PODMAN_ARGS+=(
         /usr/bin/bash
         -c
-        "bazel build ... && \
-            sha256sum bazel-bin/water_neuron/canister_shrink.wasm.gz && \
-            cp bazel-bin/water_neuron/canister_shrink.wasm.gz /artifacts/waterneuron.wasm.gz && \
-            sha256sum bazel-bin/boomerang/canister_shrink.wasm.gz && \
-            cp bazel-bin/boomerang/canister_shrink.wasm.gz /artifacts/boomerang.wasm.gz && \
-            sha256sum bazel-bin/sns_module/canister_shrink.wasm.gz && \
-            cp bazel-bin/sns_module/canister_shrink.wasm.gz /artifacts/sns_module.wasm.gz"
+        "cargo canister --release -p water_neuron -p boomerang -p sns_module --bin water_neuron --bin boomerang --bin sns_module"
     )
 fi
 

@@ -160,7 +160,7 @@ pub fn icrc21_canister_call_consent_message(
             format!("Cancel the withdrawal associated to the neuron id: {}.", arg.id)
         },
         Icrc21Function::ClaimAirdrop =>  {
-            format!("Claim WTN tokens associated to your airdrop allocation. ")
+            "Claim WTN tokens associated to your airdrop allocation.".to_string()
         }
     };
 

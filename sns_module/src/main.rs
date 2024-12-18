@@ -235,15 +235,12 @@ fn http_request(_req: HttpRequest) -> HttpResponse {
     }
 
     match encode_metrics(&mut writer) {
-        Ok(()) => {
-            return HttpResponseBuilder::ok()
-                .header("Content-Type", "text/plain; version=0.0.4")
-                .with_body_and_content_length(writer.into_inner())
-                .build()
-        }
+        Ok(()) => HttpResponseBuilder::ok()
+            .header("Content-Type", "text/plain; version=0.0.4")
+            .with_body_and_content_length(writer.into_inner())
+            .build(),
         Err(err) => {
-            return HttpResponseBuilder::server_error(format!("Failed to encode metrics: {}", err))
-                .build();
+            HttpResponseBuilder::server_error(format!("Failed to encode metrics: {}", err)).build()
         }
     }
 }

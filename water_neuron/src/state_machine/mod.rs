@@ -44,57 +44,20 @@ use ic_state_machine_tests::{
     CanisterId, CanisterInstallMode, ErrorCode::CanisterCalledTrap, PrincipalId, StateMachine,
     UserError, WasmResult,
 };
+use ic_wasm_utils::{
+    cmc_wasm, governance_wasm, icp_ledger_wasm, ledger_wasm, sns_governance_wasm, sns_root_wasm,
+    sns_swap_wasm, water_neuron_wasm,
+};
 use icp_ledger::{AccountIdentifier, LedgerCanisterInitPayload, Tokens};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use icrc_ledger_types::icrc2::approve::{ApproveArgs, ApproveError};
-use lazy_static::lazy_static;
 use prost::Message;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
-
-lazy_static! {
-    static ref CARGO_BUILD_RESULT: Result<(), std::io::Error> = cargo_build();
-}
-
-fn get_wasm(env: &str) -> Vec<u8> {
-    std::fs::read(std::env::var(env).unwrap()).unwrap()
-}
-
-fn water_neuron_wasm() -> Vec<u8> {
-    get_wasm("WATER_NEURON_CANISTER_WASM_PATH")
-}
-
-fn ledger_wasm() -> Vec<u8> {
-    get_wasm("IC_ICRC1_LEDGER_WASM_PATH")
-}
-
-fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm("LEDGER_CANISTER_WASM_PATH")
-}
-
-fn cmc_wasm() -> Vec<u8> {
-    get_wasm("CYCLES_MINTING_CANISTER_WASM_PATH")
-}
-
-fn governance_wasm() -> Vec<u8> {
-    get_wasm("GOVERNANCE_CANISTER_WASM_PATH")
-}
-
-fn sns_root() -> Vec<u8> {
-    get_wasm("SNS_ROOT_CANISTER_WASM_PATH")
-}
-
-fn sns_governance() -> Vec<u8> {
-    get_wasm("SNS_GOVERNANCE_CANISTER_WASM_PATH")
-}
-
-fn sns_swap() -> Vec<u8> {
-    get_wasm("SNS_SWAP_CANISTER_WASM_PATH")
-}
 
 pub fn sha256_hash(data: Vec<u8>) -> Vec<u8> {
     let mut hasher = Sha256::new();
@@ -376,7 +339,6 @@ impl SnsTestsInitPayloadBuilder {
                 dissolve_delay_interval_seconds: 10_001,
             }),
             nns_proposal_id: Some(10),
-            neurons_fund_participants: None,
             neurons_fund_participation: Some(false),
             neurons_fund_participation_constraints: None,
             ..Default::default()
@@ -480,10 +442,10 @@ fn setup_sns_canisters(env: &StateMachine, neurons: Vec<SnsNeuron>) -> SNSCanist
     );
 
     let deployed_version = Version {
-        root_wasm_hash: sha256_hash(sns_root()),
-        governance_wasm_hash: sha256_hash(sns_governance()),
+        root_wasm_hash: sha256_hash(sns_root_wasm()),
+        governance_wasm_hash: sha256_hash(sns_governance_wasm()),
         ledger_wasm_hash: sha256_hash(ledger_wasm()),
-        swap_wasm_hash: sha256_hash(sns_swap()),
+        swap_wasm_hash: sha256_hash(sns_swap_wasm()),
         archive_wasm_hash: vec![], // tests don't need it for now so we don't compile it.
         index_wasm_hash: vec![],
     };
@@ -492,19 +454,19 @@ fn setup_sns_canisters(env: &StateMachine, neurons: Vec<SnsNeuron>) -> SNSCanist
 
     env.install_existing_canister(
         governance_canister_id,
-        sns_governance(),
+        sns_governance_wasm(),
         Encode!(&payloads.governance).unwrap(),
     )
     .unwrap();
     env.install_existing_canister(
         root_canister_id,
-        sns_root(),
+        sns_root_wasm(),
         Encode!(&payloads.root).unwrap(),
     )
     .unwrap();
     env.install_existing_canister(
         swap_canister_id,
-        sns_swap(),
+        sns_swap_wasm(),
         Encode!(&payloads.swap).unwrap(),
     )
     .unwrap();
@@ -518,30 +480,6 @@ fn setup_sns_canisters(env: &StateMachine, neurons: Vec<SnsNeuron>) -> SNSCanist
         governance: governance_canister_id,
         ledger: ledger_canister_id,
     }
-}
-
-fn cargo_build() -> Result<(), std::io::Error> {
-    std::process::Command::new("cargo")
-        .current_dir("../")
-        .args(&[
-            "build",
-            "--target=wasm32-unknown-unknown",
-            "--release",
-            "--locked",
-            "--features=self_check",
-        ])
-        .spawn()
-        .unwrap()
-        .wait()
-        .unwrap();
-    std::process::Command::new("gzip")
-        .args(&["-nf9v", "water-neuron.wasm"])
-        .current_dir("../target/wasm32-unknown-unknown/release")
-        .spawn()
-        .unwrap()
-        .wait()
-        .unwrap();
-    Ok(())
 }
 
 #[derive(Debug)]

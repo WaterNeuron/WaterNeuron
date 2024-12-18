@@ -271,7 +271,7 @@ impl State {
     }
 
     pub fn get_withdrawal_status(&self, withdrawal_id: WithdrawalId) -> WithdrawalStatus {
-        if self.withdrawal_to_split.get(&withdrawal_id).is_some() {
+        if self.withdrawal_to_split.contains(&withdrawal_id) {
             return WithdrawalStatus::WaitingToSplitNeuron;
         }
 
@@ -289,7 +289,7 @@ impl State {
             };
         }
 
-        if self.withdrawal_to_disburse.get(&withdrawal_id).is_some() {
+        if self.withdrawal_to_disburse.contains(&withdrawal_id) {
             return WithdrawalStatus::WaitingDissolvement {
                 neuron_id: self
                     .get_withdrawal_request(withdrawal_id)
@@ -305,7 +305,7 @@ impl State {
             };
         }
 
-        if self.withdrawal_cancelled.get(&withdrawal_id).is_some() {
+        if self.withdrawal_cancelled.contains(&withdrawal_id) {
             return WithdrawalStatus::Cancelled;
         }
 

@@ -1,4 +1,5 @@
 use candid::{Encode, Nat, Principal};
+use ic_base_types::{CanisterId, PrincipalId};
 use ic_icrc1_ledger::{
     ArchiveOptions, InitArgs as LedgerInitArgs, InitArgsBuilder as LedgerInitArgsBuilder,
     LedgerArgument,
@@ -10,49 +11,14 @@ use ic_sns_governance::pb::v1::Neuron;
 use ic_sns_init::SnsCanisterInitPayloads;
 use ic_sns_root::pb::v1::SnsRootCanister;
 use ic_sns_swap::pb::v1::{Init as SwapInit, NeuronBasketConstructionParameters};
-use ic_state_machine_tests::{CanisterId, PrincipalId, StateMachine, WasmResult};
+use ic_state_machine_tests::{StateMachine, WasmResult};
+use ic_wasm_utils::{ledger_wasm, sns_governance_wasm, sns_root_wasm, sns_swap_wasm};
 use icp_ledger::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 
 const NEURON_LEDGER_FEE: u64 = 1_000_000;
-
-pub fn get_wasm(env: &str) -> Vec<u8> {
-    std::fs::read(std::env::var(env).unwrap()).unwrap()
-}
-
-pub fn boomerang_wasm() -> Vec<u8> {
-    get_wasm("BOOMERANG_CANISTER_WASM_PATH")
-}
-
-pub fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm("LEDGER_CANISTER_WASM_PATH")
-}
-
-pub fn governance_wasm() -> Vec<u8> {
-    get_wasm("GOVERNANCE_CANISTER_WASM_PATH")
-}
-
-pub fn water_neuron_wasm() -> Vec<u8> {
-    get_wasm("WATER_NEURON_CANISTER_WASM_PATH")
-}
-
-pub fn ledger_wasm() -> Vec<u8> {
-    get_wasm("IC_ICRC1_LEDGER_WASM_PATH")
-}
-
-pub fn sns_governance() -> Vec<u8> {
-    get_wasm("SNS_GOVERNANCE_CANISTER_WASM_PATH")
-}
-
-pub fn sns_root() -> Vec<u8> {
-    get_wasm("SNS_ROOT_CANISTER_WASM_PATH")
-}
-
-pub fn sns_swap() -> Vec<u8> {
-    get_wasm("SNS_SWAP_CANISTER_WASM_PATH")
-}
 
 /// Builder to help create the initial payloads for the SNS canisters in tests.
 pub struct SnsTestsInitPayloadBuilder {
@@ -205,7 +171,6 @@ impl SnsTestsInitPayloadBuilder {
                 dissolve_delay_interval_seconds: 10_001,
             }),
             nns_proposal_id: Some(10),
-            neurons_fund_participants: None,
             neurons_fund_participation: Some(false),
             neurons_fund_participation_constraints: None,
             ..Default::default()
@@ -309,10 +274,10 @@ pub fn setup_sns_canisters(env: &StateMachine, neurons: Vec<Neuron>) -> SnsCanis
     );
 
     let deployed_version = Version {
-        root_wasm_hash: sha256_hash(sns_root()),
-        governance_wasm_hash: sha256_hash(sns_governance()),
+        root_wasm_hash: sha256_hash(sns_root_wasm()),
+        governance_wasm_hash: sha256_hash(sns_governance_wasm()),
         ledger_wasm_hash: sha256_hash(ledger_wasm()),
-        swap_wasm_hash: sha256_hash(sns_swap()),
+        swap_wasm_hash: sha256_hash(sns_swap_wasm()),
         archive_wasm_hash: vec![], // tests don't need it for now so we don't compile it.
         index_wasm_hash: vec![],
     };
@@ -321,19 +286,19 @@ pub fn setup_sns_canisters(env: &StateMachine, neurons: Vec<Neuron>) -> SnsCanis
 
     env.install_existing_canister(
         governance_canister_id,
-        sns_governance(),
+        sns_governance_wasm(),
         Encode!(&payloads.governance).unwrap(),
     )
     .unwrap();
     env.install_existing_canister(
         root_canister_id,
-        sns_root(),
+        sns_root_wasm(),
         Encode!(&payloads.root).unwrap(),
     )
     .unwrap();
     env.install_existing_canister(
         swap_canister_id,
-        sns_swap(),
+        sns_swap_wasm(),
         Encode!(&payloads.swap).unwrap(),
     )
     .unwrap();

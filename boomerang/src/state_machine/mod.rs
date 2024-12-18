@@ -1,49 +1,31 @@
 use crate::{BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess, E8S, TRANSFER_FEE};
 use candid::{Decode, Encode, Nat, Principal};
+use ic_base_types::{CanisterId, PrincipalId};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
+use ic_management_canister_types::CanisterInstallMode;
 use ic_nns_constants::GOVERNANCE_CANISTER_ID;
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::pb::v1::neuron::DissolveState;
 use ic_sns_governance::pb::v1::{Neuron, NeuronId, NeuronPermission, NeuronPermissionType};
-use ic_state_machine_tests::{CanisterId, CanisterInstallMode, PrincipalId, StateMachine};
+use ic_state_machine_tests::StateMachine;
+use ic_wasm_utils::{
+    boomerang_wasm, governance_wasm, icp_ledger_wasm, ledger_wasm, water_neuron_wasm,
+};
+use prost::Message;
+
+use utils::{assert_reply, compute_neuron_staking_subaccount_bytes, setup_sns_canisters};
+
 use icp_ledger::{
     AccountIdentifier, LedgerCanisterInitPayload, Memo, Subaccount, Tokens, TransferArgs,
     TransferError,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError as IcrcTransferError};
-use lazy_static::lazy_static;
-use prost::Message;
 use std::collections::HashMap;
-use std::process::Command;
-use utils::{
-    assert_reply, boomerang_wasm, compute_neuron_staking_subaccount_bytes, governance_wasm,
-    icp_ledger_wasm, ledger_wasm, setup_sns_canisters, water_neuron_wasm,
-};
 use water_neuron::{InitArg, LiquidArg, ONE_MONTH_SECONDS};
 
 pub mod tests;
 pub mod utils;
-
-lazy_static! {
-    static ref CARGO_BUILD_RESULT: Result<(), std::io::Error> = cargo_build();
-}
-
-fn cargo_build() -> Result<(), std::io::Error> {
-    Command::new("cargo")
-        .args(&[
-            "build",
-            "--target",
-            "wasm32-unknown-unknown",
-            "--release",
-            "-p",
-            "boomerang",
-            "--locked",
-        ])
-        .spawn()?
-        .wait()?;
-    Ok(())
-}
 
 #[derive(Debug)]
 pub struct BoomerangSetup {
@@ -84,6 +66,7 @@ impl BoomerangSetup {
             neuron_management_voting_period_seconds: Some(60 * 60 * 48), // 48 hours
             ..Default::default()
         };
+
         let _governance_id = env
             .install_canister(governance_wasm(), arg.encode_to_vec(), None)
             .unwrap();

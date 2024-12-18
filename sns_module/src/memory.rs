@@ -134,7 +134,7 @@ pub fn set_state(state: State) {
 
 pub fn add_in_flight_wtn(amount: u64) {
     IN_FLIGHT_WTN.with(|b| {
-        let balance = b.borrow().get().clone();
+        let balance = *b.borrow().get();
         let new_balance = balance.checked_add(amount).unwrap();
         b.borrow_mut().set(new_balance).unwrap();
     });
@@ -142,14 +142,14 @@ pub fn add_in_flight_wtn(amount: u64) {
 
 pub fn remove_in_flight_wtn(amount: u64) {
     IN_FLIGHT_WTN.with(|b| {
-        let balance = b.borrow().get().clone();
+        let balance = *b.borrow().get();
         let new_balance = balance.checked_sub(amount).unwrap();
         b.borrow_mut().set(new_balance).unwrap();
     });
 }
 
 pub fn get_in_flight_wtn() -> u64 {
-    IN_FLIGHT_WTN.with(|m| m.borrow().get().clone())
+    IN_FLIGHT_WTN.with(|m| *m.borrow().get())
 }
 
 #[test]

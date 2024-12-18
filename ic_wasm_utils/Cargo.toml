@@ -1,0 +1,24 @@
+[package]
+name = "ic_wasm_utils"
+version.workspace = true
+edition.workspace = true
+description = "Utility for fetching and compiling canisters"
+
+[[bin]]
+name = "ic-wasm-utils"
+path = "src/main.rs"
+
+[lib]
+name = "ic_wasm_utils"
+path = "src/lib.rs"
+
+[dependencies]
+thiserror.workspace = true
+reqwest.workspace = true
+lazy_static.workspace = true
+serde.workspace = true
+toml.workspace = true
+sha2.workspace = true
+dirs.workspace = true
+once_cell.workspace = true
+cargo_metadata.workspace = true
