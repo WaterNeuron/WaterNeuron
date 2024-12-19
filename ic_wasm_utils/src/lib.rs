@@ -124,17 +124,16 @@ lazy_static! {
         .expect("Failed to get workspace root")
         .workspace_root
         .into();
-    static ref BOOMERANG_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("boomerang".into()), true).unwrap();
+    static ref BOOMERANG_WASM: Vec<u8> = get_wasm(CanisterName::Local("boomerang"), true).unwrap();
     static ref WATER_NEURON_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("water_neuron".into()), true).unwrap();
+        get_wasm(CanisterName::Local("water_neuron"), true).unwrap();
     static ref SNS_MODULE_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("sns_module".into()), true).unwrap();
+        get_wasm(CanisterName::Local("sns_module"), true).unwrap();
 }
 
 pub fn get_wasm_path(name: CanisterName, self_check: bool) -> Result<PathBuf> {
     match name {
-        CanisterName::Local(name) => build_local_wasm(&name, self_check),
+        CanisterName::Local(name) => build_local_wasm(name, self_check),
         remote => fetch_remote_wasm(&remote),
     }
 }
