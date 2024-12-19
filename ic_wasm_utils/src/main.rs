@@ -15,6 +15,10 @@ lazy_static! {
             get_wasm_path(CanisterName::Local("water_neuron".into()), false).unwrap()
         ),
         (
+            "water_neuron_self_check".into(),
+            get_wasm_path(CanisterName::Local("water_neuron".into()), true).unwrap()
+        ),
+        (
             "sns_module".into(),
             get_wasm_path(CanisterName::Local("sns_module".into()), false).unwrap()
         ),
