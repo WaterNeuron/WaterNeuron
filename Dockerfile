@@ -5,21 +5,18 @@ ENV TZ=UTC
 
 # Install packages
 RUN apt -y update && \
-    apt -yqq install \
-        ca-certificates \
+    apt -yqq install --no-install-recommends \
+        # ca-certificates \
         curl \
         git \
         build-essential \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
-# RUN echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
 RUN mkdir /waterneuron
 
 USER ubuntu
-
-ENV PATH=/home/ubuntu/.cargo/bin:/home/ubuntu/.local/bin:$PATH
+ENV PATH=/home/ubuntu/.cargo/bin:$PATH
 
 ARG RUST_VERSION=1.82.0
 RUN curl --fail https://sh.rustup.rs -sSf \
