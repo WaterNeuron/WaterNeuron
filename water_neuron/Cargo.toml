@@ -12,9 +12,7 @@ crate-type = ["cdylib", "rlib"]
 name = "water_neuron"
 path = "src/main.rs"
 
-
 [features]
-default = []
 self_check = []
 
 [dependencies]

@@ -124,17 +124,16 @@ lazy_static! {
         .expect("Failed to get workspace root")
         .workspace_root
         .into();
-    static ref BOOMERANG_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("boomerang".into()), true).unwrap();
+    static ref BOOMERANG_WASM: Vec<u8> = get_wasm(CanisterName::Local("boomerang"), true).unwrap();
     static ref WATER_NEURON_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("water_neuron".into()), true).unwrap();
+        get_wasm(CanisterName::Local("water_neuron"), true).unwrap();
     static ref SNS_MODULE_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("sns_module".into()), true).unwrap();
+        get_wasm(CanisterName::Local("sns_module"), true).unwrap();
 }
 
 pub fn get_wasm_path(name: CanisterName, self_check: bool) -> Result<PathBuf> {
     match name {
-        CanisterName::Local(name) => build_local_wasm(&name, self_check),
+        CanisterName::Local(name) => build_local_wasm(name, self_check),
         remote => fetch_remote_wasm(&remote),
     }
 }
@@ -146,19 +145,13 @@ fn get_wasm(name: CanisterName, self_check: bool) -> Result<Vec<u8>> {
 fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
     std::fs::create_dir_all(WORKSPACE_ROOT.join("artifacts"))?;
 
-    let self_check_flag = if self_check {
-        "--features=self_check"
-    } else {
-        ""
-    };
-
     let build_steps = [
-        format!("cargo canister -p {0} --release --bin {0} --locked {1}", name, self_check_flag),
-        format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}_candid.wasm metadata candid:service -f {0}/{0}.did -v public", name),
-        format!("ic-wasm artifacts/{0}_candid.wasm -o artifacts/{0}_candid_git.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
-        format!("ic-wasm artifacts/{0}_candid_git.wasm -o artifacts/{0}_candid_git_shrink.wasm shrink", name),
-        format!("gzip -nf9v artifacts/{0}_candid_git_shrink.wasm", name),
-        format!("mv artifacts/{0}_candid_git_shrink.wasm.gz artifacts/{0}.wasm.gz", name),
+        format!("cargo canister -p {0} --release --bin {0} --locked {1}", name, if self_check { "--features=self_check"} else {""}),
+        format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}.wasm metadata candid:service -f {0}/{0}.did -v public", name),
+        format!("ic-wasm artifacts/{0}.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
+        format!("ic-wasm artifacts/{0}.wasm shrink", name),
+        format!("gzip -cnf9 artifacts/{0}.wasm > artifacts/{0}{1}.wasm.gz", name, if self_check { "_self_check" } else { "" }),
+        format!("rm artifacts/{0}.wasm", name),
     ];
 
     for cmd in &build_steps {
@@ -172,7 +165,11 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
         }
     }
 
-    Ok(WORKSPACE_ROOT.join(format!("artifacts/{}.wasm.gz", name)))
+    Ok(WORKSPACE_ROOT.join(format!(
+        "artifacts/{}{}.wasm.gz",
+        name,
+        if self_check { "_self_check" } else { "" }
+    )))
 }
 
 fn fetch_remote_wasm(canister: &CanisterName) -> Result<PathBuf> {

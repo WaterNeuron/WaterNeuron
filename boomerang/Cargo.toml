@@ -12,10 +12,6 @@ crate-type = ["cdylib", "rlib"]
 name = "boomerang"
 path = "src/main.rs"
 
-[features]
-default = []
-self_check = []
-
 [dependencies]
 candid.workspace = true
 ic-canister-log.workspace = true
