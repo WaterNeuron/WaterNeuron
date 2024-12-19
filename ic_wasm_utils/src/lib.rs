@@ -38,7 +38,6 @@ pub enum CanisterName<'a> {
 struct WasmBinary {
     hash: &'static str,
     ic_version: &'static str,
-
     name: &'static str,
 }
 
@@ -119,7 +118,7 @@ lazy_static! {
         );
         map
     };
-    pub static ref WORKSPACE_ROOT: PathBuf = cargo_metadata::MetadataCommand::new()
+    static ref WORKSPACE_ROOT: PathBuf = cargo_metadata::MetadataCommand::new()
         .no_deps()
         .exec()
         .expect("Failed to get workspace root")
