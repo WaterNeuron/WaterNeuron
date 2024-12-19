@@ -25,9 +25,18 @@ lazy_static! {
     ];
 }
 
+fn check_self_check(path: &PathBuf) -> bool {
+    let output = Command::new("wasm-objdump")
+        .args(["-x", path.to_str().unwrap()])
+        .output()
+        .unwrap();
+    String::from_utf8(output.stdout)
+        .unwrap()
+        .contains("canister_query self_check")
+}
+
 fn main() {
     let mut sums = vec![];
-
     for (name, path) in CANISTER_PATHS.iter() {
         println!("Building {}...", name);
         let data = std::fs::read(path).expect(&format!("Could not read {:?}", path));
@@ -39,9 +48,16 @@ fn main() {
 
     println!("\nSHA256 Checksums:");
     println!("─────────────────────────────────────────────");
-    for (name, path, sum) in sums {
+    for (name, path, sum) in &sums {
         println!("{:<12} {}", name, sum);
         println!("           → {:?}", path);
+        if name.contains("water_neuron") {
+            let has_self_check = check_self_check(path);
+            println!(
+                "           self_check: {}",
+                if has_self_check { "✓" } else { "✗" }
+            );
+        }
         println!();
     }
 

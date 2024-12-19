@@ -109,9 +109,6 @@ pub fn self_canister_id() -> Principal {
     Principal::anonymous()
 }
 
-#[cfg(feature = "self_check")]
-pub fn self_check() {}
-
 #[derive(Deserialize, CandidType)]
 pub enum LiquidArg {
     Init(InitArg),

@@ -153,6 +153,7 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
         format!("ic-wasm artifacts/{0}.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
         format!("ic-wasm artifacts/{0}.wasm shrink", name),
         format!("gzip -cnf9 artifacts/{0}.wasm > artifacts/{0}{1}.wasm.gz", name, if self_check { "_self_check" } else { "" }),
+        format!("rm artifacts/{0}.wasm", name),
     ];
 
     for cmd in &build_steps {
