@@ -1,4 +1,4 @@
-use ic_wasm_utils::{get_wasm_path, CanisterName};
+use ic_wasm_utils::{get_wasm_path, CanisterName, WORKSPACE_ROOT};
 use lazy_static::lazy_static;
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
@@ -26,13 +26,21 @@ lazy_static! {
 }
 
 fn check_self_check(path: &PathBuf) -> bool {
-    let output = Command::new("wasm-objdump")
-        .args(["-x", path.to_str().unwrap()])
-        .output()
+    let wasm_path = path.to_str().unwrap().strip_suffix(".gz").unwrap();
+
+    let unzip_cmd = format!("gunzip -fk {}", path.to_str().unwrap());
+    Command::new("sh")
+        .args(["-c", &unzip_cmd])
+        .status()
         .unwrap();
-    String::from_utf8(output.stdout)
-        .unwrap()
-        .contains("canister_query self_check")
+
+    let dump_cmd = format!("wasm-objdump -x {}", wasm_path);
+    let output = Command::new("sh").args(["-c", &dump_cmd]).output().unwrap();
+
+    output
+        .stdout
+        .windows("canister_query self_check".len())
+        .any(|window| window == "canister_query self_check".as_bytes())
 }
 
 fn main() {

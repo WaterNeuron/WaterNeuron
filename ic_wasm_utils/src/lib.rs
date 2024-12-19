@@ -119,7 +119,7 @@ lazy_static! {
         );
         map
     };
-    static ref WORKSPACE_ROOT: PathBuf = cargo_metadata::MetadataCommand::new()
+    pub static ref WORKSPACE_ROOT: PathBuf = cargo_metadata::MetadataCommand::new()
         .no_deps()
         .exec()
         .expect("Failed to get workspace root")
