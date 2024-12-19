@@ -37,6 +37,7 @@ where
 const PRINCIPAL_TO_ICP_ID: MemoryId = MemoryId::new(0);
 const PRINCIPAL_TO_WTN_ID: MemoryId = MemoryId::new(1);
 const IN_FLIGHT_WTN_ID: MemoryId = MemoryId::new(2);
+const IS_WTN_CLAIMABLE_ID: MemoryId = MemoryId::new(3);
 
 const METADATA_PAGES: u64 = 16;
 
@@ -73,6 +74,11 @@ thread_local! {
     static IN_FLIGHT_WTN: RefCell<StableCell<u64, VM>> =
         MEMORY_MANAGER.with(|mm| {
         RefCell::new(StableCell::init(mm.borrow().get(IN_FLIGHT_WTN_ID), 0_u64).expect("failed to initialize the cell"))
+    });
+
+    static IS_WTN_CLAIMABLE: RefCell<StableCell<bool, VM>> =
+        MEMORY_MANAGER.with(|mm| {
+        RefCell::new(StableCell::init(mm.borrow().get(IS_WTN_CLAIMABLE_ID), false).expect("failed to initialize the cell"))
     });
 }
 
@@ -132,6 +138,16 @@ pub fn set_state(state: State) {
     });
 }
 
+pub fn set_is_wtn_claimable(value: bool) {
+    IS_WTN_CLAIMABLE.with(|b| {
+        b.borrow_mut().set(value).unwrap();
+    });
+}
+
+pub fn is_wtn_claimable() -> bool {
+    IS_WTN_CLAIMABLE.with(|b| *b.borrow_mut().get())
+}
+
 pub fn add_in_flight_wtn(amount: u64) {
     IN_FLIGHT_WTN.with(|b| {
         let balance = *b.borrow().get();
@@ -183,4 +199,13 @@ fn should_apply_algebra() {
     assert_eq!(get_in_flight_wtn(), 200);
     remove_in_flight_wtn(200);
     assert_eq!(get_in_flight_wtn(), 00);
+}
+
+#[test]
+fn is_claimable_flag() {
+    assert!(!is_wtn_claimable());
+    set_is_wtn_claimable(true);
+    assert!(is_wtn_claimable());
+    set_is_wtn_claimable(false);
+    assert!(!is_wtn_claimable());
 }
