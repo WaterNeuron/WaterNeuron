@@ -18,58 +18,31 @@ sudo apt-get install podman git
 ./run.sh
 ```
 
-## Verify
-### [Proposal#9](https://dashboard.internetcomputer.org/sns/jmod6-4iaaa-aaaaq-aadkq-cai/proposal/9)
+## Dev
 
-Spin up the local container
+You need the following packages to run the system tests.
+
 ```bash
-./run.sh
-```
-
-Verify the proposal
-```bash
-bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=d81ded9adbee1475f8f63b125d23eec861c9d163 -- \
-    --proposal-id 9 \
-    --wasm-hash 18f89aafc01d87a5cb62be8f189e80f9810126e4603a820226436fe537039510 \
-    --git-commit d81ded9adbee1475f8f63b125d23eec861c9d163 \
-    --target-canister tsbvt-pyaaa-aaaar-qafva-cai \
-    --canister water-neuron-canister \
-    --upgrade-args '(LiquidArg)' '(variant{Init = record {wtn_ledger_id=principal "jcmow-hyaaa-aaaaq-aadlq-cai"; wtn_governance_id=principal "jfnic-kaaaa-aaaaq-aadla-cai"; nicp_ledger_id=principal "buwm7-7yaaa-aaaar-qagva-cai"}})'
-
-```
-
-### [Proposal#27](https://dashboard.internetcomputer.org/sns/jmod6-4iaaa-aaaaq-aadkq-cai/proposal/27)
-
-Spin up the local container
-```bash
-./run.sh
-```
-
-Verify the proposal
-```bash
-bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=a8aad61870061619b14d61f3f9f1bb279dd03047 -- \
-    --proposal-id 27 \
-    --wasm-hash e6e2b66179372f8806fc9e18f13c0b905285c0b07af455f8ecaedbd621f62d83 \
-    --git-commit a8aad61870061619b14d61f3f9f1bb279dd03047 \
-    --target-canister tsbvt-pyaaa-aaaar-qafva-cai \
-    --canister water-neuron-canister \
-    --upgrade-args '(LiquidArg)' '(variant{Upgrade})'
-```
-
-### [Proposal#29](https://dashboard.internetcomputer.org/sns/jmod6-4iaaa-aaaaq-aadkq-cai/proposal/29)
-
-Spin up the local container
-```bash
-./run.sh
-```
-
-Verify the proposal
-```bash
-bazel run //scripts/verify:bin --action_env=STABLE_GIT_COMMIT=f5aa7c12166c94d0f652fea2ee4527040c4b059f -- \
-    --proposal-id 29 \
-    --wasm-hash ec46abad688b9385a64bd70772af8c65b615e486b8bc0117ac59faa3139cf463 \
-    --git-commit f5aa7c12166c94d0f652fea2ee4527040c4b059f \
-    --target-canister tsbvt-pyaaa-aaaar-qafva-cai \
-    --canister water-neuron-canister \
-    --upgrade-args '(LiquidArg)' '(variant{Upgrade})'
-```
+sudo apt udpate && sudo apt install \
+        curl \
+        git \
+        gcc \
+        lld \
+        sudo \
+        wget \
+        tree \
+        cmake \
+        wabt \
+        build-essential \
+        pkg-config \
+        libssl-dev \
+        libunwind-dev \
+        libusb-1.0-0-dev \
+        libsqlite3-dev \
+        zlib1g-dev \
+        libclang-18-dev \
+        protobuf-compiler \
+        llvm \
+        liblmdb-dev \
+        liblzma-dev
+``
