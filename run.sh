@@ -3,10 +3,6 @@
 set -euxo pipefail
 
 MODE="dev"
-ARTIFACTS_DIR="$(pwd)/artifacts"
-
-rm -rf "$ARTIFACTS_DIR"
-mkdir -p "$ARTIFACTS_DIR"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -25,7 +21,6 @@ PODMAN_ARGS=(
     -w /waterneuron
     --userns=keep-id
     --mount type=bind,source=$(pwd),target=/waterneuron
-    --mount type=bind,source=${ARTIFACTS_DIR},target=/artifacts
     "$PODMAN_HASH"
 )
 
