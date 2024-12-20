@@ -14,12 +14,13 @@ RUN apt -y update && \
         && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /waterneuron
+WORKDIR /waterneuron
 
 USER ubuntu
 
 ENV PATH=/home/ubuntu/.cargo/bin:$PATH
 
-ARG RUST_VERSION=1.82.0
+ARG RUST_VERSION=1.83.0
 RUN curl --fail https://sh.rustup.rs -sSf \
     | sh -s -- -y --default-toolchain ${RUST_VERSION}-x86_64-unknown-linux-gnu --no-modify-path && \
     rustup default ${RUST_VERSION}-x86_64-unknown-linux-gnu && \
@@ -28,4 +29,4 @@ RUN curl --fail https://sh.rustup.rs -sSf \
 
 RUN cargo install ic-wasm --version 0.9.1
 
-CMD ["/usr/bin/bash", "cargo", "canisters"]
+CMD ["/usr/bin/bash"]

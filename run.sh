@@ -13,12 +13,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-PODMAN_HASH=$(podman build -q -f Dockerfile .)
+PODMAN_HASH=$(podman build -q -f Containerfile .)
 
 PODMAN_ARGS=(
     -it
     --rm
-    -w /waterneuron
     --userns=keep-id
     --mount type=bind,source=$(pwd),target=/waterneuron
     "$PODMAN_HASH"
