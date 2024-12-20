@@ -6,16 +6,17 @@ ENV TZ=UTC
 # Install packages
 RUN apt -y update && \
     apt -yqq install --no-install-recommends \
-        # ca-certificates \
         curl \
+        ca-certificates \
         git \
-        build-essential \
+        g++ \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /waterneuron
 
 USER ubuntu
+
 ENV PATH=/home/ubuntu/.cargo/bin:$PATH
 
 ARG RUST_VERSION=1.82.0
@@ -27,4 +28,4 @@ RUN curl --fail https://sh.rustup.rs -sSf \
 
 RUN cargo install ic-wasm --version 0.9.1
 
-CMD ["/usr/bin/bash"]
+CMD ["/usr/bin/bash", "cargo", "canisters"]

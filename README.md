@@ -8,14 +8,9 @@ Liquid staking protocol on the Internet Computer
 sudo apt-get install podman git
 ```
 
--   To test the canister hash of the current commit
+-   To build canisters at the current commit
 ```bash
 ./run.sh --build
-```
-
--   To dev
-```bash
-./run.sh
 ```
 
 ## Dev
