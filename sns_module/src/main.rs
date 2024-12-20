@@ -13,7 +13,7 @@ use sns_module::memory::{
 use sns_module::state::{mutate_state, read_state, replace_state, InitArg, State};
 use sns_module::{
     balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
-    transfer, Status, E8S, MIN_DEPOSIT_AMOUNT, NANOS,
+    transfer, Status, DEV_WALLET, E8S, MIN_DEPOSIT_AMOUNT, NANOS,
 };
 
 fn main() {}
@@ -112,10 +112,7 @@ async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, Strin
 
 #[update]
 async fn distribute_tokens() -> Result<u64, String> {
-    assert_eq!(
-        ic_cdk::caller(),
-        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
-    );
+    assert_eq!(ic_cdk::caller(), Principal::from_text(DEV_WALLET).unwrap());
     if !is_distribution_available() {
         return Err("Distribution not available".to_string());
     }
@@ -154,7 +151,7 @@ async fn distribute_tokens() -> Result<u64, String> {
 
 #[update]
 fn set_is_wtn_claimable(val: bool) -> Result<(), String> {
-    if ic_cdk::caller() != Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap() {
+    if ic_cdk::caller() != Principal::from_text(DEV_WALLET).unwrap() {
         return Err("caller not allowed".to_string());
     }
     sns_module::memory::set_is_wtn_claimable(val);
@@ -163,10 +160,7 @@ fn set_is_wtn_claimable(val: bool) -> Result<(), String> {
 
 #[update]
 async fn stake_icp(amount: u64) -> Result<u64, String> {
-    assert_eq!(
-        ic_cdk::caller(),
-        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
-    );
+    assert_eq!(ic_cdk::caller(), Principal::from_text(DEV_WALLET).unwrap());
     let icp_ledger = read_state(|s| s.icp_ledger_id);
     match transfer(
         None,
