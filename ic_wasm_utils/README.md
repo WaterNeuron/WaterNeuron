@@ -1,4 +1,6 @@
+# IC WASM UTILS
 
+## Canisters
 Let's compile `sns_module` from the command line.
 
 !! we do not have the canister profile enabled
@@ -21,3 +23,21 @@ ic-wasm artefacts/sns_module_with_candid_and_git.wasm -o artefacts/sns_module_ca
 ```
 gzip -n --force artefacts/sns_module_candid_git_shrink.wasm
 ```
+
+## Self-check
+
+When compiling the canister for mainnet the feature flag should not be present.
+
+```bash
+#[cfg(feature = "self_check")]
+#[query]
+pub fn self_check() {}
+```
+
+```bash
+$ wasm-objdump water_neuron_self_check.wasm -x | rg "canister_query self_check"
+ - func[4096] sig=0 <canister_query self_check>
+ - func[4096] <canister_query self_check> -> "canister_query self_check"
+ - func[4096] size=46 <canister_query self_check>
+ ```
+

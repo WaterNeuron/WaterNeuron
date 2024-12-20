@@ -16,6 +16,8 @@ pub const E8S: u64 = 100_000_000;
 pub const NANOS: u64 = 1_000_000_000;
 pub const MIN_DEPOSIT_AMOUNT: u64 = 10 * E8S;
 
+pub const DEV_WALLET: &str = "nicuf-siaaa-aaaao-qjw6a-cai";
+
 #[derive(CandidType, Deserialize)]
 pub struct Status {
     pub participants: usize,

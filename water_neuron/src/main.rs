@@ -122,6 +122,10 @@ fn check_invariants() -> Result<(), String> {
     })
 }
 
+#[cfg(feature = "self_check")]
+#[query]
+pub fn self_check() {}
+
 fn check_postcondition<T>(t: T) -> T {
     #[cfg(feature = "self_check")]
     ok_or_die(check_invariants());
