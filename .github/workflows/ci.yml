@@ -1,19 +1,21 @@
 name: Test Canisters
 
 on:
-  push:
-    branches:
-      - '**'
+ push:
+   branches:
+     - '**'
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run cargo canisters
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/waterneuron \
-            --user ubuntu \
-            ghcr.io/waterneuron/waterneuron@sha256:97aa8f78871ddf40d4b457a81f14c171a1d4ef3dfc402fdd4de0b442c99a31d8 \
-            /usr/bin/bash -c 'cd /waterneuron && cargo canisters'
+ test:
+   runs-on: ubuntu-latest
+   steps:
+     - uses: actions/checkout@v4
+     - name: Set repository permissions
+       run: chmod -R a+rw .
+     - name: Run cargo canisters
+       run: |
+         docker run --rm \
+           -v ${{ github.workspace }}:/waterneuron \
+           --user ubuntu \
+           ghcr.io/waterneuron/waterneuron@sha256:97aa8f78871ddf40d4b457a81f14c171a1d4ef3dfc402fdd4de0b442c99a31d8 \
+           /usr/bin/bash -c 'cd /waterneuron && cargo canisters'
