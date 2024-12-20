@@ -3,15 +3,17 @@ use ic_base_types::PrincipalId;
 use ic_canisters_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_cdk::{init, post_upgrade, query, update};
 use icp_ledger::{AccountIdentifier, Subaccount};
+use icrc_ledger_types::icrc1::account::Account;
 use scopeguard::guard;
 use sns_module::memory::{
     add_in_flight_wtn, add_wtn_owed, decrease_wtn_owed, deposit_icp, get_in_flight_wtn,
-    get_principal_to_icp, get_principal_to_wtn_owed, remove_in_flight_wtn, total_wtn_allocated,
+    get_principal_to_icp, get_principal_to_wtn_owed, is_wtn_claimable, remove_in_flight_wtn,
+    total_wtn_allocated,
 };
 use sns_module::state::{mutate_state, read_state, replace_state, InitArg, State};
 use sns_module::{
     balance_of, derive_staking, dispatch_tokens, is_distribution_available, is_swap_available,
-    transfer, Status, E8S, MIN_DEPOSIT_AMOUNT, NANOS,
+    transfer, Status, DEV_WALLET, E8S, MIN_DEPOSIT_AMOUNT, NANOS,
 };
 
 fn main() {}
@@ -110,10 +112,7 @@ async fn notify_icp_deposit(target: Principal, amount: u64) -> Result<u64, Strin
 
 #[update]
 async fn distribute_tokens() -> Result<u64, String> {
-    assert_eq!(
-        ic_cdk::caller(),
-        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
-    );
+    assert_eq!(ic_cdk::caller(), Principal::from_text(DEV_WALLET).unwrap());
     if !is_distribution_available() {
         return Err("Distribution not available".to_string());
     }
@@ -151,6 +150,52 @@ async fn distribute_tokens() -> Result<u64, String> {
 }
 
 #[update]
+fn set_is_wtn_claimable(val: bool) -> Result<(), String> {
+    if ic_cdk::caller() != Principal::from_text(DEV_WALLET).unwrap() {
+        return Err("caller not allowed".to_string());
+    }
+    sns_module::memory::set_is_wtn_claimable(val);
+    Ok(())
+}
+
+#[update]
+async fn stake_icp(amount: u64) -> Result<u64, String> {
+    assert_eq!(ic_cdk::caller(), Principal::from_text(DEV_WALLET).unwrap());
+    let icp_ledger = read_state(|s| s.icp_ledger_id);
+    match transfer(
+        None,
+        eight_years_account(),
+        Nat::from(amount),
+        None,
+        icp_ledger,
+    )
+    .await
+    {
+        Ok(block_index) => Ok(block_index),
+        Err(e) => Err(format!("{e}")),
+    }
+}
+
+fn eight_years_account() -> Account {
+    let governance_id = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+
+    let eight_years_subaccount: [u8; 32] =
+        hex::decode("cc3beb0e3a6d7e26485fde67916225d1c2fcb7398590a92bffb97c8704140b25")
+            .unwrap()
+            .try_into()
+            .unwrap();
+    Account {
+        owner: governance_id,
+        subaccount: Some(eight_years_subaccount),
+    }
+}
+
+#[test]
+fn check_target() {
+    assert_eq!(format!("{}", eight_years_account()), "rrkah-fqaaa-aaaaa-aaaaq-cai-k5odt6i.cc3beb0e3a6d7e26485fde67916225d1c2fcb7398590a92bffb97c8704140b25".to_string());
+}
+
+#[update]
 async fn claim_wtn(of: Principal) -> Result<u64, String> {
     let wtn_amount = sns_module::memory::get_wtn_owed(of);
     if wtn_amount < E8S {
@@ -161,6 +206,9 @@ async fn claim_wtn(of: Principal) -> Result<u64, String> {
     }
     if !is_distribution_available() {
         return Err("swap not over".to_string());
+    }
+    if !is_wtn_claimable() {
+        return Err("wtn not claimable".to_string());
     }
 
     let ledger_canister_id = read_state(|s| s.wtn_ledger_id);

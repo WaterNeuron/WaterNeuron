@@ -259,6 +259,23 @@ impl SnsModuleEnv {
         .unwrap()
     }
 
+    fn set_is_wtn_claimable(&self, val: bool) -> Result<(), String> {
+        Decode!(
+            &assert_reply(
+                self.env
+                    .execute_ingress_as(
+                        PrincipalId(Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()),
+                        self.sns_module_id,
+                        "set_is_wtn_claimable",
+                        Encode!(&val).unwrap()
+                    )
+                    .unwrap()
+            ),
+            Result<(), String>
+        )
+        .unwrap()
+    }
+
     fn distribute_tokens(&self) -> Result<u64, String> {
         Decode!(
             &assert_reply(
@@ -329,6 +346,8 @@ fn e2e_basic() {
         env.wtn_ledger_id,
     );
 
+    assert!(env.set_is_wtn_claimable(true).is_ok());
+
     env.env.advance_time(Duration::from_secs(7 * 24 * 60 * 60));
 
     assert!(env.distribute_tokens().is_ok());
@@ -378,6 +397,8 @@ fn should_dispatch_tokens_accordingly() {
         env.wtn_ledger_id,
     );
     assert_eq!(env.get_wtn_allocated(nns_principal), 0);
+
+    assert!(env.set_is_wtn_claimable(true).is_ok());
 
     env.env.advance_time(Duration::from_secs(7 * 24 * 60 * 60));
     assert_eq!(env.distribute_tokens(), Ok(2_600_000 * E8S));
