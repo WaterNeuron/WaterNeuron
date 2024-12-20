@@ -2,15 +2,19 @@
 Liquid staking protocol on the Internet Computer
 
 ## Building
--   We assume you are building on a Ubuntu +22.04 based machine.
--   Packages pre-requisites: `podman`, `git`
+We assume you are building on a Ubuntu +22.04 based machine. The packages below are needed to compile the canisters.
 ```bash
 sudo apt-get install podman git
 ```
 
--   To build canisters at the current commit
+To build canisters at the current commit run the following:
 ```bash
-./run.sh --build
+./run.sh
+```
+
+To build canisters at the current commit and the container image run the following:
+```bash
+./run.sh --local
 ```
 
 ## Dev
