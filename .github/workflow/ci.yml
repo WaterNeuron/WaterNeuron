@@ -1,0 +1,17 @@
+name: Build Canisters
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/waterneuron/waterneuron@sha256:97aa8f78871ddf40d4b457a81f14c171a1d4ef3dfc402fdd4de0b442c99a31d8
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo canisters
