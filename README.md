@@ -1,25 +1,20 @@
 # WaterNeuron
-Liquid staking protocol on the Internet Computer
+Liquid staking protocol on the Internet Computer Protocol.
 
 ## Building
-We assume you are building on a Ubuntu +22.04 based machine. The packages below are needed to compile the canisters.
+You need to run a Unix based system with x86_64 architecture to compile the canisters.
+
 ```bash
+# packages to install
 sudo apt-get install podman git
-```
-
-To build canisters at the current commit run the following:
-```bash
+# build canisters
 ./run.sh
-```
-
-To build canisters at the current commit and the container image run the following:
-```bash
+# build canisters along with the container image locally
 ./run.sh --local
 ```
 
 ## Dev
-
-You need the following packages to run the system tests.
+You need the following packages to run system tests.
 
 ```bash
 sudo apt udpate && sudo apt install \

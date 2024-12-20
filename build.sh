@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 MODE="remote"
-CONTAINER_IMAGE="ghcr.io/waterneuron/waterneuron:66423f63a6b9110781c134cf643088856ca141a751bc33dea0e5b8a2d1470846"
+CONTAINER_IMAGE="ghcr.io/waterneuron/waterneuron@sha256:66423f63a6b9110781c134cf643088856ca141a751bc33dea0e5b8a2d1470846"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
