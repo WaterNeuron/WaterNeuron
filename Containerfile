@@ -10,6 +10,7 @@ RUN apt -y update && \
         ca-certificates \
         git \
         g++ \
+        wabt \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 

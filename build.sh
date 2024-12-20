@@ -23,7 +23,6 @@ fi
 PODMAN_ARGS=(
     -it
     --rm
-    -w /waterneuron
     --userns=keep-id
     --mount type=bind,source=$(pwd),target=/waterneuron
     "$PODMAN_HASH"
