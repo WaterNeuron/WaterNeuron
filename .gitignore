@@ -1,17 +1,6 @@
 target/
 .dfx
 candid/
-
-# nix
-.direnv/
-
-# bazel
-bazel-*
-tmp/
-
-rust-project.json
 proptest-regressions
-
 artifacts/
-
 *.bin
