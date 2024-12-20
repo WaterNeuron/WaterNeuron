@@ -1,48 +1,56 @@
 name: Test Canisters
 
 on:
-  push:
-    branches:
-      - '**'
-  pull_request:
-    types: [closed]
-    branches:
-      - main
+ push:
+   branches:
+     - '**'
+ pull_request:
+   types: [closed]
+   branches:
+     - main
 
 jobs:
-  build:
-    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    env:
-      RUST_VERSION: 1.83.0
-    steps:
-      - uses: actions/checkout@v4
+ build:
+   if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+   runs-on: ubuntu-24.04
+   env:
+     RUST_VERSION: 1.83.0
+   steps:
+     - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libssl-dev
+     - name: Install dependencies
+       run: |
+         sudo apt -y update
+         sudo apt -yqq install --no-install-recommends build-essential pkg-config libssl-dev curl ca-certificates git g++ wabt
 
-      - name: Install Rust
-        run: |
-          curl --fail https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VERSION}-x86_64-unknown-linux-gnu --no-modify-path
-          source "$HOME/.cargo/env"
-          rustup default ${RUST_VERSION}-x86_64-unknown-linux-gnu
-          rustup target add wasm32-unknown-unknown
-          rustup component add clippy
-          cargo install ic-wasm --version 0.9.1
+     - name: Install Rust
+       run: |
+         curl --fail https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VERSION}-x86_64-unknown-linux-gnu --no-modify-path
+         source "$HOME/.cargo/env"
+         rustup default ${RUST_VERSION}-x86_64-unknown-linux-gnu
+         rustup target add wasm32-unknown-unknown
+         rustup component add clippy
+         cargo install ic-wasm --version 0.9.1
 
-      - name: Run build script
-        run: ./build.sh
+     - name: Run cargo canisters
+       run: cargo canisters
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run cargo canisters
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/waterneuron \
-            --user $(id -u):$(id -g) \
-            ghcr.io/waterneuron/waterneuron@sha256:97aa8f78871ddf40d4b457a81f14c171a1d4ef3dfc402fdd4de0b442c99a31d8 \
-            /usr/bin/bash -c 'cd /waterneuron && cargo canisters'
+ build_script:
+   if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+   runs-on: ubuntu-24.04
+   steps:
+     - uses: actions/checkout@v4
+     - name: Run build script
+       run: ./build.sh
+
+ test:
+   runs-on: ubuntu-latest
+   steps:
+     - uses: actions/checkout@v4
+     - name: Run cargo canisters
+       run: |
+         docker run --rm \
+           -v ${{ github.workspace }}:/waterneuron \
+           --user ubuntu \
+           ghcr.io/waterneuron/waterneuron@sha256:97aa8f78871ddf40d4b457a81f14c171a1d4ef3dfc402fdd4de0b442c99a31d8 \
+           /usr/bin/bash -c 'cd /waterneuron && cargo canisters'
