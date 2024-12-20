@@ -192,12 +192,37 @@ fn construct_metadata_table() -> String {
                         <td>{}</td>
                     </tr>
                     <tr>
-                        <th>6-month nICP Neuron</th>
-                        <td>{} Fetched {} ICP - Tracked {} ICP</td>
+                        <th rowspan=\"4\">6-month nICP Neuron</th>
+                        <td>{}</td>
                     </tr>
                     <tr>
-                        <th>8-year SNS Neuron</th>
-                        <td>{} {} ICP</td>
+                        <td>Fetched {} ICP </td>
+                    </tr>
+                    <tr>
+                        <td>Tracked {} ICP</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <a target=\"_blank\" href=\"https://dashboard.internetcomputer.org/account/11db16e8da65784bc03feafc67fde5317bbbe59852bd6d9af8f8753e8c8e3279\">Maturity Account</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th rowspan=\"3\">8-year SNS Neuron</th>
+                        <td>{}</td>
+                    </tr>
+                    <tr>
+                        <td>Fetched {} ICP</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <a target=\"_blank\" href=\"https://dashboard.internetcomputer.org/account/45075f09714a20a804a3f4ab4b7d9d45c1b93b500b525d5a9b8bfa394e2765d4\">Maturity Account</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>SNS Rewards</th>
+                        <td>
+                            <a target=\"_blank\" href=\"https://dashboard.internetcomputer.org/account/ff6987e51d16f29ffc4c7932b8e2e93e558fc617732fd17de4db9f5a43c9994c\">SNS Rewards Account</a>
+                        </td>
                     </tr>
                     <tr>
                         <th>nICP Circulating</th>
@@ -236,7 +261,7 @@ fn construct_metadata_table() -> String {
                 .unwrap_or_else(|| "Neuron Not Set".to_string()),
             s.main_neuron_8y_stake,
             s.total_circulating_nicp,
-            s.principal_to_deposit.keys().len(),
+            s.account_to_deposits.keys().len(),
             s.get_icp_to_ncip_exchange_rate_e8s()
         )
     })
@@ -277,14 +302,14 @@ fn construct_withdrawal_table() -> String {
 fn construct_deposit_table() -> String {
     with_utf8_buffer(|buf| {
         read_state(|s| {
-            for (principal, transfer_ids) in s.principal_to_deposit.iter() {
+            for (account, transfer_ids) in s.account_to_deposits.iter() {
                 for transfer_id in transfer_ids {
                     if let Some(deposit) = s.transfer_executed.get(transfer_id) {
                         write!(
                             buf,
                             "<tr><td>{}</td><td>{}</td><td>{}</td><td>{:?}</td></tr>",
                             deposit.transfer.transfer_id,
-                            principal,
+                            account,
                             DisplayAmount(deposit.transfer.amount),
                             deposit.block_index
                         )
@@ -300,10 +325,15 @@ fn construct_to_disburse_table() -> String {
     with_utf8_buffer(|buf| {
         read_state(|s| {
             for (neuron_id, disburse_request) in s.to_disburse.iter() {
+                let neuron_string = format!(
+                    "<a href=\"{}\" target=\"_blank\">{}</a>",
+                    neuron_id.to_dashboard_link(),
+                    neuron_id.id
+                );
                 write!(
                     buf,
-                    "<tr><td>{:?}</td><td>{}</td></tr>",
-                    neuron_id, disburse_request.receiver,
+                    "<tr><td>{}</td><td>{}</td></tr>",
+                    neuron_string, disburse_request.receiver,
                 )
                 .unwrap();
             }

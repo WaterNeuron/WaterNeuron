@@ -68,6 +68,7 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             withdrawal_id,
             neuron_id,
         } => state.record_neuron_split(*withdrawal_id, *neuron_id),
+        EventType::MergeNeuron { neuron_id } => state.record_neuron_merge(*neuron_id),
         EventType::StartedToDissolve { withdrawal_id } => {
             state.record_started_to_dissolve_neuron(*withdrawal_id)
         }
@@ -104,6 +105,10 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             state
                 .proposals
                 .insert(nns_proposal_id.clone(), sns_proposal_id.clone());
+
+            if *nns_proposal_id > state.last_nns_proposal_processed {
+                state.last_nns_proposal_processed = nns_proposal_id.clone();
+            }
         }
     }
 }

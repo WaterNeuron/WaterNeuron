@@ -1,14 +1,15 @@
 use crate::nns_types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use crate::nns_types::manage_neuron::configure::Operation;
 use crate::nns_types::manage_neuron::{
-    Command, Configure, Disburse, IncreaseDissolveDelay, NeuronIdOrSubaccount, Spawn, Split,
-    StartDissolving,
+    Command, Configure, Disburse, IncreaseDissolveDelay, Merge, NeuronIdOrSubaccount, Spawn, Split,
+    StartDissolving, StopDissolving,
 };
 use crate::nns_types::{
     AccountIdentifier, DisburseResponse, Empty, GovernanceError, ListNeurons, ListNeuronsResponse,
-    ManageNeuron, ManageNeuronResponse, Neuron, NeuronId, ProposalId, ProposalInfo,
+    ListProposalInfo, ListProposalInfoResponse, ManageNeuron, ManageNeuronResponse, Neuron,
+    NeuronId, ProposalId,
 };
-use crate::state::{read_state, NNS_GOVERNANCE_ID};
+use crate::state::{read_state, NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE};
 use crate::{compute_neuron_staking_subaccount_bytes, CommandResponse};
 use candid::{Nat, Principal};
 use ic_sns_governance::pb::v1::{
@@ -83,9 +84,9 @@ pub async fn list_neurons(args: ListNeurons) -> Result<ListNeuronsResponse, Stri
     }
 }
 
-pub async fn get_pending_proposals() -> Result<Vec<ProposalInfo>, String> {
-    let res_gov: Result<(Vec<ProposalInfo>,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "get_pending_proposals", ())
+pub async fn list_proposals(args: ListProposalInfo) -> Result<ListProposalInfoResponse, String> {
+    let res_gov: Result<(ListProposalInfoResponse,), (i32, String)> =
+        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "list_proposals", (args,))
             .await
             .map_err(|(code, msg)| (code as i32, msg));
     match res_gov {
@@ -306,6 +307,30 @@ pub async fn split_neuron(
     manage_neuron(
         Command::Split(Split { amount_e8s }),
         NeuronNonceOrId::Nonce(neuron_nonce),
+    )
+    .await
+}
+
+pub async fn stop_dissolvement(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
+    assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
+    manage_neuron(
+        Command::Configure(Configure {
+            operation: Some(Operation::StopDissolving(StopDissolving {})),
+        }),
+        NeuronNonceOrId::Id(neuron_id),
+    )
+    .await
+}
+
+pub async fn merge_neuron_into_six_months(
+    neuron_id: NeuronId,
+) -> Result<ManageNeuronResponse, String> {
+    assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
+    manage_neuron(
+        Command::Merge(Merge {
+            source_neuron_id: Some(neuron_id),
+        }),
+        NeuronNonceOrId::Nonce(SIX_MONTHS_NEURON_NONCE),
     )
     .await
 }

@@ -3,8 +3,8 @@ use crate::numeric::{nICP, ICP, WTN};
 use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
-    compute_neuron_staking_subaccount_bytes, self_canister_id, InitArg, PendingTransfer, Unit,
-    UpgradeArg, E8S,
+    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, InitArg,
+    PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -101,7 +101,7 @@ pub struct WithdrawalRequest {
     pub timestamp: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct WithdrawalDetails {
     pub status: WithdrawalStatus,
     pub request: WithdrawalRequest,
@@ -127,6 +127,7 @@ pub enum WithdrawalStatus {
     WaitingDissolvement { neuron_id: NeuronId },
     ConversionDone { transfer_block_height: u64 },
     NotFound,
+    Cancelled,
 }
 
 impl fmt::Display for WithdrawalStatus {
@@ -134,15 +135,16 @@ impl fmt::Display for WithdrawalStatus {
         match self {
             WithdrawalStatus::WaitingToSplitNeuron => write!(f, "Waiting to split neuron"),
             WithdrawalStatus::WaitingToStartDissolving { neuron_id } => {
-                write!(f, "Waiting to start dissolving {:?}", neuron_id)
+                write!(f, "Waiting to start dissolving of {}", neuron_id.id)
             }
             WithdrawalStatus::WaitingDissolvement { neuron_id } => {
-                write!(f, "Waiting dissolvement {:?}", neuron_id)
+                write!(f, "Waiting dissolvement of {}", neuron_id.id)
             }
             WithdrawalStatus::ConversionDone {
                 transfer_block_height,
             } => write!(f, "Neuron Disbursed at index: {transfer_block_height}"),
             WithdrawalStatus::NotFound => write!(f, "Neuron Not Found"),
+            WithdrawalStatus::Cancelled => write!(f, "Withdrawal Cancelled"),
         }
     }
 }
@@ -157,9 +159,9 @@ pub struct State {
     pub withdrawal_id: WithdrawalId,
 
     // NNS Proposal Id to SNS Proposals ID
-    // and deadline_timestamp_seconds of the NNS proposal
     pub proposals: BTreeMap<ProposalId, ProposalId>,
     pub voted_proposals: BTreeSet<ProposalId>,
+    pub last_nns_proposal_processed: ProposalId,
 
     // Airdrop Map
     pub airdrop: BTreeMap<Principal, WTN>,
@@ -172,6 +174,9 @@ pub struct State {
     pub withdrawal_id_to_request: BTreeMap<WithdrawalId, WithdrawalRequest>,
     pub neuron_id_to_withdrawal_id: BTreeMap<NeuronId, WithdrawalId>,
 
+    // Cancel Withdrawal
+    pub withdrawal_cancelled: BTreeSet<WithdrawalId>,
+
     // Neurons To Disburse
     pub to_disburse: BTreeMap<NeuronId, DisburseRequest>,
 
@@ -183,8 +188,8 @@ pub struct State {
     pub transfer_executed: BTreeMap<TransferId, ExecutedTransfer>,
 
     // Maps for tracking purposes.
-    pub principal_to_deposit: BTreeMap<Principal, Vec<TransferId>>,
-    pub principal_to_withdrawal: BTreeMap<Principal, Vec<WithdrawalId>>,
+    pub account_to_deposits: BTreeMap<Account, Vec<TransferId>>,
+    pub account_to_withdrawals: BTreeMap<Account, Vec<WithdrawalId>>,
 
     // Neurons
     pub neuron_id_6m: Option<NeuronId>,
@@ -202,8 +207,9 @@ pub struct State {
     pub principal_guards: BTreeSet<Principal>,
     pub active_tasks: BTreeSet<TaskType>,
 
-    // metrics
+    // ICP Distribution
     pub latest_distribution_icp_per_vp: Option<f64>,
+    pub last_distribution_ts: u64,
 }
 
 impl State {
@@ -223,8 +229,9 @@ impl State {
             maturity_neuron_to_block_indicies: Default::default(),
             withdrawal_finalized: Default::default(),
             withdrawal_id_to_request: BTreeMap::default(),
-            principal_to_deposit: BTreeMap::default(),
-            principal_to_withdrawal: BTreeMap::default(),
+            withdrawal_cancelled: BTreeSet::default(),
+            account_to_deposits: BTreeMap::default(),
+            account_to_withdrawals: BTreeMap::default(),
             transfer_id: 0,
             withdrawal_id: 0,
             voted_proposals: BTreeSet::default(),
@@ -240,6 +247,8 @@ impl State {
             principal_guards: BTreeSet::default(),
             active_tasks: BTreeSet::default(),
             latest_distribution_icp_per_vp: None,
+            last_nns_proposal_processed: Default::default(),
+            last_distribution_ts: timestamp_nanos(),
         }
     }
 
@@ -262,7 +271,7 @@ impl State {
     }
 
     pub fn get_withdrawal_status(&self, withdrawal_id: WithdrawalId) -> WithdrawalStatus {
-        if self.withdrawal_to_split.get(&withdrawal_id).is_some() {
+        if self.withdrawal_to_split.contains(&withdrawal_id) {
             return WithdrawalStatus::WaitingToSplitNeuron;
         }
 
@@ -280,7 +289,7 @@ impl State {
             };
         }
 
-        if self.withdrawal_to_disburse.get(&withdrawal_id).is_some() {
+        if self.withdrawal_to_disburse.contains(&withdrawal_id) {
             return WithdrawalStatus::WaitingDissolvement {
                 neuron_id: self
                     .get_withdrawal_request(withdrawal_id)
@@ -295,6 +304,11 @@ impl State {
                 transfer_block_height: *block_index,
             };
         }
+
+        if self.withdrawal_cancelled.contains(&withdrawal_id) {
+            return WithdrawalStatus::Cancelled;
+        }
+
         WithdrawalStatus::NotFound
     }
 
@@ -428,8 +442,8 @@ impl State {
             ),
             None
         );
-        self.principal_to_deposit
-            .entry(receiver.owner)
+        self.account_to_deposits
+            .entry(receiver)
             .and_modify(|deposits| deposits.push(transfer_id))
             .or_insert(vec![transfer_id]);
     }
@@ -505,8 +519,8 @@ impl State {
                 )
             });
         let withdrawal_id = self.increment_withdrawal_id();
-        self.principal_to_withdrawal
-            .entry(receiver.owner)
+        self.account_to_withdrawals
+            .entry(receiver)
             .and_modify(|ids| ids.push(withdrawal_id))
             .or_insert(vec![withdrawal_id]);
         assert_eq!(
@@ -538,6 +552,62 @@ impl State {
             .neuron_id_to_withdrawal_id
             .insert(neuron_id, withdrawal_id)
             .is_none());
+    }
+
+    pub fn record_neuron_merge(&mut self, neuron_id: NeuronId) {
+        let withdrawal_id: &u64 = self.neuron_id_to_withdrawal_id.get(&neuron_id).unwrap();
+        assert!(
+            self.withdrawal_to_start_dissolving.remove(withdrawal_id)
+                || (self.withdrawal_to_disburse.remove(withdrawal_id)
+                    && self.to_disburse.remove(&neuron_id).is_some())
+        );
+
+        let withdrawal_request = self
+            .withdrawal_id_to_request
+            .get(withdrawal_id)
+            .unwrap()
+            .clone();
+
+        self.withdrawal_cancelled.insert(*withdrawal_id);
+        assert!(self.neuron_id_to_withdrawal_id.remove(&neuron_id).is_some());
+
+        // Merging the neurons costs two times the ICP ledger transaction fee.
+        // Once to calculate the effects of merging two neurons (step 1).
+        // Once to operate the transaction of the source neuron stake to the target neuron (step 5).
+        // Here is the link to the according merge_neurons function used:
+        // https://github.com/dfinity/ic/blob/714c85c6a4245fb5b39e76f5c8003e6d90e49c4d/rs/nns/governance/src/governance.rs#L2780
+        let icp_stake_e8s = withdrawal_request
+            .icp_due
+            .checked_sub(ICP::from_e8s(2 * DEFAULT_LEDGER_FEE))
+            .expect("ICP due should be greater than 10.");
+        let nicp_stake_value_e8s = self.convert_icp_to_nicp(icp_stake_e8s);
+
+        // 0.5% fee when a withdrawal is cancelled.
+        let nicp_fee = nICP::from_e8s(nicp_stake_value_e8s.0.checked_div(200).unwrap());
+        let nicp_to_mint = nicp_stake_value_e8s.checked_sub(nicp_fee).unwrap();
+        self.total_circulating_nicp += nicp_to_mint;
+
+        self.tracked_6m_stake += icp_stake_e8s;
+
+        let transfer_id = self.increment_transfer_id();
+        assert_eq!(
+            self.pending_transfers.insert(
+                transfer_id,
+                PendingTransfer {
+                    transfer_id,
+                    from_subaccount: None,
+                    amount: nicp_to_mint.0,
+                    receiver: withdrawal_request.receiver,
+                    unit: Unit::NICP,
+                    memo: None
+                }
+            ),
+            None
+        );
+        self.account_to_deposits
+            .entry(withdrawal_request.receiver)
+            .and_modify(|deposits| deposits.push(transfer_id))
+            .or_insert(vec![transfer_id]);
     }
 
     pub fn record_started_to_dissolve_neuron(&mut self, withdrawal_id: WithdrawalId) {
@@ -697,15 +767,15 @@ impl State {
             "pending_transfers do not match"
         );
         ensure_eq!(
-            self.principal_to_withdrawal,
-            other.principal_to_withdrawal,
-            "principal_to_withdrawal do not match"
+            self.account_to_withdrawals,
+            other.account_to_withdrawals,
+            "account_to_withdrawals do not match"
         );
 
         ensure_eq!(
-            self.principal_to_deposit,
-            other.principal_to_deposit,
-            "principal_to_deposit do not match"
+            self.account_to_deposits,
+            other.account_to_deposits,
+            "account_to_deposits do not match"
         );
         ensure_eq!(
             self.neuron_id_6m,

@@ -1,33 +1,48 @@
-use crate::management::{get_sns_proposal, manage_neuron_sns};
-use crate::nns_types::convert_nns_proposal_to_sns_proposal;
+use crate::management::{get_sns_proposal, list_proposals, manage_neuron_sns};
+use crate::nns_types::{convert_nns_proposal_to_sns_proposal, ListProposalInfo};
 use crate::{
-    compute_neuron_staking_subaccount_bytes, get_pending_proposals, mutate_state, process_event,
-    read_state, register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType,
-    ProposalId, TaskType, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
+    compute_neuron_staking_subaccount_bytes, mutate_state, process_event, read_state,
+    register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType, ProposalId,
+    TaskType, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
 };
 use ic_canister_log::log;
 use ic_sns_governance::pb::v1::manage_neuron::Command as CommandSns;
 use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandSnsResponse;
 
+const BATCH_SIZE_LIMIT: u32 = 100;
+const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;
+const REWARD_STATUS_READY_TO_SETTLE: i32 = 2;
+
 pub async fn mirror_proposals() -> Result<(), String> {
     let subaccount = compute_neuron_staking_subaccount_bytes(self_canister_id(), 0).to_vec();
 
-    match get_pending_proposals().await {
+    let list_proposals_args = ListProposalInfo {
+        limit: BATCH_SIZE_LIMIT,
+        before_proposal: None,
+        exclude_topic: vec![],
+        include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
+        omit_large_fields: Some(true),
+        ..Default::default()
+    };
+
+    match list_proposals(list_proposals_args).await {
         Ok(mut pending_proposals) => {
             read_state(|s| {
-                pending_proposals.retain(|p| !s.proposals.contains_key(&p.id.clone().unwrap()))
+                pending_proposals
+                    .proposal_info
+                    .retain(|p| !s.proposals.contains_key(&p.id.clone().unwrap()))
             });
             log!(
                 INFO,
                 "[mirror_proposals] found {} new pending proposals",
-                pending_proposals.len()
+                pending_proposals.proposal_info.len()
             );
-            pending_proposals.sort_by(|a, b| {
+            pending_proposals.proposal_info.sort_by(|a, b| {
                 a.deadline_timestamp_seconds
                     .cmp(&b.deadline_timestamp_seconds)
             });
 
-            for proposal_info in pending_proposals {
+            for proposal_info in pending_proposals.proposal_info {
                 let proposal_id = match proposal_info.id.clone() {
                     Some(proposal_id) => proposal_id,
                     None => {
@@ -69,7 +84,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
                                                 id: sns_proposal_id.id,
                                             },
                                         },
-                                    )
+                                    );
                                 });
                                 continue;
                             }
@@ -102,19 +117,28 @@ pub async fn mirror_proposals() -> Result<(), String> {
 pub async fn vote_on_nns_proposals() {
     let wtn_governance_id = read_state(|s| s.wtn_governance_id);
 
-    match get_pending_proposals().await {
+    let list_proposals_args = ListProposalInfo {
+        limit: BATCH_SIZE_LIMIT,
+        before_proposal: None,
+        exclude_topic: vec![],
+        include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
+        omit_large_fields: Some(true),
+        ..Default::default()
+    };
+
+    match list_proposals(list_proposals_args).await {
         Ok(mut pending_proposals) => {
             log!(
                 INFO,
-                "[schedule_voting] found {} pending proposals",
-                pending_proposals.len()
+                "[vote_on_nns_proposals] found {} pending proposals",
+                pending_proposals.proposal_info.len()
             );
-            pending_proposals.sort_by(|a, b| {
+            pending_proposals.proposal_info.sort_by(|a, b| {
                 a.deadline_timestamp_seconds
                     .unwrap_or(u64::MAX)
                     .cmp(&b.deadline_timestamp_seconds.unwrap_or(u64::MAX))
             });
-            for proposal in pending_proposals {
+            for proposal in pending_proposals.proposal_info {
                 let deadline_timestamp_seconds = proposal.deadline_timestamp_seconds.unwrap_or(0);
                 let proposal_id = match proposal.id {
                     Some(proposal_id) => proposal_id,
@@ -123,7 +147,6 @@ pub async fn vote_on_nns_proposals() {
                 let diff_secs = deadline_timestamp_seconds
                     .saturating_sub(timestamp_nanos() / SEC_NANOS)
                     .saturating_sub(ONE_HOUR_SECONDS);
-
                 if diff_secs == 0 {
                     if let Some(sns_proposal_id) =
                         read_state(|s| s.proposals.get(&proposal_id).cloned())
@@ -131,7 +154,7 @@ pub async fn vote_on_nns_proposals() {
                         match get_sns_proposal(wtn_governance_id, sns_proposal_id.id).await {
                             Ok(proposal_response) => {
                                 if let Some(ic_sns_governance::pb::v1::get_proposal_response::Result::Proposal(proposal_data)) =
-                                    proposal_response.result
+                                    proposal_response.result.clone()
                                 {
                                     if let Some(tally) = proposal_data.latest_tally {
                                         let vote_outcome = tally.yes > tally.no;
@@ -139,6 +162,10 @@ pub async fn vote_on_nns_proposals() {
                                         continue;
                                     }
                                 }
+                                log!(
+                                    INFO,
+                                    "[vote_on_nns_proposals] Failed to fetch SNS proposal, got: {proposal_response:?}"
+                                );
                             }
                             Err(e) => log!(
                                 INFO,
@@ -163,13 +190,21 @@ pub async fn vote_on_nns_proposals() {
 }
 
 async fn vote_on_proposal(proposal_id: ProposalId, vote: bool) {
-    if read_state(|s| s.voted_proposals.get(&proposal_id).is_some()) {
+    if read_state(|s| s.voted_proposals.contains(&proposal_id)) {
+        log!(
+            INFO,
+            "[VoteOnProposal] Already voted {vote} on proposal {}",
+            proposal_id.id
+        );
         return;
     }
 
     let neuron_6m = match read_state(|s| s.neuron_id_6m) {
         Some(neuron_6m_id) => neuron_6m_id,
-        None => return,
+        None => {
+            log!(INFO, "[VoteOnProposal] 6 months neuron not set",);
+            return;
+        }
     };
 
     match register_vote(neuron_6m, proposal_id.clone(), vote).await {

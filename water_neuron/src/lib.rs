@@ -3,12 +3,12 @@ use crate::guards::{GuardError, TaskGuard};
 use crate::logs::{DEBUG, INFO};
 use crate::management::{
     balance_of, disburse, follow_neuron, get_full_neuron, get_full_neuron_by_nonce,
-    get_pending_proposals, increase_dissolve_delay, list_neurons, manage_neuron_sns,
-    refresh_neuron, register_vote, spawn_all_maturity, split_neuron, start_dissolving, transfer,
+    increase_dissolve_delay, list_neurons, manage_neuron_sns, refresh_neuron, register_vote,
+    spawn_all_maturity, split_neuron, start_dissolving, transfer,
 };
 use crate::nns_types::{
-    neuron::DissolveState, CommandResponse, ListNeurons, NeuronId, ProposalId, TOPIC_GOVERNANCE,
-    TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
+    neuron::DissolveState, CommandResponse, GovernanceError, ListNeurons, NeuronId, ProposalId,
+    TOPIC_GOVERNANCE, TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
 };
 use crate::numeric::{nICP, ICP};
 use crate::proposal::{mirror_proposals, vote_on_nns_proposals};
@@ -38,6 +38,7 @@ pub mod cbor;
 pub mod conversion;
 pub mod dashboard;
 pub mod guards;
+pub mod icrc21;
 pub mod logs;
 pub mod management;
 pub mod nns_types;
@@ -117,7 +118,7 @@ pub enum LiquidArg {
 #[derive(Deserialize, CandidType, Encode, Decode, PartialEq, Eq, Clone, Debug)]
 pub struct InitArg {
     #[cbor(n(0), with = "crate::cbor::principal")]
-    nicp_ledger_id: Principal,
+    pub nicp_ledger_id: Principal,
     #[cbor(n(1), with = "crate::cbor::principal")]
     pub wtn_governance_id: Principal,
     #[cbor(n(2), with = "crate::cbor::principal")]
@@ -163,7 +164,7 @@ impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Unit::ICP => write!(f, "ICP"),
-            Unit::NICP => write!(f, "NICP"),
+            Unit::NICP => write!(f, "nICP"),
             Unit::WTN => write!(f, "WTN"),
         }
     }
@@ -219,12 +220,14 @@ pub struct PendingWithdrawal {
 pub struct DepositSuccess {
     pub block_index: Nat,
     pub transfer_id: u64,
+    pub nicp_amount: Option<nICP>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct WithdrawalSuccess {
     pub block_index: Nat,
     pub withdrawal_id: u64,
+    pub icp_amount: Option<ICP>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -234,6 +237,21 @@ pub enum ConversionError {
     AmountTooLow { minimum_amount_e8s: u64 },
     GuardError { guard_error: GuardError },
     GenericError { code: i32, message: String },
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub enum CancelWithdrawalError {
+    GuardError { guard_error: GuardError },
+    GenericError { code: i32, message: String },
+    GovernanceError(GovernanceError),
+    BadCommand { message: String },
+    BadCaller { message: String },
+    RequestNotFound,
+    StopDissolvementError { message: String },
+    MergeNeuronError { message: String },
+    GetFullNeuronError { message: String },
+    TooLate,
+    UnknownTimeLeft,
 }
 
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This
@@ -467,10 +485,10 @@ async fn process_pending_transfer() -> u64 {
 
     for transfer in pending_transfers {
         let (ledger_id, fee) = (transfer.unit.ledger_id(), transfer.unit.fee());
-        if transfer.amount <= fee {
+        if transfer.amount <= fee || transfer.receiver == NNS_GOVERNANCE_ID.into() {
             log!(
                 INFO,
-                "[process_pending_transfer] Amount lower than fee: {} skipping.",
+                "[process_pending_transfer] Impossible transfer with id {}, skipping.",
                 transfer.transfer_id
             );
             mutate_state(|s| {
@@ -762,6 +780,16 @@ async fn distribute_icp_to_sns_neurons() {
         return;
     }
 
+    let last_distribution_ts = read_state(|s| s.last_distribution_ts);
+    if last_distribution_ts + ONE_WEEK_NANOS > timestamp_nanos() {
+        log!(
+            INFO,
+            "[distribute_icp_to_sns_neurons] Distributed less than a week ago, last distribution ts: {}",
+            last_distribution_ts / SEC_NANOS
+        );
+        return;
+    }
+
     let sns_account = read_state(|s| s.get_sns_account());
 
     match balance_of(sns_account, ICP_LEDGER_ID).await {
@@ -783,7 +811,7 @@ async fn distribute_icp_to_sns_neurons() {
                         Err(error) => log!(INFO, "[distribute_icp_to_sns_neurons] Failed to distribute ICP to SNS neurons {error}"),
                 }
             } else {
-                log!(DEBUG, "[distribute_icp_to_sns_neurons] Not enought ICP to distribute, balance {balance} ICP min {MINIMUM_ICP_DISTRIBUTION} ICP");
+                log!(DEBUG, "[distribute_icp_to_sns_neurons] Not enough ICP to distribute, balance {balance} ICP min {} ICP", MINIMUM_ICP_DISTRIBUTION / E8S);
             }
         }
         Err(error) => {

@@ -1,0 +1,69 @@
+type Account = record { owner : principal; subaccount : opt blob };
+type ApproveError = variant {
+  GenericError : record { message : text; error_code : nat };
+  TemporarilyUnavailable;
+  Duplicate : record { duplicate_of : nat };
+  BadFee : record { expected_fee : nat };
+  AllowanceChanged : record { current_allowance : nat };
+  CreatedInFuture : record { ledger_time : nat64 };
+  TooOld;
+  Expired : record { ledger_time : nat64 };
+  InsufficientFunds : record { balance : nat };
+};
+type BoomerangError = variant {
+  GenericError : record { code : int32; message : text };
+  TransferError : TransferError;
+  ConversionError : ConversionError;
+  ApproveError : ApproveError;
+  NotEnoughICP;
+};
+type CanisterIds = record {
+  icp_ledger_id : principal;
+  water_neuron_id : principal;
+  wtn_ledger_id : principal;
+  nicp_ledger_id : principal;
+};
+type ConversionError = variant {
+  GenericError : record { code : int32; message : text };
+  TransferError : TransferError;
+  AmountTooLow : record { minimum_amount_e8s : nat64 };
+  TransferFromError : TransferFromError;
+};
+type DepositSuccess = record {
+  nicp_amount : opt nat64;
+  block_index : nat;
+  transfer_id : nat64;
+};
+type Result = variant { Ok : DepositSuccess; Err : BoomerangError };
+type Result_1 = variant { Ok : WithdrawalSuccess; Err : BoomerangError };
+type Result_2 = variant { Ok : nat; Err : BoomerangError };
+type TransferError = variant {
+  GenericError : record { message : text; error_code : nat };
+  TemporarilyUnavailable;
+  BadBurn : record { min_burn_amount : nat };
+  Duplicate : record { duplicate_of : nat };
+  BadFee : record { expected_fee : nat };
+  CreatedInFuture : record { ledger_time : nat64 };
+  TooOld;
+  InsufficientFunds : record { balance : nat };
+};
+type TransferFromError = variant {
+  GenericError : record { message : text; error_code : nat };
+  TemporarilyUnavailable;
+  InsufficientAllowance : record { allowance : nat };
+  BadBurn : record { min_burn_amount : nat };
+  Duplicate : record { duplicate_of : nat };
+  BadFee : record { expected_fee : nat };
+  CreatedInFuture : record { ledger_time : nat64 };
+  TooOld;
+  InsufficientFunds : record { balance : nat };
+};
+type WithdrawalSuccess = record { block_index : nat; withdrawal_id : nat64 };
+service : (CanisterIds) -> {
+  get_staking_account : (principal) -> (Account);
+  get_unstaking_account : (principal) -> (Account);
+  notify_icp_deposit : (principal) -> (Result);
+  notify_nicp_deposit : (principal) -> (Result_1);
+  retrieve_nicp : (principal) -> (Result_2);
+  try_retrieve_icp : (principal) -> (Result_2);
+}

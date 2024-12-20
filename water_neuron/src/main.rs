@@ -3,12 +3,16 @@ use ic_canister_log::log;
 use ic_canisters_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_cdk_macros::{init, post_upgrade, query, update};
 use ic_metrics_encoder::MetricsEncoder;
+use icrc_ledger_types::icrc1::account::Account;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
 use water_neuron::dashboard::DisplayAmount;
 use water_neuron::guards::GuardPrincipal;
+use water_neuron::icrc21::{ConsentInfo, ConsentMessageRequest, Icrc21Error, StandardRecord};
 use water_neuron::logs::INFO;
 use water_neuron::management::register_vote;
-use water_neuron::nns_types::{GovernanceError, ManageNeuronResponse, Neuron, ProposalId};
+use water_neuron::nns_types::{
+    GovernanceError, ManageNeuronResponse, MergeResponse, Neuron, NeuronId, ProposalId,
+};
 use water_neuron::numeric::{ICP, WTN};
 use water_neuron::sns_distribution::compute_rewards;
 use water_neuron::state::audit::{process_event, replay_events};
@@ -19,8 +23,8 @@ use water_neuron::state::{
 use water_neuron::storage::total_event_count;
 use water_neuron::tasks::{schedule_now, TaskType};
 use water_neuron::{
-    CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg, Unit, UpgradeArg,
-    WithdrawalSuccess,
+    CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
+    Unit, UpgradeArg, WithdrawalSuccess,
 };
 
 fn reject_anonymous_call() {
@@ -68,6 +72,12 @@ pub fn post_upgrade(args: LiquidArg) {
                 }
                 mutate_state(|s| process_event(s, EventType::Upgrade(args)));
             }
+
+            mutate_state(|s| {
+                if let Some(entry) = s.proposals.last_entry() {
+                    s.last_nns_proposal_processed = entry.key().clone();
+                }
+            });
 
             let end = ic_cdk::api::instruction_counter();
 
@@ -141,20 +151,23 @@ fn get_events(args: GetEventsArg) -> GetEventsResult {
 }
 
 #[query]
-fn get_airdrop_allocation() -> WTN {
-    reject_anonymous_call();
-
-    read_state(|s| *s.airdrop.get(&ic_cdk::caller()).unwrap_or(&WTN::ZERO))
+fn get_airdrop_allocation(p: Option<Principal>) -> WTN {
+    read_state(|s| {
+        *s.airdrop
+            .get(&p.unwrap_or(ic_cdk::caller()))
+            .unwrap_or(&WTN::ZERO)
+    })
 }
 
 #[query]
-fn get_wtn_proposal_id(nns_proposal_id: u64) -> Option<u64> {
+fn get_wtn_proposal_id(nns_proposal_id: u64) -> Result<ProposalId, ProposalId> {
     read_state(|s| {
         s.proposals
             .get(&ProposalId {
                 id: nns_proposal_id,
             })
-            .map(|p| p.id)
+            .cloned()
+            .ok_or_else(|| s.last_nns_proposal_processed.clone())
     })
 }
 
@@ -287,7 +300,7 @@ fn get_info() -> CanisterInfo {
         neuron_8y_stake_e8s: s.main_neuron_8y_stake,
         neuron_8y_account: s.get_8y_neuron_account(),
         exchange_rate: s.get_icp_to_ncip_exchange_rate_e8s(),
-        stakers_count: s.principal_to_deposit.keys().len(),
+        stakers_count: s.account_to_deposits.keys().len(),
         total_icp_deposited: s.total_icp_deposited,
         nicp_supply: s.total_circulating_nicp,
         minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
@@ -297,11 +310,11 @@ fn get_info() -> CanisterInfo {
 }
 
 #[query]
-fn get_withdrawal_requests(maybe_principal: Option<Principal>) -> Vec<WithdrawalDetails> {
-    let principal = maybe_principal.unwrap_or(ic_cdk::caller());
+fn get_withdrawal_requests(maybe_account: Option<Account>) -> Vec<WithdrawalDetails> {
+    let account = maybe_account.unwrap_or(ic_cdk::caller().into());
     read_state(|s| {
-        s.principal_to_withdrawal
-            .get(&principal)
+        s.account_to_withdrawals
+            .get(&account)
             .cloned()
             .unwrap_or(vec![])
             .iter()
@@ -328,6 +341,24 @@ async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, Conversion
 async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionError> {
     reject_anonymous_call();
     check_postcondition(water_neuron::conversion::icp_to_nicp(arg).await)
+}
+
+#[update]
+async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelWithdrawalError> {
+    reject_anonymous_call();
+    check_postcondition(water_neuron::conversion::cancel_withdrawal(neuron_id).await)
+}
+
+#[query]
+fn icrc10_supported_standards() -> Vec<StandardRecord> {
+    water_neuron::icrc21::icrc10_supported_standards()
+}
+
+#[update]
+fn icrc21_canister_call_consent_message(
+    request: ConsentMessageRequest,
+) -> Result<ConsentInfo, Icrc21Error> {
+    water_neuron::icrc21::icrc21_canister_call_consent_message(request)
 }
 
 #[query(hidden = true)]
@@ -362,7 +393,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                 )?;
                 w.encode_gauge(
                     "stakers",
-                    s.principal_to_deposit.keys().len() as f64,
+                    s.account_to_deposits.keys().len() as f64,
                     "Stakers count",
                 )?;
                 w.encode_gauge(
@@ -472,7 +503,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
             neuron_8y_stake_e8s: s.main_neuron_8y_stake,
             neuron_8y_account: s.get_8y_neuron_account(),
             exchange_rate: s.get_icp_to_ncip_exchange_rate_e8s(),
-            stakers_count: s.principal_to_deposit.keys().len(),
+            stakers_count: s.account_to_deposits.keys().len(),
             total_icp_deposited: s.total_icp_deposited,
             nicp_supply: s.total_circulating_nicp,
             minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,

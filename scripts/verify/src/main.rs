@@ -15,6 +15,7 @@ mod types;
 
 const WATERNEURON_GOVERNANCE_CANISTER: &'static str = "jfnic-kaaaa-aaaaq-aadla-cai";
 const CANDID_DIDC_PATH: &'static str = "CANDID_DIDC_PATH";
+const REGULAR_PROPOSAL_LENGTH: usize = 64;
 
 type Result<T> = std::result::Result<T, CustomError>;
 
@@ -373,26 +374,45 @@ async fn parse_proposal(proposal_id: u64) -> Result<(String, String, String)> {
         hex::encode(&canister_upgrade_arg)
     );
 
-    let wasm_utf8 = std::str::from_utf8(&wasm)?;
-    info!("Wasm (UTF-8): {}", wasm_utf8);
+    let wasm_sha256_hash = if wasm.len() <= REGULAR_PROPOSAL_LENGTH {
+        let sha256_encoded_wasm = format!("{:x}", Sha256::digest(&wasm));
+        info!("SHA256 hash of the encoded Wasm: {}", sha256_encoded_wasm);
+        sha256_encoded_wasm
+    } else {
+        let wasm_utf8 = std::str::from_utf8(&wasm)?;
+        info!("Wasm (UTF-8): {}", wasm_utf8);
 
-    let wasm_sha256_hash = extract_sha256_hash(wasm_utf8).ok_or(CustomError::Generic(
-        "No SHA256 hash found in the Wasm".to_string(),
-    ))?;
-    info!("Wasm SHA256 Hash: {}", wasm_sha256_hash);
+        let wasm_sha256_hash = extract_sha256_hash(wasm_utf8).ok_or(CustomError::Generic(
+            "No SHA256 hash found in the Wasm".to_string(),
+        ))?;
+        info!("Wasm SHA256 Hash: {}", wasm_sha256_hash);
+        wasm_sha256_hash
+    };
 
-    let canister_upgrade_arg_utf8 = std::str::from_utf8(&canister_upgrade_arg)?;
-    info!(
-        "Canister Upgrade Arg (UTF-8): {}",
-        canister_upgrade_arg_utf8
-    );
-    let canister_upgrade_arg_sha256_hash = extract_sha256_hash(canister_upgrade_arg_utf8).ok_or(
-        CustomError::Generic("No SHA256 hash found in the Canister Upgrade Arg".to_string()),
-    )?;
-    info!(
-        "Canister Upgrade Arg SHA256 Hash: {}",
+    let canister_upgrade_arg_sha256_hash = if canister_upgrade_arg.len() <= REGULAR_PROPOSAL_LENGTH
+    {
+        let sha256_encoded_candid_arg = format!("{:x}", Sha256::digest(&canister_upgrade_arg));
+        info!(
+            "SHA256 hash of the encoded upgrade args: {}",
+            sha256_encoded_candid_arg
+        );
+        sha256_encoded_candid_arg
+    } else {
+        let canister_upgrade_arg_utf8 = std::str::from_utf8(&canister_upgrade_arg)?;
+        info!(
+            "Canister Upgrade Arg (UTF-8): {}",
+            canister_upgrade_arg_utf8
+        );
+        let canister_upgrade_arg_sha256_hash = extract_sha256_hash(canister_upgrade_arg_utf8)
+            .ok_or(CustomError::Generic(
+                "No SHA256 hash found in the Canister Upgrade Arg".to_string(),
+            ))?;
+        info!(
+            "Canister Upgrade Arg SHA256 Hash: {}",
+            canister_upgrade_arg_sha256_hash
+        );
         canister_upgrade_arg_sha256_hash
-    );
+    };
 
     Ok((
         wasm_sha256_hash,

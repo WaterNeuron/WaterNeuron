@@ -85,7 +85,8 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
 
         mutate_state(|s| {
             s.latest_distribution_icp_per_vp =
-                Some((icp_amount_to_distribute / E8S) as f64 / total_voting_power as f64)
+                Some((icp_amount_to_distribute / E8S) as f64 / total_voting_power as f64);
+            s.last_distribution_ts = timestamp_nanos();
         });
 
         for (owner, stake) in sns_neurons {
@@ -162,7 +163,7 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
                         continue;
                     }
                     if let Some(owner) = get_neuron_owner(&neuron) {
-                        if owner == self_canister_id() {
+                        if owner == self_canister_id() || owner == crate::NNS_GOVERNANCE_ID {
                             continue;
                         }
                         let vp = get_rounded_voting_power(&neuron, now_seconds);
