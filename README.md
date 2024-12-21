@@ -1,6 +1,14 @@
 # WaterNeuron
 Liquid staking protocol on the Internet Computer Protocol.
 
+RUSTFLAGS="--remap-path-prefix=/home/enzo/code/WaterNeuron=/waterNeuron" cargo canister -p water_neuron --bin water_neuron --release --locked
+
+RUSTFLAGS="--remap-path-prefix=/home/enzo/code/WaterNeuron= --remap-path-prefix=/home/enzo/.cargo=" cargo canister -p water_neuron --bin water_neuron --release --locked
+
+nix develop -i -k $HOME
+
+nix develop -i -k HOME -c bash -c "cargo canisters"
+
 ## Building
 You need to run a Unix based system with x86_64 architecture to compile the canisters.
 

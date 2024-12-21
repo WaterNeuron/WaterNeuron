@@ -8,19 +8,31 @@ lazy_static! {
     static ref CANISTER_PATHS: Vec<(String, PathBuf)> = vec![
         (
             "boomerang".into(),
-            get_wasm_path(CanisterName::Local("boomerang"), false).unwrap()
+            match get_wasm_path(CanisterName::Local("boomerang"), false) {
+                Ok(path) => path,
+                Err(e) => panic!("Error: {:?}", e),
+            }
         ),
         (
             "water_neuron".into(),
-            get_wasm_path(CanisterName::Local("water_neuron"), false).unwrap()
+            match get_wasm_path(CanisterName::Local("water_neuron"), false) {
+                Ok(path) => path,
+                Err(e) => panic!("Error: {:?}", e),
+            }
         ),
         (
             "water_neuron_self_check".into(),
-            get_wasm_path(CanisterName::Local("water_neuron"), true).unwrap()
+            match get_wasm_path(CanisterName::Local("water_neuron"), true) {
+                Ok(path) => path,
+                Err(e) => panic!("Error: {:?}", e),
+            }
         ),
         (
             "sns_module".into(),
-            get_wasm_path(CanisterName::Local("sns_module"), false).unwrap()
+            match get_wasm_path(CanisterName::Local("sns_module"), false) {
+                Ok(path) => path,
+                Err(e) => panic!("Error: {:?}", e),
+            }
         ),
     ];
 }
