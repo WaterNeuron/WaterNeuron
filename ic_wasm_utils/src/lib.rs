@@ -155,6 +155,8 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
         cargo_dir.display()
     );
 
+    let file_name = format!("{0}{1}", name, if self_check { "_self_check" } else { "" });
+
     let build_steps = [
         format!(
             "{0} cargo canister -p {1} --release --bin {1} --locked {2}",
@@ -163,10 +165,10 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
             if self_check { "--features=self_check"} else {""}
         ),
         format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}.wasm metadata candid:service -f {0}/{0}.did -v public", name),
-        format!("ic-wasm artifacts/{0}.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
-        format!("ic-wasm artifacts/{0}.wasm shrink", name),
-        format!("gzip -cnf9 artifacts/{0}.wasm > artifacts/{0}{1}.wasm.gz", name, if self_check { "_self_check" } else { "" }),
-        format!("rm artifacts/{0}.wasm", name),
+        format!("ic-wasm artifacts/{0}.wasm -o artifacts/{1}.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name, file_name),
+        format!("ic-wasm artifacts/{0}.wasm shrink", file_name),
+        format!("gzip -cnf9 artifacts/{0}.wasm > artifacts/{0}.wasm.gz", file_name),
+        format!("rm artifacts/{0}.wasm", file_name),
     ];
 
     for cmd in &build_steps {
@@ -180,11 +182,7 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
         }
     }
 
-    Ok(WORKSPACE_ROOT.join(format!(
-        "artifacts/{}{}.wasm.gz",
-        name,
-        if self_check { "_self_check" } else { "" }
-    )))
+    Ok(WORKSPACE_ROOT.join(format!("artifacts/{}.wasm.gz", file_name)))
 }
 
 fn fetch_remote_wasm(canister: &CanisterName) -> Result<PathBuf> {
