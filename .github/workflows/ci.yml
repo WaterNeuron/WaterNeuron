@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-  pull_request:
+    branches:
+      - '**'
+      - 'main'
 
 jobs:
   check:
@@ -17,3 +19,9 @@ jobs:
       - uses: DeterminateSystems/flake-checker-action@main
       - name: Run `cargo canisters`
         run: nix develop -i -k HOME -c bash -c "cargo canisters"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: canisters
+          path: artifacts/
+          retention-days: 30
