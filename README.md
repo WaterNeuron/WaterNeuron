@@ -8,7 +8,7 @@ We recommend the Determinate Systems nix install tool which you can find [here](
 
 ```bash
 # build canisters
-nix develop -i -k HOME -c bash -c "cargo canisters"
+./build.sh
 ```
 
 ## Dev
