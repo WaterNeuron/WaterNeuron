@@ -12,9 +12,6 @@ crate-type = ["cdylib", "rlib"]
 name = "sns_module"
 path = "src/main.rs"
 
-[features]
-self_check = []
-
 [dependencies]
 ic-management-canister-types.workspace = true
 candid.workspace = true
