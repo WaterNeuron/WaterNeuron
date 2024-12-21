@@ -192,10 +192,7 @@ fn construct_metadata_table() -> String {
                         <td>{}</td>
                     </tr>
                     <tr>
-                        <th rowspan=\"4\">6-month nICP Neuron</th>
-                        <td>{}</td>
-                    </tr>
-                    <tr>
+                        <th rowspan=\"3\">{}</th>
                         <td>Fetched {} ICP </td>
                     </tr>
                     <tr>
@@ -207,10 +204,7 @@ fn construct_metadata_table() -> String {
                         </td>
                     </tr>
                     <tr>
-                        <th rowspan=\"3\">8-year SNS Neuron</th>
-                        <td>{}</td>
-                    </tr>
-                    <tr>
+                        <th rowspan=\"2\">{}</th>
                         <td>Fetched {} ICP</td>
                     </tr>
                     <tr>
@@ -245,18 +239,16 @@ fn construct_metadata_table() -> String {
             link_to_dashboard(s.wtn_ledger_id),
             s.neuron_id_6m
                 .map(|n| format!(
-                    "<a href=\"{}\" target=\"_blank\">{}</a>",
+                    "<a href=\"{}\" target=\"_blank\">6-month nICP Neuron</a>",
                     n.to_dashboard_link(),
-                    n.id
                 ))
                 .unwrap_or_else(|| "Neuron Not Set".to_string()),
             s.main_neuron_6m_staked,
             s.tracked_6m_stake,
             s.neuron_id_8y
                 .map(|n| format!(
-                    "<a href=\"{}\" target=\"_blank\">{}</a>",
+                    "<a href=\"{}\" target=\"_blank\">8-year SNS Neuron</a>",
                     n.to_dashboard_link(),
-                    n.id
                 ))
                 .unwrap_or_else(|| "Neuron Not Set".to_string()),
             s.main_neuron_8y_stake,
