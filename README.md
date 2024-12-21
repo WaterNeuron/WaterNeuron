@@ -8,9 +8,9 @@ You need to run a Unix based system with x86_64 architecture to compile the cani
 # packages to install
 sudo apt-get install podman git
 # build canisters
-./run.sh
+./build.sh
 # build canisters along with the container image locally
-./run.sh --local
+./build.sh --local
 ```
 
 ## Dev
