@@ -55,6 +55,37 @@ fn check_self_check(path: &Path) -> bool {
         .any(|window| window == "canister_query self_check".as_bytes())
 }
 
+fn check_candid(name: &str, path: &PathBuf) -> bool {
+    let candid_cmd = Command::new("ic-wasm")
+        .args([path.to_str().unwrap(), "metadata", "candid:service"])
+        .output()
+        .expect("Failed to execute ic-wasm command");
+
+    let candid_output = String::from_utf8_lossy(&candid_cmd.stdout);
+    let candid_file =
+        std::fs::read_to_string(format!("{}/{}.did", name, name)).unwrap_or_else(|_| String::new());
+
+    !candid_output.trim().is_empty() && candid_output.trim() == candid_file.trim()
+}
+
+fn check_git(path: &PathBuf) -> bool {
+    let git_cmd = Command::new("ic-wasm")
+        .args([path.to_str().unwrap(), "metadata", "git_commit_id"])
+        .output()
+        .expect("Failed to execute ic-wasm command");
+
+    let git_output = String::from_utf8_lossy(&git_cmd.stdout);
+    let current_commit = String::from_utf8(
+        Command::new("git")
+            .args(["rev-parse", "HEAD"])
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap();
+    git_output.trim() == current_commit.trim()
+}
+
 fn main() {
     let mut sums = vec![];
     for (name, path) in CANISTER_PATHS.iter() {
@@ -71,6 +102,21 @@ fn main() {
     for (name, path, sum) in &sums {
         println!("{:<12} {}", name, sum);
         println!("           → {:?}", path);
+
+        println!(
+            "          git commit metadata: {}",
+            if check_git(path) { "✓" } else { "✗" }
+        );
+
+        println!(
+            "          candid metadata: {}",
+            if check_candid(name, path) {
+                "✓"
+            } else {
+                "✗"
+            }
+        );
+
         if name.contains("water_neuron") {
             let has_self_check = check_self_check(path);
             println!(
