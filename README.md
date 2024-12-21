@@ -1,24 +1,14 @@
 # WaterNeuron
 Liquid staking protocol on the Internet Computer Protocol.
 
-RUSTFLAGS="--remap-path-prefix=/home/enzo/code/WaterNeuron=/waterNeuron" cargo canister -p water_neuron --bin water_neuron --release --locked
 
-RUSTFLAGS="--remap-path-prefix=/home/enzo/code/WaterNeuron= --remap-path-prefix=/home/enzo/.cargo=" cargo canister -p water_neuron --bin water_neuron --release --locked
-
-nix develop -i -k $HOME
-
-nix develop -i -k HOME -c bash -c "cargo canisters"
-
-## Building
-You need to run a Unix based system with x86_64 architecture to compile the canisters.
+## Reproducible Builds
+You need to run a Unix based system with x86_64 architecture with Nix installed to compile the canisters.
+We recommend the Determinate Systems nix install tool which you can find [here](https://determinate.systems/posts/determinate-nix-installer/).
 
 ```bash
-# packages to install
-sudo apt-get install podman git
 # build canisters
-./build.sh
-# build canisters along with the container image locally
-./build.sh --local
+nix develop -i -k HOME -c bash -c "cargo canisters"
 ```
 
 ## Dev
