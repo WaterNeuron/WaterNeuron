@@ -55,7 +55,7 @@ fn check_self_check(path: &Path) -> bool {
         .any(|window| window == "canister_query self_check".as_bytes())
 }
 
-fn check_candid(name: &str, path: &PathBuf) -> bool {
+fn check_candid(name: &str, path: &Path) -> bool {
     let candid_cmd = Command::new("ic-wasm")
         .args([path.to_str().unwrap(), "metadata", "candid:service"])
         .output()
@@ -68,7 +68,7 @@ fn check_candid(name: &str, path: &PathBuf) -> bool {
     !candid_output.trim().is_empty() && candid_output.trim() == candid_file.trim()
 }
 
-fn check_git(path: &PathBuf) -> bool {
+fn check_git(path: &Path) -> bool {
     let git_cmd = Command::new("ic-wasm")
         .args([path.to_str().unwrap(), "metadata", "git_commit_id"])
         .output()
