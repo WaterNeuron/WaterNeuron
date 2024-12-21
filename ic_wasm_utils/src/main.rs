@@ -101,15 +101,22 @@ fn main() {
     println!("─────────────────────────────────────────────");
     for (name, path, sum) in &sums {
         println!("{:<12} {}", name, sum);
+
+        let name = if name.contains("water_neuron") {
+            "water_neuron"
+        } else {
+            name
+        };
+
         println!("           → {:?}", path);
 
         println!(
-            "          git commit metadata: {}",
+            "           {} git commit metadata",
             if check_git(path) { "✓" } else { "✗" }
         );
 
         println!(
-            "          candid metadata: {}",
+            "           {} candid metadata",
             if check_candid(name, path) {
                 "✓"
             } else {
@@ -120,8 +127,8 @@ fn main() {
         if name.contains("water_neuron") {
             let has_self_check = check_self_check(path);
             println!(
-                "           self_check: {}",
-                if has_self_check { "✓" } else { "✗" }
+                "           {} does not have `self_check`",
+                if !has_self_check { "✓" } else { "✗" }
             );
         }
         println!();
