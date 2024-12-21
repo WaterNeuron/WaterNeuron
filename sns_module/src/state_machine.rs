@@ -1,4 +1,5 @@
 use crate::state::InitArg as SnsModuleInitArg;
+use crate::DEV_WALLET;
 use crate::E8S;
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
