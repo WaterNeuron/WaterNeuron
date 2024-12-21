@@ -1,5 +1,5 @@
 use crate::state::InitArg as SnsModuleInitArg;
-use crate::E8S;
+use crate::{DEV_WALLET, E8S};
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
 use ic_base_types::{CanisterId, PrincipalId};
@@ -264,7 +264,7 @@ impl SnsModuleEnv {
             &assert_reply(
                 self.env
                     .execute_ingress_as(
-                        PrincipalId(Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()),
+                        PrincipalId(Principal::from_text(DEV_WALLET).unwrap()),
                         self.sns_module_id,
                         "set_is_wtn_claimable",
                         Encode!(&val).unwrap()
@@ -281,7 +281,7 @@ impl SnsModuleEnv {
             &assert_reply(
                 self.env
                     .execute_ingress_as(
-                        PrincipalId(Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()),
+                        PrincipalId(Principal::from_text(DEV_WALLET).unwrap()),
                         self.sns_module_id,
                         "distribute_tokens",
                         Encode!().unwrap()

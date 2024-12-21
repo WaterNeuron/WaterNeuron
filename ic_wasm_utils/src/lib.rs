@@ -124,11 +124,11 @@ lazy_static! {
         .expect("Failed to get workspace root")
         .workspace_root
         .into();
-    static ref BOOMERANG_WASM: Vec<u8> = get_wasm(CanisterName::Local("boomerang"), true).unwrap();
+    static ref BOOMERANG_WASM: Vec<u8> = get_wasm(CanisterName::Local("boomerang"), false).unwrap();
     static ref WATER_NEURON_WASM: Vec<u8> =
         get_wasm(CanisterName::Local("water_neuron"), true).unwrap();
     static ref SNS_MODULE_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("sns_module"), true).unwrap();
+        get_wasm(CanisterName::Local("sns_module"), false).unwrap();
 }
 
 pub fn get_wasm_path(name: CanisterName, self_check: bool) -> Result<PathBuf> {
@@ -145,13 +145,30 @@ fn get_wasm(name: CanisterName, self_check: bool) -> Result<Vec<u8>> {
 fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
     std::fs::create_dir_all(WORKSPACE_ROOT.join("artifacts"))?;
 
+    let home_dir = std::env::var("HOME")
+        .map_err(|e| Error::Io(std::io::Error::new(std::io::ErrorKind::NotFound, e)))?;
+    let cargo_dir = PathBuf::from(home_dir).join(".cargo");
+
+    let rustflags = format!(
+        "RUSTFLAGS=\"--remap-path-prefix={}= --remap-path-prefix={}=\"",
+        WORKSPACE_ROOT.display(),
+        cargo_dir.display()
+    );
+
+    let file_name = format!("{0}{1}", name, if self_check { "_self_check" } else { "" });
+
     let build_steps = [
-        format!("cargo canister -p {0} --release --bin {0} --locked {1}", name, if self_check { "--features=self_check"} else {""}),
+        format!(
+            "{0} cargo canister -p {1} --release --bin {1} --locked {2}",
+            rustflags,
+            name,
+            if self_check { "--features=self_check"} else {""}
+        ),
         format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}.wasm metadata candid:service -f {0}/{0}.did -v public", name),
-        format!("ic-wasm artifacts/{0}.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name),
-        format!("ic-wasm artifacts/{0}.wasm shrink", name),
-        format!("gzip -cnf9 artifacts/{0}.wasm > artifacts/{0}{1}.wasm.gz", name, if self_check { "_self_check" } else { "" }),
-        format!("rm artifacts/{0}.wasm", name),
+        format!("ic-wasm artifacts/{0}.wasm -o artifacts/{1}.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name, file_name),
+        format!("ic-wasm artifacts/{0}.wasm shrink", file_name),
+        format!("gzip -cnf9 artifacts/{0}.wasm > artifacts/{0}.wasm.gz", file_name),
+        format!("rm artifacts/{0}.wasm", file_name),
     ];
 
     for cmd in &build_steps {
@@ -165,11 +182,7 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
         }
     }
 
-    Ok(WORKSPACE_ROOT.join(format!(
-        "artifacts/{}{}.wasm.gz",
-        name,
-        if self_check { "_self_check" } else { "" }
-    )))
+    Ok(WORKSPACE_ROOT.join(format!("artifacts/{}.wasm.gz", file_name)))
 }
 
 fn fetch_remote_wasm(canister: &CanisterName) -> Result<PathBuf> {

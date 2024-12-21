@@ -1,5 +1,3 @@
 [toolchain]
-channel = "1.82.0"
-targets = ["wasm32-unknown-unknown"]
-profile = "default"
-components = ["rls"]
+channel = "1.83.0"
+targets = ["wasm32-unknown-unknown", "x86_64-unknown-linux-gnu"]
