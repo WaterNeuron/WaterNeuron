@@ -23,9 +23,11 @@ jobs:
         run: nix develop -i -k HOME -c bash -c "cargo fmt --check"
       - name: Compile canisters
         run: ./build.sh
-      - name: Upload artifacts
+     - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: canisters
           path: artifacts/
           retention-days: 30
+      - name: Test canisters
+        run: nix develop -i -k HOME -c bash -c "cargo t"

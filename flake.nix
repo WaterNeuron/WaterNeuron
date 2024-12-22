@@ -43,8 +43,11 @@
             wabt
             ic-wasm
             rustToolchain
+
+            # systetm tests
             libunwind
             libunwind.dev
+            protobuf
           ];
           TZ = "UTC";
         };
