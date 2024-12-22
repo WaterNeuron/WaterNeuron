@@ -43,6 +43,8 @@
             wabt
             ic-wasm
             rustToolchain
+            libunwind
+            libunwind.dev
           ];
           TZ = "UTC";
         };
