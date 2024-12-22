@@ -27,7 +27,7 @@
       "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
     },
     "governance": {
-      "candid": "governance_full.did",
+      "candid": "governance.did",
       "type": "custom",
       "wasm": "water_neuron/src/tests/governance-canister.wasm.gz"
     },
