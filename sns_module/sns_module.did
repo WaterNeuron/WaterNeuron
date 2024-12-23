@@ -35,6 +35,7 @@ service : (InitArg) -> {
   get_status : () -> (Status) query;
   get_wtn_allocated : (principal) -> (nat64) query;
   notify_icp_deposit : (principal, nat64) -> (Result);
+  return_uncommited_icp : (principal, nat64) -> (Result);
   set_is_wtn_claimable : (bool) -> (variant { Ok; Err : text });
   stake_icp : (nat64) -> (Result);
 }
