@@ -390,7 +390,10 @@ fn should_return_uncommited_icp() {
         Principal::from_text("wwyv5-q3sgh-tae7o-v2wq7-zd32d-mv4xa-xuaup-z3r5z-vmfcg-xsm6p-xqe")
             .unwrap();
     let deposit_address = env.get_icp_deposit_address(nns_principal);
-    let deposit_account = Account{ owner: env.sns_module_id.into(), subaccount: Some(derive_staking(nns_principal))};
+    let deposit_account = Account {
+        owner: env.sns_module_id.into(),
+        subaccount: Some(derive_staking(nns_principal)),
+    };
 
     let amount = 10_000 * E8S;
 
@@ -398,7 +401,10 @@ fn should_return_uncommited_icp() {
     assert_eq!(env.balance_of(env.icp_ledger_id, deposit_account), amount);
 
     assert_eq!(env.return_uncommited_icp(nns_principal, amount), Ok(3));
-    assert_eq!(env.balance_of(env.icp_ledger_id, nns_principal), amount - 10_000);
+    assert_eq!(
+        env.balance_of(env.icp_ledger_id, nns_principal),
+        amount - 10_000
+    );
     assert_eq!(env.balance_of(env.icp_ledger_id, deposit_account), 0u64);
 }
 
