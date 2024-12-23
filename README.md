@@ -15,7 +15,7 @@ We recommend the Determinate Systems nix install tool which you can find [here](
 You need the following packages to run system tests.
 
 ```bash
-sudo apt udpate && sudo apt install \
+sudo apt update && sudo apt install \
         curl \
         git \
         gcc \
