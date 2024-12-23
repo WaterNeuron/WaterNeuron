@@ -195,6 +195,26 @@ fn check_target() {
     assert_eq!(format!("{}", eight_years_account()), "rrkah-fqaaa-aaaaa-aaaaq-cai-k5odt6i.cc3beb0e3a6d7e26485fde67916225d1c2fcb7398590a92bffb97c8704140b25".to_string());
 }
 
+// Returns the uncommited ICP back to the target Principal.
+// Recommended to use `get_icp_deposit_address` to check the correct amount before calling this function.
+#[update]
+async fn return_uncommited_icp(target: Principal, amount: u64) -> Result<u64, String> {
+    let icp_ledger = read_state(|s| s.icp_ledger_id);
+    let tokens = amount.checked_sub(10_000).unwrap();
+    match transfer(
+        Some(derive_staking(target)),
+        target,
+        Nat::from(tokens),
+        None,
+        icp_ledger,
+    )
+    .await
+    {
+        Ok(block_index) => Ok(block_index),
+        Err(e) => Err(format!("{e}")),
+    }
+}
+
 #[update]
 async fn claim_wtn(of: Principal) -> Result<u64, String> {
     let wtn_amount = sns_module::memory::get_wtn_owed(of);
