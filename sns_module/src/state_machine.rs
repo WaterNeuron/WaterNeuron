@@ -242,14 +242,14 @@ impl SnsModuleEnv {
         .unwrap()
     }
 
-    fn return_uncommited_icp(&self, target: Principal, amount: u64) -> Result<u64, String> {
+    fn return_uncommitted_icp(&self, target: Principal, amount: u64) -> Result<u64, String> {
         Decode!(
             &assert_reply(
                 self.env
                     .execute_ingress_as(
                         PrincipalId::new_user_test_id(0),
                         self.sns_module_id,
-                        "return_uncommited_icp",
+                        "return_uncommitted_icp",
                         Encode!(&target, &amount).unwrap()
                     )
                     .unwrap()
@@ -383,7 +383,7 @@ fn e2e_basic() {
 }
 
 #[test]
-fn should_return_uncommited_icp() {
+fn should_return_uncommitted_icp() {
     let env = SnsModuleEnv::new();
 
     let nns_principal =
@@ -400,7 +400,7 @@ fn should_return_uncommited_icp() {
     assert_eq!(env.icp_transfer(env.user, deposit_address, amount), 2);
     assert_eq!(env.balance_of(env.icp_ledger_id, deposit_account), amount);
 
-    assert_eq!(env.return_uncommited_icp(nns_principal, amount), Ok(3));
+    assert_eq!(env.return_uncommitted_icp(nns_principal, amount), Ok(3));
     assert_eq!(
         env.balance_of(env.icp_ledger_id, nns_principal),
         amount - 10_000
