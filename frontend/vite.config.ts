@@ -5,7 +5,7 @@ import environment from 'vite-plugin-environment';
 import dotenv from 'dotenv';
 import inject from '@rollup/plugin-inject';
 
-dotenv.config({ path: '../../.env' });
+dotenv.config();
 
 export default defineConfig({
 	build: {
@@ -45,10 +45,6 @@ export default defineConfig({
 	],
 	resolve: {
 		alias: [
-			{
-				find: '$declarations',
-				replacement: fileURLToPath(new URL('./src/declarations', import.meta.url))
-			},
 			{
 				find: '$lib',
 				replacement: fileURLToPath(new URL('./src/lib', import.meta.url))
