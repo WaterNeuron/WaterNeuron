@@ -327,9 +327,9 @@ testWithII('test ledger hardware wallet interaction', async ({ page, iiPage }) =
 	const principal = await page.locator('p[title="principal-user"]').textContent();
 	const accountId = await page.locator('p[title="accountIdentifier-hex"]').textContent();
 
-	expect(principal).toBe('abvgq-dnvkg-jzju2-ga7rm-qbs27-2qckd-5v5y6-uw2nz-a2klw-lnh3a-lae');
+	expect(principal).toBe('bqfvl-vwbmq-wjhyu-l24zd-mqeaw-or6ji-avorb-ozacl-wuj5j-tviiu-oae');
 	expect(ledgerDestination).toBe(principal);
-	expect(accountId).toBe('90024352950321efafa6f85ac95699fd5f470490c251a1606021b3deaa55a389');
+	expect(accountId).toBe('bc5e6a28697c5766dbd322f40105d3cb5a044a79070af91dabb675c643ce4722');
 
 	await page.waitForTimeout(100);
 	await page.locator('[title="send-btn-ICP"]').click();

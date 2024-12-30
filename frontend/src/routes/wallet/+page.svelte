@@ -39,7 +39,7 @@
 				<div class="third-column-container">
 					<div class="switch-container">
 						<div class="btn-active-container">
-							<button on:click={() => handleWalletSelection(true)} title="switch-ledger-btn">
+							<button on:click={() => handleWalletSelection(true)} title="switch-main-btn">
 								<p>Main</p>
 							</button>
 							{#if inMainWallet}

@@ -18,16 +18,14 @@ import { IDL } from '@dfinity/candid';
 export class User {
 	public principal: Principal;
 	public accountId: string;
-	public identityProvider: 'Plug' | 'II' | 'Nfid';
 	public account: 'main' | 'ledger';
 	public icpBalanceE8s: bigint;
 	public nicpBalanceE8s: bigint;
 	public wtnBalanceE8s: bigint;
 	public wtnAllocationE8s: bigint;
 
-	constructor(principal: Principal, identityProvider: 'Plug' | 'II' | 'Nfid') {
+	constructor(principal: Principal) {
 		this.principal = principal;
-		this.identityProvider = identityProvider;
 		this.account = 'main';
 		this.accountId = AccountIdentifier.fromPrincipal({ principal }).toHex();
 		this.icpBalanceE8s = 0n;

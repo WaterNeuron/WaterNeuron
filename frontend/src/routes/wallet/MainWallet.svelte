@@ -1,6 +1,6 @@
 <script lang="ts">
 	import CopyIcon from '$lib/icons/CopyIcon.svelte';
-	import { fade, scale } from 'svelte/transition';
+	import { scale } from 'svelte/transition';
 	import { user } from '$lib/stores';
 	import SendButton from './SendButton.svelte';
 

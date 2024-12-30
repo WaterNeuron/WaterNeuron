@@ -54,7 +54,7 @@ export async function connectWithInternetIdentity() {
 				host: HOST
 			});
 			canisters.set(await fetchActors(agent));
-			user.set(new User(identity.getPrincipal(), 'II'));
+			user.set(new User(identity.getPrincipal()));
 		} else {
 			await authClient.login({
 				maxTimeToLive: AUTH_MAX_TIME_TO_LIVE,
@@ -68,7 +68,7 @@ export async function connectWithInternetIdentity() {
 						host: HOST
 					});
 					canisters.set(await fetchActors(agent));
-					user.set(new User(identity.getPrincipal(), 'II'));
+					user.set(new User(identity.getPrincipal()));
 				},
 				onError: (error) => {
 					throw Error(error);
@@ -90,7 +90,7 @@ export async function tryConnectOnReload() {
 			host: HOST
 		});
 		canisters.set(await fetchActors(agent));
-		user.set(new User(identity.getPrincipal(), 'II'));
+		user.set(new User(identity.getPrincipal()));
 	} else {
 		canisters.set(await fetchActors());
 	}
@@ -134,7 +134,7 @@ export async function finalizePlugConnection(newSigner: Signer, userPrincipal: P
 	});
 
 	canisters.set(await fetchActors(signerAgent));
-	user.set(new User(userPrincipal, 'Plug'));
+	user.set(new User(userPrincipal));
 }
 
 export async function connectWithTransport(rpc: typeof NFID_RPC) {
@@ -155,7 +155,7 @@ export async function connectWithTransport(rpc: typeof NFID_RPC) {
 		});
 
 		canisters.set(await fetchActors(signerAgent));
-		user.set(new User(userPrincipal, 'Nfid'));
+		user.set(new User(userPrincipal));
 	} catch (error) {
 		console.log(error);
 	}
@@ -219,7 +219,7 @@ export async function localSignIn() {
 				});
 
 				canisters.set(await fetchActors(agent));
-				user.set(new User(identity.getPrincipal(), 'II'));
+				user.set(new User(identity.getPrincipal()));
 			},
 			onError: (error) => {
 				throw new Error(error);
@@ -248,23 +248,15 @@ export async function testSignIn() {
 				});
 
 				canisters.set(await fetchActors(agent));
-				user.set(new User(identity.getPrincipal(), 'II'));
+				user.set(new User(identity.getPrincipal()));
 			},
 			onError: (error) => {
 				throw new Error(error);
 			}
 		});
-
-		const ARRAY_IDENTITY = [
-			4, 144, 222, 78, 183, 128, 41, 233, 81, 117, 37, 208, 169, 46, 222, 65, 160, 114, 39, 191,
-			184, 93, 226, 186, 191, 74, 231, 244, 73, 95, 10, 219, 137, 160, 240, 65, 34, 4, 36, 52, 69,
-			81, 91, 116, 228, 186, 129, 22, 25, 56, 104, 6, 207, 110, 194, 170, 51, 92, 62, 195, 223, 227,
-			72, 246, 109
-		];
-
 		const rawLedgerIdentity = new ArrayBuffer(65);
 		const view = new Uint8Array(rawLedgerIdentity);
-		view.set(ARRAY_IDENTITY);
+		view.set(Uint8Array.from('Test', (x) => x.charCodeAt(0)));
 		const key = Secp256k1PublicKey.fromRaw(rawLedgerIdentity);
 		const ledgerIdentity = LedgerIdentity.createMockIdentity(key);
 
