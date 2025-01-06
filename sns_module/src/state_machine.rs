@@ -1,5 +1,5 @@
 use crate::state::InitArg as SnsModuleInitArg;
-use crate::{DEV_WALLET, E8S};
+use crate::{derive_staking, DEV_WALLET, E8S};
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
 use ic_base_types::{CanisterId, PrincipalId};
@@ -242,6 +242,23 @@ impl SnsModuleEnv {
         .unwrap()
     }
 
+    fn return_uncommitted_icp(&self, target: Principal, amount: u64) -> Result<u64, String> {
+        Decode!(
+            &assert_reply(
+                self.env
+                    .execute_ingress_as(
+                        PrincipalId::new_user_test_id(0),
+                        self.sns_module_id,
+                        "return_uncommitted_icp",
+                        Encode!(&target, &amount).unwrap()
+                    )
+                    .unwrap()
+            ),
+            Result<u64, String>
+        )
+        .unwrap()
+    }
+
     fn claim_wtn(&self, target: Principal) -> Result<u64, String> {
         Decode!(
             &assert_reply(
@@ -363,6 +380,32 @@ fn e2e_basic() {
     assert_eq!(env.get_wtn_allocated(nns_principal), 0);
 
     assert!(env.notify_icp_deposit(nns_principal, 10_000 * E8S).is_err());
+}
+
+#[test]
+fn should_return_uncommitted_icp() {
+    let env = SnsModuleEnv::new();
+
+    let nns_principal =
+        Principal::from_text("wwyv5-q3sgh-tae7o-v2wq7-zd32d-mv4xa-xuaup-z3r5z-vmfcg-xsm6p-xqe")
+            .unwrap();
+    let deposit_address = env.get_icp_deposit_address(nns_principal);
+    let deposit_account = Account {
+        owner: env.sns_module_id.into(),
+        subaccount: Some(derive_staking(nns_principal)),
+    };
+
+    let amount = 10_000 * E8S;
+
+    assert_eq!(env.icp_transfer(env.user, deposit_address, amount), 2);
+    assert_eq!(env.balance_of(env.icp_ledger_id, deposit_account), amount);
+
+    assert_eq!(env.return_uncommitted_icp(nns_principal, amount), Ok(3));
+    assert_eq!(
+        env.balance_of(env.icp_ledger_id, nns_principal),
+        amount - 10_000
+    );
+    assert_eq!(env.balance_of(env.icp_ledger_id, deposit_account), 0u64);
 }
 
 #[test]
