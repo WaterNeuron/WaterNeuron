@@ -199,6 +199,7 @@ fn check_target() {
 // Recommended to use `get_icp_deposit_address` to check the correct amount before calling this function.
 #[update]
 async fn return_uncommitted_icp(target: Principal, amount: u64) -> Result<u64, String> {
+    assert_eq!(ic_cdk::caller(), Principal::from_text(DEV_WALLET).unwrap());
     let icp_ledger = read_state(|s| s.icp_ledger_id);
     let tokens = amount.checked_sub(10_000).unwrap();
     match transfer(
