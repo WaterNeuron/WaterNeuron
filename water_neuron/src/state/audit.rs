@@ -24,6 +24,7 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
                 *amount,
                 Some(SNS_DISTRIBUTION_MEMO),
             );
+            state.last_distribution_ts = timestamp;
         }
         EventType::TransferExecuted {
             transfer_id,

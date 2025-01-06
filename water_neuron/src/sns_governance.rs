@@ -87,7 +87,6 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
         mutate_state(|s| {
             s.latest_distribution_icp_per_vp =
                 Some((icp_amount_to_distribute / E8S) as f64 / total_voting_power as f64);
-            s.last_distribution_ts = timestamp_nanos();
         });
 
         for (owner, stake) in sns_neurons {
