@@ -1,7 +1,9 @@
 use crate::numeric::ICP;
+use crate::storage::stable_add_rewards;
 use crate::{
-    mutate_state, process_event, read_state, self_canister_id, timestamp_nanos, Account,
-    CdkRuntime, EventType, ICRC1Client, DEBUG, E8S, INFO, MINIMUM_ICP_DISTRIBUTION, SEC_NANOS,
+    mutate_state, process_event, read_state, schedule_now, self_canister_id, timestamp_nanos,
+    Account, CdkRuntime, EventType, ICRC1Client, TaskType, DEBUG, E8S, INFO,
+    MINIMUM_ICP_DISTRIBUTION, SEC_NANOS,
 };
 use async_trait::async_trait;
 use candid::Principal;
@@ -15,8 +17,6 @@ pub const WTN_MAX_DISSOLVE_DELAY_SECONDS: u64 = 94_672_800;
 const WTN_MAX_NEURON_AGE_FOR_AGE_BONUS: u64 = 94_672_800;
 const WTN_MAX_DISSOLVE_DELAY_BONUS_PERCENTAGE: u64 = 100;
 const WTN_MAX_AGE_BONUS_PERCENTAGE: u64 = 100;
-
-const MINIMUM_ICP_AMOUNT_DISTRIBUTION: u64 = 1_000_000;
 
 #[async_trait]
 pub trait CanisterRuntime {
@@ -93,23 +93,18 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
             let share = stake as f64 / total_voting_power as f64;
             let share_amount = icp_amount_to_distribute as f64 * share;
             let share_amount_icp = ICP::from_e8s(share_amount as u64);
-            if share_amount as u64 > MINIMUM_ICP_AMOUNT_DISTRIBUTION {
-                mutate_state(|s| {
-                    process_event(
-                        s,
-                        EventType::DistributeICPtoSNS {
-                            amount: share_amount_icp,
-                            receiver: owner,
-                        },
-                    );
-                });
-                stakers_count += 1;
-                log!(
-                    INFO,
-                    "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner}",
-                );
-            }
+            stable_add_rewards(owner, share_amount_icp.0);
+            stakers_count += 1;
+            log!(
+                INFO,
+                "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner}",
+            );
         }
+
+        mutate_state(|s| {
+            process_event(s, EventType::DistributeICPtoSNSv2);
+        });
+        schedule_now(TaskType::MaybeDistributeRewards);
     }
 
     Ok(stakers_count)

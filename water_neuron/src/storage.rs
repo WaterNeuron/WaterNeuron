@@ -1,15 +1,17 @@
 use crate::state::event::{Event, EventType};
+use candid::Principal;
 use ic_stable_structures::{
     log::Log as StableLog,
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     storable::{Bound, Storable},
-    DefaultMemoryImpl,
+    DefaultMemoryImpl, StableBTreeMap,
 };
 use std::borrow::Cow;
 use std::cell::RefCell;
 
 const LOG_INDEX_MEMORY_ID: MemoryId = MemoryId::new(0);
 const LOG_DATA_MEMORY_ID: MemoryId = MemoryId::new(1);
+const PRINCIPAL_TO_ICP_REWARDS_ID: MemoryId = MemoryId::new(2);
 
 type VMem = VirtualMemory<DefaultMemoryImpl>;
 type EventLog = StableLog<Event, VMem, VMem>;
@@ -43,6 +45,11 @@ thread_local! {
                   ).expect("failed to initialize stable log")
               )
         );
+
+    static PRINCIPAL_TO_ICP_REWARDS: RefCell<StableBTreeMap<Principal, u64, VMem>> =
+        MEMORY_MANAGER.with(|mm| {
+        RefCell::new(StableBTreeMap::init(mm.borrow().get(PRINCIPAL_TO_ICP_REWARDS_ID)))
+    });
 }
 
 /// Appends the event to the event log.
@@ -62,4 +69,40 @@ where
     F: for<'a> FnOnce(Box<dyn Iterator<Item = Event> + 'a>) -> R,
 {
     EVENTS.with(|events| f(Box::new(events.borrow().iter())))
+}
+
+pub fn stable_add_rewards(to: Principal, amount_e8s: u64) {
+    PRINCIPAL_TO_ICP_REWARDS.with(|p| {
+        let balance = p.borrow().get(&to).unwrap_or(0);
+        let new_balance = balance.checked_add(amount_e8s).unwrap();
+        p.borrow_mut().insert(to, new_balance);
+    });
+}
+
+pub fn stable_sub_rewards(to: Principal, amount_e8s: u64) {
+    PRINCIPAL_TO_ICP_REWARDS.with(|p| {
+        let balance = p.borrow().get(&to).unwrap_or(0);
+        let new_balance = balance.checked_sub(amount_e8s).unwrap();
+        if new_balance == 0 {
+            assert!(p.borrow_mut().remove(&to).is_some());
+        } else {
+            assert!(p.borrow_mut().insert(to, new_balance).is_some());
+        }
+    });
+}
+
+pub fn get_rewards_ready_to_be_distributed() -> Vec<(Principal, u64)> {
+    PRINCIPAL_TO_ICP_REWARDS.with(|p| {
+        const MINIMUM_ICP_AMOUNT_DISTRIBUTION: u64 = 1_000_000;
+
+        let mut result: Vec<(Principal, u64)> = vec![];
+
+        for (p, b) in p.borrow().iter() {
+            if b > MINIMUM_ICP_AMOUNT_DISTRIBUTION {
+                result.push((p, b));
+            }
+        }
+
+        result
+    })
 }

@@ -17,8 +17,9 @@ use crate::state::audit::process_event;
 use crate::state::event::EventType;
 use crate::state::{
     mutate_state, read_state, NeuronOrigin, TransferId, EIGHT_YEARS_NEURON_NONCE, ICP_LEDGER_ID,
-    NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE,
+    NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE, SNS_GOVERNANCE_SUBACCOUNT,
 };
+use crate::storage::{get_rewards_ready_to_be_distributed, stable_sub_rewards};
 use crate::tasks::{schedule_after, schedule_now, TaskType};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_canister_log::log;
@@ -386,8 +387,68 @@ pub fn timer() {
                     }
                 });
             }
+            TaskType::MaybeDistributeRewards => {
+                ic_cdk::spawn(async move {
+                    let _guard = match TaskGuard::new(task_type) {
+                        Ok(guard) => guard,
+                        Err(_) => return,
+                    };
+
+                    match process_icp_distribution().await {
+                        Some(error_count) => {
+                            if error_count > 0 {
+                                log!(INFO, "[MaybeDistributeRewards] Failed to process {error_count} transfers, rescheduling task.");
+                                schedule_after(RETRY_DELAY, TaskType::MaybeDistributeRewards);
+                            }
+                        }
+                        None => {}
+                    }
+                });
+            }
         }
     }
+}
+
+async fn process_icp_distribution() -> Option<u64> {
+    let mut error_count = 0;
+    let rewards = get_rewards_ready_to_be_distributed();
+    if rewards.is_empty() {
+        return None;
+    }
+
+    for (to, reward) in rewards {
+        match crate::management::transfer(
+            to,
+            reward
+                .checked_sub(DEFAULT_LEDGER_FEE)
+                .expect("bug: all transfers should be greater than the fee")
+                .into(),
+            Some(Nat::from(DEFAULT_LEDGER_FEE)),
+            Some(SNS_GOVERNANCE_SUBACCOUNT),
+            ICP_LEDGER_ID,
+            Some(SNS_DISTRIBUTION_MEMO),
+        )
+        .await
+        {
+            Ok(block_index) => {
+                stable_sub_rewards(to, reward);
+                log!(
+                    INFO,
+                    "[process_icp_distribution] successfully transfered {} ICP to {to} at {block_index}",
+                    DisplayAmount(reward),
+                );
+            }
+            Err(e) => {
+                log!(
+                    DEBUG,
+                    "[process_icp_distribution] failed to transfer for {to} with error: {e}",
+                );
+                error_count += 1;
+            }
+        }
+    }
+
+    Some(error_count)
 }
 
 async fn refresh_stakes() {
