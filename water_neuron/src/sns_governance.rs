@@ -1,16 +1,19 @@
 use crate::numeric::ICP;
 use crate::storage::stable_add_rewards;
 use crate::{
-    mutate_state, process_event, read_state, schedule_now, self_canister_id, timestamp_nanos,
-    Account, CdkRuntime, EventType, ICRC1Client, TaskType, DEBUG, E8S, INFO,
-    MINIMUM_ICP_DISTRIBUTION, SEC_NANOS,
+    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, schedule_now,
+    self_canister_id, stable_sub_rewards, timestamp_nanos, Account, CdkRuntime, DisplayAmount,
+    EventType, ICRC1Client, TaskType, DEBUG, DEFAULT_LEDGER_FEE, E8S, ICP_LEDGER_ID, INFO,
+    MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO, SNS_GOVERNANCE_SUBACCOUNT,
 };
 use async_trait::async_trait;
-use candid::Principal;
+use candid::{Nat, Principal};
 use ic_canister_log::log;
 use ic_sns_governance::pb::v1::{
     ListNeurons, ListNeuronsResponse, Neuron, NeuronId, NeuronPermissionType,
 };
+use icrc_ledger_types::icrc1::transfer::TransferArg;
+use icrc_ledger_types::icrc1::transfer::TransferError;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const WTN_MAX_DISSOLVE_DELAY_SECONDS: u64 = 94_672_800;
@@ -27,6 +30,8 @@ pub trait CanisterRuntime {
         target: Account,
         ledger_canister_id: Principal,
     ) -> Result<u64, String>;
+
+    async fn transfer_icp(&self, to: Principal, amount: u64) -> Result<u64, TransferError>;
 }
 
 pub struct IcCanisterRuntime {}
@@ -66,6 +71,58 @@ impl CanisterRuntime for IcCanisterRuntime {
             .try_into()
             .unwrap())
     }
+
+    async fn transfer_icp(&self, to: Principal, amount: u64) -> Result<u64, TransferError> {
+        let client = ICRC1Client {
+            runtime: CdkRuntime,
+            ledger_canister_id: ICP_LEDGER_ID,
+        };
+        let block_index = client
+            .transfer(TransferArg {
+                from_subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT),
+                to: to.into(),
+                fee: Some(Nat::from(DEFAULT_LEDGER_FEE)),
+                created_at_time: None,
+                memo: Some(SNS_DISTRIBUTION_MEMO.into()),
+                amount: Nat::from(amount),
+            })
+            .await
+            .map_err(|e| TransferError::GenericError {
+                error_code: (Nat::from(e.0 as u32)),
+                message: (e.1),
+            })??;
+        Ok(block_index.0.try_into().unwrap())
+    }
+}
+
+pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option<u64> {
+    let mut error_count = 0;
+    let rewards = get_rewards_ready_to_be_distributed();
+    if rewards.is_empty() {
+        return None;
+    }
+
+    for (to, reward) in rewards {
+        match runtime.transfer_icp(to, reward).await {
+            Ok(block_index) => {
+                stable_sub_rewards(to, reward);
+                log!(
+                    INFO,
+                    "[process_icp_distribution] successfully transfered {} ICP to {to} at {block_index}",
+                    DisplayAmount(reward),
+                );
+            }
+            Err(e) => {
+                log!(
+                    DEBUG,
+                    "[process_icp_distribution] failed to transfer for {to} with error: {e}",
+                );
+                error_count += 1;
+            }
+        }
+    }
+
+    Some(error_count)
 }
 
 pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
@@ -206,8 +263,8 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
 #[cfg(test)]
 mod test {
     use crate::sns_governance::{
-        fetch_sns_neurons, maybe_fetch_neurons_and_distribute, CanisterRuntime, ListNeurons,
-        ListNeuronsResponse, Neuron,
+        fetch_sns_neurons, maybe_fetch_neurons_and_distribute, process_icp_distribution,
+        CanisterRuntime, ListNeurons, ListNeuronsResponse, Neuron,
     };
     use crate::state::replace_state;
     use crate::state::test::default_state;
@@ -216,6 +273,7 @@ mod test {
     use async_trait::async_trait;
     use candid::{Nat, Principal};
     use ic_sns_governance::pb::v1::{NeuronId, NeuronPermission, NeuronPermissionType};
+    use icrc_ledger_types::icrc1::transfer::TransferError;
     use mockall::mock;
     use std::str::FromStr;
 
@@ -231,6 +289,8 @@ mod test {
                 target: Account,
                 ledger_canister_id: Principal,
             ) -> Result<u64, String>;
+
+            async fn transfer_icp(&self, to: Principal, amount: u64) -> Result<u64, TransferError>;
          }
     }
 
@@ -395,6 +455,17 @@ mod test {
             get_pending_rewards(caller).unwrap(),
             Nat::from(icp_to_distribute / 2)
         );
+
+        runtime
+            .expect_transfer_icp()
+            .withf(move |_to, balance| *balance == icp_to_distribute / 2)
+            .times(2)
+            .return_const(Ok(1));
+
+        process_icp_distribution(&runtime).await;
+
+        assert_eq!(get_pending_rewards(caller), None);
+        assert_eq!(get_pending_rewards(caller_2), None);
     }
 
     use crate::sns_governance::get_rounded_voting_power;

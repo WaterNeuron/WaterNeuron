@@ -394,7 +394,8 @@ pub fn timer() {
                         Err(_) => return,
                     };
 
-                    match process_icp_distribution().await {
+                    let runtime = IcCanisterRuntime {};
+                    match crate::sns_governance::process_icp_distribution(&runtime).await {
                         Some(error_count) => {
                             if error_count > 0 {
                                 log!(INFO, "[MaybeDistributeRewards] Failed to process {error_count} transfers, rescheduling task.");
@@ -407,48 +408,6 @@ pub fn timer() {
             }
         }
     }
-}
-
-async fn process_icp_distribution() -> Option<u64> {
-    let mut error_count = 0;
-    let rewards = get_rewards_ready_to_be_distributed();
-    if rewards.is_empty() {
-        return None;
-    }
-
-    for (to, reward) in rewards {
-        match crate::management::transfer(
-            to,
-            reward
-                .checked_sub(DEFAULT_LEDGER_FEE)
-                .expect("bug: all transfers should be greater than the fee")
-                .into(),
-            Some(Nat::from(DEFAULT_LEDGER_FEE)),
-            Some(SNS_GOVERNANCE_SUBACCOUNT),
-            ICP_LEDGER_ID,
-            Some(SNS_DISTRIBUTION_MEMO),
-        )
-        .await
-        {
-            Ok(block_index) => {
-                stable_sub_rewards(to, reward);
-                log!(
-                    INFO,
-                    "[process_icp_distribution] successfully transfered {} ICP to {to} at {block_index}",
-                    DisplayAmount(reward),
-                );
-            }
-            Err(e) => {
-                log!(
-                    DEBUG,
-                    "[process_icp_distribution] failed to transfer for {to} with error: {e}",
-                );
-                error_count += 1;
-            }
-        }
-    }
-
-    Some(error_count)
 }
 
 async fn refresh_stakes() {
@@ -1050,6 +1009,7 @@ mod test {
     use async_trait::async_trait;
     use candid::Principal;
     use ic_sns_governance::pb::v1::{ListNeurons, ListNeuronsResponse};
+    use icrc_ledger_types::icrc1::transfer::TransferError;
     use mockall::mock;
 
     mock! {
@@ -1064,6 +1024,8 @@ mod test {
                 target: Account,
                 ledger_canister_id: Principal,
             ) -> Result<u64, String>;
+
+            async fn transfer_icp(&self, to: Principal, amount: u64) -> Result<u64, TransferError>;
          }
     }
 
