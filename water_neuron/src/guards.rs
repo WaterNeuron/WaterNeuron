@@ -81,7 +81,7 @@ impl Drop for TaskGuard {
 }
 
 #[test]
-fn guard_should_exculde() {
+fn guard_should_exclude() {
     let state = crate::state::test::default_state();
     crate::state::replace_state(state);
 
