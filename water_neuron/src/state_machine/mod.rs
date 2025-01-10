@@ -1271,8 +1271,7 @@ fn e2e_basic() {
 
     assert!(neuron_6m_stake_e8s_before_proposal < water_neuron.get_info().neuron_6m_stake_e8s);
 
-    dbg!(water_neuron.get_events());
-    assert_eq!(water_neuron.get_events().total_event_count, 22);
+    assert_eq!(water_neuron.get_events().total_event_count, 21);
 
     assert!(water_neuron
         .get_events()
@@ -2066,7 +2065,7 @@ fn should_distribute_icp_to_sns_neurons() {
         Nat::from(100 * E8S) - DEFAULT_LEDGER_FEE
     );
 
-    assert_eq!(water_neuron.get_events().total_event_count, 9);
+    assert_eq!(water_neuron.get_events().total_event_count, 8);
 
     assert_eq!(water_neuron
         .env

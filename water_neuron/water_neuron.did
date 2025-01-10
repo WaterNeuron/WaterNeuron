@@ -90,6 +90,7 @@ type EventType = variant {
   };
   NeuronEightYears : NeuronId;
   DistributeICPtoSNS : record { amount : nat64; receiver : principal };
+  DistributeICPtoSNSv2;
   NIcpWithdrawal : record {
     nicp_burned : nat64;
     nicp_burn_index : nat64;

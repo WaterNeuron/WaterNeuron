@@ -211,7 +211,8 @@ mod test {
     };
     use crate::state::replace_state;
     use crate::state::test::default_state;
-    use crate::{compute_neuron_staking_subaccount_bytes, read_state, Account, E8S};
+    use crate::storage::get_pending_rewards;
+    use crate::{compute_neuron_staking_subaccount_bytes, Account, E8S};
     use async_trait::async_trait;
     use candid::{Nat, Principal};
     use ic_sns_governance::pb::v1::{NeuronId, NeuronPermission, NeuronPermissionType};
@@ -387,11 +388,11 @@ mod test {
         let res = maybe_fetch_neurons_and_distribute(&runtime, icp_to_distribute).await;
         assert_eq!(res, Ok(2));
         assert_eq!(
-            read_state(|s| s.pending_transfers[&0].amount.clone()),
+            get_pending_rewards(caller_2),
             Nat::from(icp_to_distribute / 2)
         );
         assert_eq!(
-            read_state(|s| s.pending_transfers[&1].amount.clone()),
+            get_pending_rewards(caller),
             Nat::from(icp_to_distribute / 2)
         );
     }
