@@ -94,15 +94,12 @@ pub fn stable_sub_rewards(to: Principal, amount_e8s: u64) {
 pub fn get_rewards_ready_to_be_distributed() -> Vec<(Principal, u64)> {
     PRINCIPAL_TO_ICP_REWARDS.with(|p| {
         const MINIMUM_ICP_AMOUNT_DISTRIBUTION: u64 = 1_000_000;
-
         let mut result: Vec<(Principal, u64)> = vec![];
-
         for (p, b) in p.borrow().iter() {
             if b > MINIMUM_ICP_AMOUNT_DISTRIBUTION {
                 result.push((p, b));
             }
         }
-
         result
     })
 }

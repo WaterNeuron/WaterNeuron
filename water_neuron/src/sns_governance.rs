@@ -77,6 +77,7 @@ impl CanisterRuntime for IcCanisterRuntime {
             runtime: CdkRuntime,
             ledger_canister_id: ICP_LEDGER_ID,
         };
+        let amount = amount.checked_sub(DEFAULT_LEDGER_FEE).unwrap();
         let block_index = client
             .transfer(TransferArg {
                 from_subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT),
@@ -108,7 +109,7 @@ pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option
                 stable_sub_rewards(to, reward);
                 log!(
                     INFO,
-                    "[process_icp_distribution] successfully transfered {} ICP to {to} at {block_index}",
+                    "[process_icp_distribution] successfully transferred {} ICP to {to} at {block_index}",
                     DisplayAmount(reward),
                 );
             }
