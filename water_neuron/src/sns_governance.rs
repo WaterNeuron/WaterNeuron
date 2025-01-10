@@ -388,11 +388,11 @@ mod test {
         let res = maybe_fetch_neurons_and_distribute(&runtime, icp_to_distribute).await;
         assert_eq!(res, Ok(2));
         assert_eq!(
-            get_pending_rewards(caller_2),
+            get_pending_rewards(caller_2).unwrap(),
             Nat::from(icp_to_distribute / 2)
         );
         assert_eq!(
-            get_pending_rewards(caller),
+            get_pending_rewards(caller).unwrap(),
             Nat::from(icp_to_distribute / 2)
         );
     }

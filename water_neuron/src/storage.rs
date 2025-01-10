@@ -107,19 +107,19 @@ pub fn get_rewards_ready_to_be_distributed() -> Vec<(Principal, u64)> {
     })
 }
 
-pub fn get_pending_rewards(to: Principal) -> u64 {
-    PRINCIPAL_TO_ICP_REWARDS.with(|p| p.borrow().get(&to).unwrap_or(0))
+pub fn get_pending_rewards(to: Principal) -> Option<u64> {
+    PRINCIPAL_TO_ICP_REWARDS.with(|p| p.borrow().get(&to))
 }
 
 #[test]
 fn should_do_operation_on_rewards() {
     let caller = Principal::anonymous();
     stable_add_rewards(caller, 100_000_000);
-    assert_eq!(get_pending_rewards(caller), 100_000_000);
+    assert_eq!(get_pending_rewards(caller), Some(100_000_000));
     stable_sub_rewards(caller, 50_000_000);
-    assert_eq!(get_pending_rewards(caller), 50_000_000);
+    assert_eq!(get_pending_rewards(caller), Some(50_000_000));
     stable_sub_rewards(caller, 50_000_000);
-    assert_eq!(get_pending_rewards(caller), 0);
+    assert_eq!(get_pending_rewards(caller), None);
 }
 
 #[test]
