@@ -150,8 +150,8 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
                 Some((icp_amount_to_distribute / E8S) as f64 / total_voting_power as f64);
         });
 
-        for (owner, stake) in sns_neurons {
-            let share = stake as f64 / total_voting_power as f64;
+        for (owner, voting_power) in sns_neurons {
+            let share = voting_power as f64 / total_voting_power as f64;
             let share_amount = icp_amount_to_distribute as f64 * share;
             let share_amount_icp = ICP::from_e8s(share_amount as u64);
             stable_add_rewards(owner, share_amount_icp.0);
