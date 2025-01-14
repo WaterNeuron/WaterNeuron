@@ -108,6 +108,10 @@ pub fn get_pending_rewards(to: Principal) -> Option<u64> {
     PRINCIPAL_TO_ICP_REWARDS.with(|p| p.borrow().get(&to))
 }
 
+pub fn total_pending_rewards() -> u64 {
+    PRINCIPAL_TO_ICP_REWARDS.with(|p| p.borrow().values().sum())
+}
+
 #[test]
 fn should_do_operation_on_rewards() {
     let caller = Principal::anonymous();

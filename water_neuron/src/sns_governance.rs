@@ -1,5 +1,5 @@
 use crate::numeric::ICP;
-use crate::storage::stable_add_rewards;
+use crate::storage::{stable_add_rewards, total_pending_rewards};
 use crate::{
     get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, schedule_now,
     self_canister_id, stable_sub_rewards, timestamp_nanos, Account, CdkRuntime, DisplayAmount,
@@ -104,9 +104,9 @@ pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option
     }
 
     for (to, reward) in rewards {
+        stable_sub_rewards(to, reward);
         match runtime.transfer_icp(to, reward).await {
             Ok(block_index) => {
-                stable_sub_rewards(to, reward);
                 log!(
                     INFO,
                     "[process_icp_distribution] successfully transferred {} ICP to {to} at {block_index}",
@@ -119,6 +119,7 @@ pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option
                     "[process_icp_distribution] failed to transfer for {to} with error: {e}",
                 );
                 error_count += 1;
+                stable_add_rewards(to, reward);
             }
         }
     }
@@ -128,9 +129,11 @@ pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option
 
 pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
     runtime: &R,
-    icp_amount_to_distribute: u64,
+    balance: u64,
 ) -> Result<usize, String> {
     let mut stakers_count: usize = 0;
+
+    let icp_amount_to_distribute = balance.checked_sub(total_pending_rewards()).unwrap();
 
     if icp_amount_to_distribute >= MINIMUM_ICP_DISTRIBUTION {
         let sns_neurons = fetch_sns_neurons(runtime).await?;
@@ -448,6 +451,17 @@ mod test {
         let icp_to_distribute: u64 = 100 * E8S;
         let res = maybe_fetch_neurons_and_distribute(&runtime, icp_to_distribute).await;
         assert_eq!(res, Ok(2));
+        assert_eq!(
+            get_pending_rewards(caller_2).unwrap(),
+            Nat::from(icp_to_distribute / 2)
+        );
+        assert_eq!(
+            get_pending_rewards(caller).unwrap(),
+            Nat::from(icp_to_distribute / 2)
+        );
+
+        let res = maybe_fetch_neurons_and_distribute(&runtime, icp_to_distribute).await;
+        assert_eq!(res, Ok(0));
         assert_eq!(
             get_pending_rewards(caller_2).unwrap(),
             Nat::from(icp_to_distribute / 2)
