@@ -65,8 +65,8 @@ lazy_static! {
         map.insert(
             CanisterName::Ledger,
             WasmBinary {
-                hash: "e31a3b38bbb3704876d8825bb826101d6f1f1843ad99c21a0d563e80bdd6e2f6",
-                ic_version: "de29a1a55b589428d173b31cdb8cec0923245657",
+                hash: "3d808fa63a3d8ebd4510c0400aa078e99a31afaa0515f0b68778f929ce4b2a46",
+                ic_version: "e54d3fa34ded227c885d04e64505fa4b5d564743",
                 name: "ledger-canister.wasm.gz",
             },
         );
