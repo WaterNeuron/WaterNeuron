@@ -54,9 +54,9 @@ impl<'a> fmt::Display for CanisterName<'a> {
 }
 
 struct WasmBinary {
-    pub hash: &'static str,
-    pub ic_version: &'static str,
-    pub name: &'static str,
+    hash: &'static str,
+    ic_version: &'static str,
+    name: &'static str,
 }
 
 lazy_static! {
