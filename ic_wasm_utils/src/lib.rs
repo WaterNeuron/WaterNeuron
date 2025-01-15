@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use sha2::{Digest, Sha256};
+use std::fmt;
 use std::{collections::BTreeMap, path::PathBuf};
 use thiserror::Error;
 
@@ -35,14 +36,31 @@ pub enum CanisterName<'a> {
     Local(&'a str),
 }
 
-struct WasmBinary {
-    hash: &'static str,
-    ic_version: &'static str,
-    name: &'static str,
+impl<'a> fmt::Display for CanisterName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CanisterName::Ledger => write!(f, "ledger"),
+            CanisterName::NnsGovernance => write!(f, "nns-governance"),
+            CanisterName::Icrc1Ledger => write!(f, "icrc1-ledger"),
+            CanisterName::SnsGovernance => write!(f, "sns-governance"),
+            CanisterName::SnsSwap => write!(f, "sns-swap"),
+            CanisterName::Sns => write!(f, "sns"),
+            CanisterName::SnsRoot => write!(f, "sns-root"),
+            CanisterName::Cmc => write!(f, "cmc"),
+            CanisterName::Icrc1IndexNg => write!(f, "icrc1-index"),
+            CanisterName::Local(name) => write!(f, "{}", name),
+        }
+    }
+}
+
+pub struct WasmBinary {
+    pub hash: &'static str,
+    pub ic_version: &'static str,
+    pub name: &'static str,
 }
 
 lazy_static! {
-    static ref DFINITY_CANISTERS: BTreeMap<CanisterName<'static>, WasmBinary> = {
+    pub static ref DFINITY_CANISTERS: BTreeMap<CanisterName<'static>, WasmBinary> = {
         let mut map = BTreeMap::new();
         map.insert(
             CanisterName::Ledger,
@@ -103,8 +121,8 @@ lazy_static! {
         map.insert(
             CanisterName::Icrc1Ledger,
             WasmBinary {
-                hash: "4264ce2952c4e9ff802d81a11519d5e3ffdaed4215d5831a6634e59efd72f7d8",
-                ic_version: "a3831c87440df4821b435050c8a8fcb3745d86f6",
+                hash: "3d808fa63a3d8ebd4510c0400aa078e99a31afaa0515f0b68778f929ce4b2a46",
+                ic_version: "d4ee25b0865e89d3eaac13a60f0016d5e3296b31",
                 name: "ic-icrc1-ledger.wasm.gz",
             },
         );
