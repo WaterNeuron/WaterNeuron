@@ -53,14 +53,14 @@ impl<'a> fmt::Display for CanisterName<'a> {
     }
 }
 
-pub struct WasmBinary {
+struct WasmBinary {
     pub hash: &'static str,
     pub ic_version: &'static str,
     pub name: &'static str,
 }
 
 lazy_static! {
-    pub static ref DFINITY_CANISTERS: BTreeMap<CanisterName<'static>, WasmBinary> = {
+    static ref DFINITY_CANISTERS: BTreeMap<CanisterName<'static>, WasmBinary> = {
         let mut map = BTreeMap::new();
         map.insert(
             CanisterName::Ledger,
