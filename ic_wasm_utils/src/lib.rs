@@ -121,8 +121,8 @@ lazy_static! {
         map.insert(
             CanisterName::Icrc1Ledger,
             WasmBinary {
-                hash: "3d808fa63a3d8ebd4510c0400aa078e99a31afaa0515f0b68778f929ce4b2a46",
-                ic_version: "e54d3fa34ded227c885d04e64505fa4b5d564743",
+                hash: "4f460b9f1e980b38c2154bf0c30d21a1ed6e824568e46ecef30f76d9cdc8705a",
+                ic_version: "fb3d35d0dddff7359acb8fb0faa9545759705768",
                 name: "ic-icrc1-ledger.wasm.gz",
             },
         );
