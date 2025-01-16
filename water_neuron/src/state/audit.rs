@@ -3,8 +3,8 @@ use super::State;
 use crate::state::SNS_GOVERNANCE_SUBACCOUNT;
 use crate::storage::{record_event, with_event_iter};
 use crate::{
-    nICP, timestamp_nanos, DEFAULT_LEDGER_FEE, ICP, INITIAL_NEURON_STAKE, ONE_WEEK_SECONDS,
-    SEC_NANOS, SNS_DISTRIBUTION_MEMO,
+    nICP, timestamp_nanos, FeeMetrics, DEFAULT_LEDGER_FEE, ICP, INITIAL_NEURON_STAKE,
+    ONE_WEEK_SECONDS, SEC_NANOS, SNS_DISTRIBUTION_MEMO,
 };
 
 /// Updates the state to reflect the given state transition.
@@ -46,40 +46,37 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             state.record_nicp_withdrawal(*receiver, *nicp_burned, *nicp_burn_index, timestamp);
         }
         EventType::DispatchICPRewards {
-            neuron_6m_amount,
+            // This represents the number of ICP dispatched to the 6m neuron. There is a typo.
+            nicp_amount,
             sns_gov_amount,
             from_neuron_type,
         } => {
-            let now_secs: u64 = timestamp_nanos() / SEC_NANOS;
-            state
-                .last_week_revenues
-                .push_back((*sns_gov_amount, now_secs));
+            state.previous_week_fee_metrics.push_back(FeeMetrics {
+                revenue: *sns_gov_amount,
+                reward: ICP::from_e8s(sns_gov_amount.0 + nicp_amount.0),
+                ts_secs: timestamp,
+            });
 
-            state.last_week_rewards.push_back((
-                ICP::from_e8s(sns_gov_amount.0 + neuron_6m_amount.0),
-                now_secs,
-            ));
-
-            if let Some((_, dispatched_ts_secs)) = state.last_week_revenues.front() {
-                if now_secs - dispatched_ts_secs > ONE_WEEK_SECONDS {
-                    state.last_week_revenues.pop_front();
-                }
-            }
-
-            if let Some((_, dispatched_ts_secs)) = state.last_week_rewards.front() {
-                if now_secs - dispatched_ts_secs > ONE_WEEK_SECONDS {
-                    state.last_week_rewards.pop_front();
+            loop {
+                if let Some(fee_metrics) = state.previous_week_fee_metrics.front() {
+                    if timestamp_nanos() / SEC_NANOS - fee_metrics.ts_secs > ONE_WEEK_SECONDS {
+                        state.previous_week_fee_metrics.pop_front();
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
                 }
             }
 
             state.record_icp_pending_transfer(
                 from_neuron_type.to_subaccount(),
                 state.get_6m_neuron_account(),
-                *neuron_6m_amount,
+                *nicp_amount,
                 None,
             );
 
-            state.tracked_6m_stake += neuron_6m_amount
+            state.tracked_6m_stake += nicp_amount
                 .checked_sub(ICP::from_e8s(DEFAULT_LEDGER_FEE))
                 .unwrap();
             state.record_icp_pending_transfer(

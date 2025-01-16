@@ -87,7 +87,7 @@ fn arb_event_type() -> impl Strategy<Value = EventType> {
         ),
         (any::<u64>(), any::<u64>()).prop_map(|(nicp_amount, sns_gov_amount)| {
             EventType::DispatchICPRewards {
-                neuron_6m_amount: ICP::from_e8s(nicp_amount),
+                nicp_amount: ICP::from_e8s(nicp_amount),
                 sns_gov_amount: ICP::from_e8s(sns_gov_amount),
                 from_neuron_type: NeuronOrigin::SnsGovernanceEightYears,
             }
@@ -102,4 +102,16 @@ proptest! {
         let bytes = event.to_bytes();
         prop_assert_eq!(&event, &Event::from_bytes(bytes.clone()), "failed to decode bytes {}", hex::encode(bytes));
     }
+}
+
+#[test]
+fn should_compute_fees() {
+    use crate::state::replace_state;
+    use crate::state::test::default_state;
+    let state = default_state();
+    replace_state(state);
+    // mutate_state(s, process_event(s, EventType { .. });
+    // mutate_state(s, process_event(s, EventType { .. });
+    // mutate_state(s, process_event(s, EventType { .. });
+    // assert_eq!();
 }

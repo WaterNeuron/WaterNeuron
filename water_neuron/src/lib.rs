@@ -255,6 +255,13 @@ pub enum CancelWithdrawalError {
     UnknownTimeLeft,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct FeeMetrics {
+    pub revenue: ICP,
+    pub reward: ICP,
+    pub ts_secs: u64,
+}
+
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This
 /// function must be kept in sync with the Nervous System UI equivalent.
 /// This code comes from the IC repo:
@@ -855,7 +862,7 @@ async fn dispatch_icp<R: CanisterRuntime>(runtime: &R) {
                         process_event(
                             s,
                             EventType::DispatchICPRewards {
-                                neuron_6m_amount: ICP::from_e8s(icp_share_e8s),
+                                nicp_amount: ICP::from_e8s(icp_share_e8s),
                                 sns_gov_amount: ICP::from_e8s(governance_share_e8s),
                                 from_neuron_type: neuron_type,
                             },

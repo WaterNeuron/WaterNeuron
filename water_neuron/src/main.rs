@@ -354,26 +354,16 @@ async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelW
 }
 
 #[query]
-fn get_latest_rewards() -> u64 {
+fn get_latest_fee_metrics() -> (u64, u64) {
     read_state(|s| {
-        let weekly_rewards: u64 = s
-            .last_week_rewards
-            .iter()
-            .map(|(revenue, _)| revenue.0)
-            .sum();
-        weekly_rewards / (s.last_week_rewards.len() as u64)
-    })
-}
-
-#[query]
-fn get_latest_revenue() -> u64 {
-    read_state(|s| {
-        let weekly_revenues: u64 = s
-            .last_week_revenues
-            .iter()
-            .map(|(revenue, _)| revenue.0)
-            .sum();
-        weekly_revenues / (s.last_week_revenues.len() as u64)
+        let mut revenues = 0;
+        let mut rewards = 0;
+        for fee_metric in &s.previous_week_fee_metrics {
+            revenues += fee_metric.revenue.0;
+            rewards += fee_metric.reward.0;
+        }
+        let metrics_count = s.previous_week_fee_metrics.len() as u64;
+        (revenues / metrics_count, rewards / metrics_count)
     })
 }
 

@@ -3,8 +3,8 @@ use crate::numeric::{nICP, ICP, WTN};
 use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
-    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, InitArg,
-    PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
+    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, FeeMetrics,
+    InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -156,10 +156,7 @@ pub struct State {
     pub total_circulating_nicp: nICP,
     pub governance_fee_share_percent: u64,
 
-    // Staking rewards
-    pub last_week_rewards: VecDeque<(ICP, u64)>,
-    // Staking rewards paid out to the WTN holders
-    pub last_week_revenues: VecDeque<(ICP, u64)>,
+    pub previous_week_fee_metrics: VecDeque<FeeMetrics>,
 
     pub transfer_id: TransferId,
     pub withdrawal_id: WithdrawalId,
@@ -228,8 +225,7 @@ impl State {
             total_circulating_nicp: nICP::ZERO,
             total_icp_deposited: ICP::ZERO,
             tracked_6m_stake: ICP::ZERO,
-            last_week_revenues: VecDeque::new(),
-            last_week_rewards: VecDeque::new(),
+            previous_week_fee_metrics: VecDeque::new(),
             to_disburse: BTreeMap::default(),
             withdrawal_to_split: BTreeSet::default(),
             withdrawal_to_start_dissolving: Default::default(),

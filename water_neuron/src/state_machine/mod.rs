@@ -2114,6 +2114,173 @@ fn should_distribute_icp_to_sns_neurons() {
 }
 
 #[test]
+fn should_compute_weekly_revenues_and_rewards() {
+    let water_neuron = WaterNeuron::new();
+
+    let caller = PrincipalId::new_user_test_id(212);
+
+    let water_neuron_principal: Principal = water_neuron.water_neuron_id.get().into();
+
+    assert_eq!(
+        water_neuron.transfer(
+            water_neuron.minter,
+            water_neuron_principal,
+            10 * E8S,
+            water_neuron.icp_ledger_id
+        ),
+        Nat::from(1_u8)
+    );
+    assert_eq!(
+        water_neuron.transfer(
+            water_neuron.minter,
+            caller.0,
+            100 * E8S,
+            water_neuron.icp_ledger_id
+        ),
+        Nat::from(2_u8)
+    );
+
+    water_neuron.advance_time_and_tick(60);
+
+    water_neuron.approve(
+        caller,
+        water_neuron.icp_ledger_id,
+        water_neuron.water_neuron_id.get().0.into(),
+    );
+
+    let icp_to_wrap = 10 * E8S;
+
+    assert_eq!(
+        water_neuron.icp_to_nicp(caller.0.into(), icp_to_wrap),
+        Ok(DepositSuccess {
+            block_index: Nat::from(6_u8),
+            transfer_id: 0,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
+        })
+    );
+
+    water_neuron.advance_time_and_tick(70);
+
+    assert_eq!(
+        water_neuron.transfer(
+            Principal::anonymous().into(),
+            water_neuron.water_neuron_id.get().0,
+            EXPECTED_INITIAL_BALANCE,
+            water_neuron.wtn_ledger_id
+        ),
+        Nat::from(0_u8)
+    );
+
+    water_neuron.advance_time_and_tick(0);
+
+    assert_eq!(
+        water_neuron.balance_of(water_neuron.wtn_ledger_id, caller.0),
+        Nat::from(0_u8)
+    );
+
+    assert_eq!(water_neuron.get_airdrop_allocation(caller.0), 8_000_000_000);
+
+    assert_eq!(
+        water_neuron.icp_to_nicp(caller.0.into(), icp_to_wrap),
+        Ok(DepositSuccess {
+            block_index: Nat::from(7_u8),
+            transfer_id: 1,
+            nicp_amount: Some(nICP::from_e8s(icp_to_wrap)),
+        })
+    );
+
+    water_neuron.advance_time_and_tick(0);
+
+    assert_eq!(
+        water_neuron.get_airdrop_allocation(caller.0),
+        16_000_000_000
+    );
+
+    assert_eq!(
+        water_neuron.transfer(
+            water_neuron.minter,
+            Account {
+                owner: water_neuron.water_neuron_id.get().0,
+                subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT)
+            },
+            100 * E8S,
+            water_neuron.icp_ledger_id
+        ),
+        Nat::from(8_u8)
+    );
+
+    assert_eq!(
+        water_neuron.balance_of(
+            water_neuron.icp_ledger_id,
+            Account {
+                owner: water_neuron.water_neuron_id.into(),
+                subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT),
+            }
+        ),
+        Nat::from(100 * E8S)
+    );
+
+    water_neuron.advance_time_and_tick(60 * 60 * 24 * 7);
+
+    assert_eq!(
+        water_neuron.balance_of(
+            water_neuron.icp_ledger_id,
+            Account {
+                owner: PrincipalId::new_user_test_id(1234).into(),
+                subaccount: None,
+            }
+        ),
+        Nat::from(100 * E8S) - DEFAULT_LEDGER_FEE
+    );
+
+    assert_eq!(water_neuron.get_events().total_event_count, 9);
+
+    assert_eq!(water_neuron
+        .env
+        .execute_ingress_as(
+            PrincipalId::from(caller),
+            water_neuron.water_neuron_id,
+            "claim_airdrop",
+            Encode!(&caller).unwrap()
+        ),Err(
+            UserError::new(CanisterCalledTrap, "Canister r7inp-6aaaa-aaaaa-aaabq-cai trapped explicitly: all rewards must be allocated before being claimable".to_string())
+        ));
+
+    water_neuron.approve(
+        water_neuron.minter.into(),
+        water_neuron.icp_ledger_id,
+        water_neuron.water_neuron_id.get().0.into(),
+    );
+
+    assert!(water_neuron
+        .icp_to_nicp(water_neuron.minter.into(), 21_000_000 * E8S)
+        .is_ok());
+
+    assert_eq!(water_neuron.claim_airdrop(caller.0), Ok(1));
+
+    assert_eq!(
+        water_neuron.balance_of(water_neuron.wtn_ledger_id, caller.0),
+        Nat::from(15_999_000_000_u64)
+    );
+
+    assert_matches!(
+        water_neuron.env.upgrade_canister(
+            water_neuron.water_neuron_id,
+            water_neuron_wasm(),
+            Encode!(&LiquidArg::Upgrade(Some(UpgradeArg {
+                governance_fee_share_percent: None
+            })))
+            .unwrap(),
+        ),
+        Ok(_)
+    );
+
+    water_neuron.advance_time_and_tick(60);
+    let info = water_neuron.get_info();
+    assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
+}
+
+#[test]
 fn transfer_ids_are_as_expected() {
     let water_neuron = WaterNeuron::new();
     let caller = PrincipalId::new_user_test_id(212);
