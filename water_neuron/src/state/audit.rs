@@ -45,19 +45,21 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             state.record_nicp_withdrawal(*receiver, *nicp_burned, *nicp_burn_index, timestamp);
         }
         EventType::DispatchICPRewards {
-            nicp_amount,
+            neuron_6m_amount,
             sns_gov_amount,
             from_neuron_type,
         } => {
+            state.latest_rewards = ICP::from_e8s(neuron_6m_amount.0 + sns_gov_amount.0);
             state.record_icp_pending_transfer(
                 from_neuron_type.to_subaccount(),
                 state.get_6m_neuron_account(),
-                *nicp_amount,
+                *neuron_6m_amount,
                 None,
             );
-            state.tracked_6m_stake += nicp_amount
+            state.tracked_6m_stake += neuron_6m_amount
                 .checked_sub(ICP::from_e8s(DEFAULT_LEDGER_FEE))
                 .unwrap();
+            state.latest_revenue = *sns_gov_amount;
             state.record_icp_pending_transfer(
                 from_neuron_type.to_subaccount(),
                 state.get_sns_account(),

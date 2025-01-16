@@ -846,15 +846,15 @@ async fn dispatch_icp<R: CanisterRuntime>(runtime: &R) {
                 if balance > MINIMUM_ICP_DISTRIBUTION {
                     let governance_share_e8s =
                         read_state(|s| s.compute_governance_share_e8s(balance));
-                    let nicp_share_e8s = balance.checked_sub(governance_share_e8s).expect(
+                    let icp_share_e8s = balance.checked_sub(governance_share_e8s).expect(
                         "bug: the governance share should always be strictly less than the balance",
                     );
-                    log!(INFO, "[dispatch_icp] {neuron_type} generated {} ICP for nICP and {} for SNS governance.", DisplayAmount(nicp_share_e8s), DisplayAmount(governance_share_e8s));
+                    log!(INFO, "[dispatch_icp] {neuron_type} generated {} ICP for nICP and {} for SNS governance.", DisplayAmount(icp_share_e8s), DisplayAmount(governance_share_e8s));
                     mutate_state(|s| {
                         process_event(
                             s,
                             EventType::DispatchICPRewards {
-                                nicp_amount: ICP::from_e8s(nicp_share_e8s),
+                                neuron_6m_amount: ICP::from_e8s(icp_share_e8s),
                                 sns_gov_amount: ICP::from_e8s(governance_share_e8s),
                                 from_neuron_type: neuron_type,
                             },

@@ -354,6 +354,16 @@ async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelW
 }
 
 #[query]
+fn get_latest_rewards() -> u64 {
+    read_state(|s| s.latest_rewards.0)
+}
+
+#[query]
+fn get_latest_revenue() -> u64 {
+    read_state(|s| s.latest_revenue.0)
+}
+
+#[query]
 fn icrc10_supported_standards() -> Vec<StandardRecord> {
     water_neuron::icrc21::icrc10_supported_standards()
 }

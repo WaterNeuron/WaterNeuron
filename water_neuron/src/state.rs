@@ -155,6 +155,11 @@ pub struct State {
     pub total_circulating_nicp: nICP,
     pub governance_fee_share_percent: u64,
 
+    // Staking rewards
+    pub latest_rewards: ICP,
+    // Staking rewards paid out to the WTN holders
+    pub latest_revenue: ICP,
+
     pub transfer_id: TransferId,
     pub withdrawal_id: WithdrawalId,
 
@@ -222,6 +227,8 @@ impl State {
             total_circulating_nicp: nICP::ZERO,
             total_icp_deposited: ICP::ZERO,
             tracked_6m_stake: ICP::ZERO,
+            latest_revenue: ICP::ZERO,
+            latest_rewards: ICP::ZERO,
             to_disburse: BTreeMap::default(),
             withdrawal_to_split: BTreeSet::default(),
             withdrawal_to_start_dissolving: Default::default(),

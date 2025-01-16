@@ -87,7 +87,7 @@ fn arb_event_type() -> impl Strategy<Value = EventType> {
         ),
         (any::<u64>(), any::<u64>()).prop_map(|(nicp_amount, sns_gov_amount)| {
             EventType::DispatchICPRewards {
-                nicp_amount: ICP::from_e8s(nicp_amount),
+                neuron_6m_amount: ICP::from_e8s(nicp_amount),
                 sns_gov_amount: ICP::from_e8s(sns_gov_amount),
                 from_neuron_type: NeuronOrigin::SnsGovernanceEightYears,
             }
