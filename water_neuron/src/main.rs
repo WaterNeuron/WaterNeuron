@@ -354,7 +354,7 @@ async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelW
 }
 
 #[query]
-fn get_latest_fee_metrics() -> (u64, u64) {
+fn get_daily_revenues_and_rewards() -> (u64, u64) {
     read_state(|s| {
         let mut revenues = 0;
         let mut rewards = 0;

@@ -103,15 +103,3 @@ proptest! {
         prop_assert_eq!(&event, &Event::from_bytes(bytes.clone()), "failed to decode bytes {}", hex::encode(bytes));
     }
 }
-
-#[test]
-fn should_compute_fees() {
-    use crate::state::replace_state;
-    use crate::state::test::default_state;
-    let state = default_state();
-    replace_state(state);
-    // mutate_state(s, process_event(s, EventType { .. });
-    // mutate_state(s, process_event(s, EventType { .. });
-    // mutate_state(s, process_event(s, EventType { .. });
-    // assert_eq!();
-}
