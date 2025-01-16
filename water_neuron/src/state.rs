@@ -12,6 +12,7 @@ use minicbor::{Decode, Encode};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use strum::IntoEnumIterator;
@@ -156,9 +157,9 @@ pub struct State {
     pub governance_fee_share_percent: u64,
 
     // Staking rewards
-    pub latest_rewards: ICP,
+    pub last_week_rewards: VecDeque<(ICP, u64)>,
     // Staking rewards paid out to the WTN holders
-    pub latest_revenue: ICP,
+    pub last_week_revenues: VecDeque<(ICP, u64)>,
 
     pub transfer_id: TransferId,
     pub withdrawal_id: WithdrawalId,
@@ -227,8 +228,8 @@ impl State {
             total_circulating_nicp: nICP::ZERO,
             total_icp_deposited: ICP::ZERO,
             tracked_6m_stake: ICP::ZERO,
-            latest_revenue: ICP::ZERO,
-            latest_rewards: ICP::ZERO,
+            last_week_revenues: VecDeque::new(),
+            last_week_rewards: VecDeque::new(),
             to_disburse: BTreeMap::default(),
             withdrawal_to_split: BTreeSet::default(),
             withdrawal_to_start_dissolving: Default::default(),

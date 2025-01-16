@@ -355,12 +355,26 @@ async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelW
 
 #[query]
 fn get_latest_rewards() -> u64 {
-    read_state(|s| s.latest_rewards.0)
+    read_state(|s| {
+        let weekly_rewards: u64 = s
+            .last_week_rewards
+            .iter()
+            .map(|(revenue, _)| revenue.0)
+            .sum();
+        weekly_rewards / (s.last_week_rewards.len() as u64)
+    })
 }
 
 #[query]
 fn get_latest_revenue() -> u64 {
-    read_state(|s| s.latest_revenue.0)
+    read_state(|s| {
+        let weekly_revenues: u64 = s
+            .last_week_revenues
+            .iter()
+            .map(|(revenue, _)| revenue.0)
+            .sum();
+        weekly_revenues / (s.last_week_revenues.len() as u64)
+    })
 }
 
 #[query]

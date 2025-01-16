@@ -3,7 +3,8 @@ use super::State;
 use crate::state::SNS_GOVERNANCE_SUBACCOUNT;
 use crate::storage::{record_event, with_event_iter};
 use crate::{
-    nICP, timestamp_nanos, DEFAULT_LEDGER_FEE, ICP, INITIAL_NEURON_STAKE, SNS_DISTRIBUTION_MEMO,
+    nICP, timestamp_nanos, DEFAULT_LEDGER_FEE, ICP, INITIAL_NEURON_STAKE, ONE_WEEK_SECONDS,
+    SEC_NANOS, SNS_DISTRIBUTION_MEMO,
 };
 
 /// Updates the state to reflect the given state transition.
@@ -49,17 +50,38 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             sns_gov_amount,
             from_neuron_type,
         } => {
-            state.latest_rewards = ICP::from_e8s(neuron_6m_amount.0 + sns_gov_amount.0);
+            let now_secs: u64 = timestamp_nanos() / SEC_NANOS;
+            state
+                .last_week_revenues
+                .push_back((*sns_gov_amount, now_secs));
+
+            state.last_week_rewards.push_back((
+                ICP::from_e8s(sns_gov_amount.0 + neuron_6m_amount.0),
+                now_secs,
+            ));
+
+            if let Some((_, dispatched_ts_secs)) = state.last_week_revenues.front() {
+                if now_secs - dispatched_ts_secs > ONE_WEEK_SECONDS {
+                    state.last_week_revenues.pop_front();
+                }
+            }
+
+            if let Some((_, dispatched_ts_secs)) = state.last_week_rewards.front() {
+                if now_secs - dispatched_ts_secs > ONE_WEEK_SECONDS {
+                    state.last_week_rewards.pop_front();
+                }
+            }
+
             state.record_icp_pending_transfer(
                 from_neuron_type.to_subaccount(),
                 state.get_6m_neuron_account(),
                 *neuron_6m_amount,
                 None,
             );
+
             state.tracked_6m_stake += neuron_6m_amount
                 .checked_sub(ICP::from_e8s(DEFAULT_LEDGER_FEE))
                 .unwrap();
-            state.latest_revenue = *sns_gov_amount;
             state.record_icp_pending_transfer(
                 from_neuron_type.to_subaccount(),
                 state.get_sns_account(),
