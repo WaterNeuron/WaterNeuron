@@ -4,8 +4,8 @@ use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
     compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, FeeMetrics,
-    InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S, ONE_WEEK_SECONDS,
-    SEC_NANOS,
+    InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S, NEURON_6M_APY,
+    NEURON_8Y_APY, ONE_WEEK_SECONDS, SEC_NANOS,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -401,6 +401,14 @@ impl State {
             rewards += fee_metric.reward.0;
         }
         (revenues / 7, rewards / 7)
+    }
+
+    pub fn compute_apy(&self) -> f64 {
+        let neuron_share = (100 - self.governance_fee_share_percent) as f64 / 100.0;
+        let rewards_icp = neuron_share
+            * (NEURON_6M_APY * self.main_neuron_6m_staked.0 as f64
+                + NEURON_8Y_APY * self.main_neuron_8y_stake.0 as f64);
+        rewards_icp / self.main_neuron_6m_staked.0 as f64
     }
 
     pub fn record_upgrade(&mut self, upgrade_arg: UpgradeArg) {
@@ -1118,5 +1126,14 @@ pub mod test {
 
         assert_eq!(state.compute_daily_fees().0, 985714285); // 985714285_e8s = 69 / 7
         assert_eq!(state.compute_daily_fees().1, 10985714285); // 10985714285_e8s = 769 / 7
+    }
+
+    #[test]
+    fn should_compute_apy() {
+        let mut state = default_state();
+        state.main_neuron_6m_staked = ICP::from_e8s(100 * E8S);
+        state.main_neuron_8y_stake = ICP::from_e8s(400 * E8S);
+
+        assert_eq!(state.compute_apy(), 0.5751);
     }
 }

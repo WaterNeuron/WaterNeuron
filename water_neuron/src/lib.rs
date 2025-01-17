@@ -85,6 +85,9 @@ pub const INITIAL_NEURON_STAKE: u64 = E8S + 42;
 
 pub const SNS_DISTRIBUTION_MEMO: u64 = 83_78_83;
 
+pub const NEURON_6M_APY: f64 = 0.075;
+pub const NEURON_8Y_APY: f64 = 0.141;
+
 #[cfg(target_arch = "wasm32")]
 pub fn timestamp_nanos() -> u64 {
     ic_cdk::api::time()
