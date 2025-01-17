@@ -109,7 +109,6 @@ proptest! {
     }
 }
 
-
 // The following test is to confirm that the encoding should be independent of the field names.
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, CandidType, Deserialize)]
 struct DispatchICPRewards {
