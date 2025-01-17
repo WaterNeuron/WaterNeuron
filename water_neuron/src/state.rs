@@ -1112,7 +1112,7 @@ pub mod test {
             NeuronOrigin::NICPSixMonths,
         );
 
-        // The dispatch goes out of the dequeu because it's older than one week.
+        // The dispatch goes out of the deque because it's older than one week.
         assert_eq!(state.compute_daily_fees().revenue, 0);
         assert_eq!(state.compute_daily_fees().reward, 0);
 

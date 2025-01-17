@@ -54,8 +54,8 @@ pub enum EventType {
     #[n(6)]
     DispatchICPRewards {
         #[n(0)]
-        // This represents the number of ICP dispatched to the 6m neuron. There is a typo.
-        // It cannot be changed without changing the nature of the Event.
+        // This field represents the number of ICP dispatched to the 6m neuron. There is a typo.
+        // It cannot be changed to be consistent with the events that already occured.
         nicp_amount: ICP,
         #[n(1)]
         sns_gov_amount: ICP,
