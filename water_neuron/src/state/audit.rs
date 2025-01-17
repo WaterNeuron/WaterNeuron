@@ -43,12 +43,11 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             state.record_nicp_withdrawal(*receiver, *nicp_burned, *nicp_burn_index, timestamp);
         }
         EventType::DispatchICPRewards {
-            // This represents the number of ICP dispatched to the 6m neuron.
-            nicp_amount,
+            neuron_6m_amount,
             sns_gov_amount,
             from_neuron_type,
         } => state.record_dispatch_icp_rewards(
-            *nicp_amount,
+            *neuron_6m_amount,
             *sns_gov_amount,
             timestamp,
             *from_neuron_type,

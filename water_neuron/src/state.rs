@@ -3,9 +3,9 @@ use crate::numeric::{nICP, ICP, WTN};
 use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
-    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, DailyFees,
-    FeeMetrics, InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
-    ONE_WEEK_SECONDS, SEC_NANOS,
+    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, FeeMetrics,
+    InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S, ONE_WEEK_SECONDS,
+    SEC_NANOS,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -393,24 +393,14 @@ impl State {
         withdrawal_id
     }
 
-    pub fn compute_daily_fees(&self) -> DailyFees {
+    pub fn compute_daily_fees(&self) -> (u64, u64) {
         let mut revenues = 0;
         let mut rewards = 0;
         for fee_metric in &self.previous_week_fee_metrics {
             revenues += fee_metric.revenue.0;
             rewards += fee_metric.reward.0;
         }
-        if self.previous_week_fee_metrics.len() > 0 {
-            DailyFees {
-                revenue: revenues / 7,
-                reward: rewards / 7,
-            }
-        } else {
-            DailyFees {
-                revenue: 0,
-                reward: 0,
-            }
-        }
+        (revenues / 7, rewards / 7)
     }
 
     pub fn record_upgrade(&mut self, upgrade_arg: UpgradeArg) {
@@ -538,13 +528,9 @@ impl State {
             ts_secs: timestamp / SEC_NANOS,
         });
 
-        loop {
-            if let Some(fee_metrics) = self.previous_week_fee_metrics.front() {
-                if timestamp_nanos() / SEC_NANOS - fee_metrics.ts_secs > ONE_WEEK_SECONDS {
-                    self.previous_week_fee_metrics.pop_front();
-                } else {
-                    break;
-                }
+        while let Some(fee_metrics) = self.previous_week_fee_metrics.front() {
+            if timestamp_nanos() / SEC_NANOS > fee_metrics.ts_secs + ONE_WEEK_SECONDS {
+                self.previous_week_fee_metrics.pop_front();
             } else {
                 break;
             }
@@ -1102,9 +1088,6 @@ pub mod test {
         let mut state = default_state();
         let now = timestamp_nanos();
 
-        assert_eq!(state.compute_daily_fees().revenue, 0);
-        assert_eq!(state.compute_daily_fees().reward, 0);
-
         state.record_dispatch_icp_rewards(
             ICP::from_e8s(100 * E8S),
             ICP::from_e8s(10 * E8S),
@@ -1113,8 +1096,8 @@ pub mod test {
         );
 
         // The dispatch goes out of the deque because it's older than one week.
-        assert_eq!(state.compute_daily_fees().revenue, 0);
-        assert_eq!(state.compute_daily_fees().reward, 0);
+        assert_eq!(state.compute_daily_fees().0, 0);
+        assert_eq!(state.compute_daily_fees().1, 0);
 
         state.record_dispatch_icp_rewards(
             ICP::from_e8s(100 * E8S),
@@ -1123,8 +1106,8 @@ pub mod test {
             NeuronOrigin::NICPSixMonths,
         );
 
-        assert_eq!(state.compute_daily_fees().revenue, 142857142); // 142857142_e8s = 10/7
-        assert_eq!(state.compute_daily_fees().reward, 1571428571); // 1571428571_e8s = 110/7
+        assert_eq!(state.compute_daily_fees().0, 142857142); // 142857142_e8s = 10/7
+        assert_eq!(state.compute_daily_fees().1, 1571428571); // 1571428571_e8s = 110/7
 
         state.record_dispatch_icp_rewards(
             ICP::from_e8s(600 * E8S),
@@ -1133,7 +1116,7 @@ pub mod test {
             NeuronOrigin::NICPSixMonths,
         );
 
-        assert_eq!(state.compute_daily_fees().revenue, 985714285); // 985714285_e8s = 69 / 7
-        assert_eq!(state.compute_daily_fees().reward, 10985714285); // 10985714285_e8s = 769 / 7
+        assert_eq!(state.compute_daily_fees().0, 985714285); // 985714285_e8s = 69 / 7
+        assert_eq!(state.compute_daily_fees().1, 10985714285); // 10985714285_e8s = 769 / 7
     }
 }
