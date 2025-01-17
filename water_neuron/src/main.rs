@@ -165,6 +165,11 @@ fn get_airdrop_allocation(p: Option<Principal>) -> WTN {
 }
 
 #[query]
+fn get_pending_rewards(p: Option<Principal>) -> u64 {
+    water_neuron::storage::get_pending_rewards(p.unwrap_or(ic_cdk::caller())).unwrap_or(0)
+}
+
+#[query]
 fn get_wtn_proposal_id(nns_proposal_id: u64) -> Result<ProposalId, ProposalId> {
     read_state(|s| {
         s.proposals
