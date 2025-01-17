@@ -126,6 +126,9 @@ pub enum EventType {
         #[n(0)]
         neuron_id: NeuronId,
     },
+
+    #[n(17)]
+    DistributeICPtoSNSv2,
 }
 
 #[derive(CandidType, Encode, Decode, Debug, PartialEq, Eq, Clone, Deserialize)]

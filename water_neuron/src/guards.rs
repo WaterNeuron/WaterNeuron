@@ -55,6 +55,7 @@ pub enum TaskGuardError {
 #[derive(Debug, PartialEq, Eq)]
 pub struct TaskGuard {
     task: TaskType,
+    _marker: PhantomData<TaskGuard>,
 }
 
 impl TaskGuard {
@@ -63,7 +64,10 @@ impl TaskGuard {
             if !s.active_tasks.insert(task) {
                 return Err(TaskGuardError::AlreadyProcessing);
             }
-            Ok(Self { task })
+            Ok(Self {
+                task,
+                _marker: PhantomData,
+            })
         })
     }
 }
@@ -74,4 +78,20 @@ impl Drop for TaskGuard {
             s.active_tasks.remove(&self.task);
         });
     }
+}
+
+#[test]
+fn guard_should_exclude() {
+    let state = crate::state::test::default_state();
+    crate::state::replace_state(state);
+
+    let _guard = match TaskGuard::new(TaskType::MaybeDistributeRewards) {
+        Ok(guard) => guard,
+        Err(_) => return,
+    };
+
+    assert_eq!(
+        TaskGuard::new(TaskType::MaybeDistributeRewards),
+        Err(TaskGuardError::AlreadyProcessing)
+    );
 }
