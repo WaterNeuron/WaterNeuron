@@ -100,6 +100,7 @@ fn setup_timer() {
     schedule_now(TaskType::SpawnNeurons);
     schedule_now(TaskType::ProcessVoting);
     schedule_now(TaskType::MaybeDistributeICP);
+    schedule_now(TaskType::MaybeDistributeRewards);
     schedule_now(TaskType::ProcessPendingTransfers);
 }
 
@@ -161,6 +162,11 @@ fn get_airdrop_allocation(p: Option<Principal>) -> WTN {
             .get(&p.unwrap_or(ic_cdk::caller()))
             .unwrap_or(&WTN::ZERO)
     })
+}
+
+#[query]
+fn get_pending_rewards(p: Option<Principal>) -> u64 {
+    water_neuron::storage::get_pending_rewards(p.unwrap_or(ic_cdk::caller())).unwrap_or(0)
 }
 
 #[query]

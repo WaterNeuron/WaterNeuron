@@ -21,6 +21,7 @@ pub enum TaskType {
     SpawnNeurons,
     ProcessVoting,
     RefreshShortTerm,
+    MaybeDistributeRewards,
 }
 
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]

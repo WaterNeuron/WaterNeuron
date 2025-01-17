@@ -26,6 +26,9 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             );
             state.last_distribution_ts = timestamp;
         }
+        EventType::DistributeICPtoSNSv2 => {
+            state.last_distribution_ts = timestamp;
+        }
         EventType::TransferExecuted {
             transfer_id,
             block_index,
