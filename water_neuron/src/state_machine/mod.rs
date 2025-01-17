@@ -841,23 +841,6 @@ impl WaterNeuron {
         .unwrap()
     }
 
-    fn get_daily_revenues_and_rewards(&self, caller: PrincipalId) -> (u64, u64) {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller,
-                        self.water_neuron_id,
-                        "get_daily_revenues_and_rewards",
-                        Encode!(&()).unwrap()
-                    )
-                    .expect("failed to get_daily_revenues_and_rewards")
-            ),
-            (u64, u64)
-        )
-        .unwrap()
-    }
-
     fn get_airdrop_allocation(&self, caller: Principal) -> u64 {
         Decode!(
             &assert_reply(
@@ -2128,69 +2111,6 @@ fn should_distribute_icp_to_sns_neurons() {
     water_neuron.advance_time_and_tick(60);
     let info = water_neuron.get_info();
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
-}
-
-#[test]
-fn should_compute_fee_metrics() {
-    let water_neuron = WaterNeuron::new();
-
-    let caller = PrincipalId::new_user_test_id(212);
-
-
-    water_neuron.approve(
-        caller,
-        water_neuron.icp_ledger_id,
-        water_neuron.water_neuron_id.get().0.into(),
-    );
-
-    assert_eq!(
-        water_neuron.transfer(
-            Principal::anonymous().into(),
-            water_neuron.water_neuron_id.get().0,
-            EXPECTED_INITIAL_BALANCE,
-            water_neuron.wtn_ledger_id
-        ),
-        Nat::from(0_u8)
-    );
-
-    water_neuron.advance_time_and_tick(0);
-
-    assert_eq!(
-        water_neuron.transfer(
-            water_neuron.minter,
-            Account {
-                owner: water_neuron.water_neuron_id.get().0,
-                subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT)
-            },
-            100 * E8S,
-            water_neuron.icp_ledger_id
-        ),
-        Nat::from(8_u8)
-    );
-
-    assert_eq!(
-        water_neuron.balance_of(
-            water_neuron.icp_ledger_id,
-            Account {
-                owner: water_neuron.water_neuron_id.into(),
-                subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT),
-            }
-        ),
-        Nat::from(100 * E8S)
-    );
-
-    water_neuron.advance_time_and_tick(60 * 60 * 24 * 7);
-
-    assert_eq!(
-        water_neuron.balance_of(
-            water_neuron.icp_ledger_id,
-            Account {
-                owner: PrincipalId::new_user_test_id(1234).into(),
-                subaccount: None,
-            }
-        ),
-        Nat::from(100 * E8S) - DEFAULT_LEDGER_FEE
-    );
 }
 
 #[test]

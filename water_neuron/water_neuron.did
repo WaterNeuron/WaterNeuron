@@ -111,9 +111,9 @@ type EventType = variant {
     neuron_id : NeuronId;
   };
   DispatchICPRewards : record {
+    nicp_amount : nat64;
     sns_gov_amount : nat64;
     from_neuron_type : NeuronOrigin;
-    neuron_6m_amount : nat64;
   };
   SplitNeuron : record { withdrawal_id : nat64; neuron_id : NeuronId };
 };
@@ -269,8 +269,6 @@ service : (LiquidArg) -> {
   get_airdrop_allocation : (opt principal) -> (nat64) query;
   get_events : (GetEventsArg) -> (GetEventsResult) query;
   get_info : () -> (CanisterInfo) query;
-  get_latest_revenue : () -> (nat64) query;
-  get_latest_rewards : () -> (nat64) query;
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
   get_withdrawal_requests : (opt Account) -> (vec WithdrawalDetails) query;
   get_wtn_proposal_id : (nat64) -> (Result_2) query;

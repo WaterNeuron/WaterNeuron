@@ -262,6 +262,12 @@ pub struct FeeMetrics {
     pub ts_secs: u64,
 }
 
+#[derive(Deserialize, CandidType)]
+pub struct DailyFees {
+    pub revenue: u64,
+    pub reward: u64,
+}
+
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This
 /// function must be kept in sync with the Nervous System UI equivalent.
 /// This code comes from the IC repo:

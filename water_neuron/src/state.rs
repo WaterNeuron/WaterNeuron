@@ -3,8 +3,9 @@ use crate::numeric::{nICP, ICP, WTN};
 use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
-    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, FeeMetrics,
-    InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
+    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, DailyFees,
+    FeeMetrics, InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
+    ONE_WEEK_SECONDS, SEC_NANOS,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -392,6 +393,26 @@ impl State {
         withdrawal_id
     }
 
+    pub fn compute_daily_fees(&self) -> DailyFees {
+        let mut revenues = 0;
+        let mut rewards = 0;
+        for fee_metric in &self.previous_week_fee_metrics {
+            revenues += fee_metric.revenue.0;
+            rewards += fee_metric.reward.0;
+        }
+        if self.previous_week_fee_metrics.len() > 0 {
+            DailyFees {
+                revenue: revenues / 7,
+                reward: rewards / 7,
+            }
+        } else {
+            DailyFees {
+                revenue: 0,
+                reward: 0,
+            }
+        }
+    }
+
     pub fn record_upgrade(&mut self, upgrade_arg: UpgradeArg) {
         if let Some(governance_fee_share_percent) = upgrade_arg.governance_fee_share_percent {
             self.governance_fee_share_percent = governance_fee_share_percent;
@@ -501,6 +522,49 @@ impl State {
                 }
             ),
             None
+        );
+    }
+
+    pub fn record_dispatch_icp_rewards(
+        &mut self,
+        neuron_6m_icp_amount: ICP,
+        sns_gov_amount: ICP,
+        timestamp: u64,
+        from_neuron_type: NeuronOrigin,
+    ) {
+        self.previous_week_fee_metrics.push_back(FeeMetrics {
+            revenue: sns_gov_amount,
+            reward: ICP::from_e8s(sns_gov_amount.0 + neuron_6m_icp_amount.0),
+            ts_secs: timestamp / SEC_NANOS,
+        });
+
+        loop {
+            if let Some(fee_metrics) = self.previous_week_fee_metrics.front() {
+                if timestamp_nanos() / SEC_NANOS - fee_metrics.ts_secs > ONE_WEEK_SECONDS {
+                    self.previous_week_fee_metrics.pop_front();
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        self.record_icp_pending_transfer(
+            from_neuron_type.to_subaccount(),
+            self.get_6m_neuron_account(),
+            neuron_6m_icp_amount,
+            None,
+        );
+
+        self.tracked_6m_stake += neuron_6m_icp_amount
+            .checked_sub(ICP::from_e8s(DEFAULT_LEDGER_FEE))
+            .unwrap();
+        self.record_icp_pending_transfer(
+            from_neuron_type.to_subaccount(),
+            self.get_sns_account(),
+            sns_gov_amount,
+            None,
         );
     }
 
@@ -1029,5 +1093,47 @@ pub mod test {
 
         let res_3 = state.compute_governance_share_e8s(880_123_000);
         assert_eq!(res_3, 88_012_300);
+    }
+
+    #[test]
+    fn should_compute_fee_metrics() {
+        use crate::{timestamp_nanos, SEC_NANOS};
+
+        let mut state = default_state();
+        let now = timestamp_nanos();
+
+        assert_eq!(state.compute_daily_fees().revenue, 0);
+        assert_eq!(state.compute_daily_fees().reward, 0);
+
+        state.record_dispatch_icp_rewards(
+            ICP::from_e8s(100 * E8S),
+            ICP::from_e8s(10 * E8S),
+            now - 8 * 24 * 3600 * SEC_NANOS,
+            NeuronOrigin::NICPSixMonths,
+        );
+
+        // The dispatch goes out of the dequeu because it's older than one week.
+        assert_eq!(state.compute_daily_fees().revenue, 0);
+        assert_eq!(state.compute_daily_fees().reward, 0);
+
+        state.record_dispatch_icp_rewards(
+            ICP::from_e8s(100 * E8S),
+            ICP::from_e8s(10 * E8S),
+            now - 6 * 24 * 3600 * SEC_NANOS,
+            NeuronOrigin::NICPSixMonths,
+        );
+
+        assert_eq!(state.compute_daily_fees().revenue, 142857142); // 142857142_e8s = 10/7
+        assert_eq!(state.compute_daily_fees().reward, 1571428571); // 1571428571_e8s = 110/7
+
+        state.record_dispatch_icp_rewards(
+            ICP::from_e8s(600 * E8S),
+            ICP::from_e8s(59 * E8S),
+            now,
+            NeuronOrigin::NICPSixMonths,
+        );
+
+        assert_eq!(state.compute_daily_fees().revenue, 985714285); // 985714285_e8s = 69 / 7
+        assert_eq!(state.compute_daily_fees().reward, 10985714285); // 10985714285_e8s = 769 / 7
     }
 }

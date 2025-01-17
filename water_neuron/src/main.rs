@@ -354,20 +354,6 @@ async fn cancel_withdrawal(neuron_id: NeuronId) -> Result<MergeResponse, CancelW
 }
 
 #[query]
-fn get_daily_revenues_and_rewards() -> (u64, u64) {
-    read_state(|s| {
-        let mut revenues = 0;
-        let mut rewards = 0;
-        for fee_metric in &s.previous_week_fee_metrics {
-            revenues += fee_metric.revenue.0;
-            rewards += fee_metric.reward.0;
-        }
-        let metrics_count = s.previous_week_fee_metrics.len() as u64;
-        (revenues / metrics_count, rewards / metrics_count)
-    })
-}
-
-#[query]
 fn icrc10_supported_standards() -> Vec<StandardRecord> {
     water_neuron::icrc21::icrc10_supported_standards()
 }
