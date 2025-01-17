@@ -23,8 +23,6 @@ pub fn build_dashboard() -> Vec<u8> {
                 }}
                 h3 {{
                     font-variant: small-caps;
-                    margin-top: 30px;
-                    margin-bottom: 5px;
                 }}
                 table table {{ font-size: small; }}
                 .background {{ margin: 0; padding: 0; }}
@@ -59,7 +57,7 @@ pub fn build_dashboard() -> Vec<u8> {
                     {}
                 </div>
             </div>
-            <div>
+            <div style='overflow-y: scroll; max-height: 350px; margin-top: 4em;>
                 <h3>Withdrawal Requests</h3>
                 <table>
                     <thead>
@@ -79,7 +77,7 @@ pub fn build_dashboard() -> Vec<u8> {
                     </tbody>
                 </table>
             </div>
-            <div>
+            <div style='overflow-y: scroll; max-height: 350px; margin-top: 4em;'>
                 <h3>Deposits History</h3>
                 <table>
                     <thead>
@@ -97,7 +95,7 @@ pub fn build_dashboard() -> Vec<u8> {
             </div>
             <div>
                 <h3>Maturity Neuron Spawned</h3>
-                <table>
+                <table style='overflow-y: scroll; max-height: 350px; margin-top: 4em;'>
                     <thead>
                         <tr>
                             <th>Neuron Id</th>
@@ -109,7 +107,7 @@ pub fn build_dashboard() -> Vec<u8> {
                     </tbody>
                 </table>
             </div>
-            <div>
+            <div style='overflow-y: scroll; max-height: 350px; margin-top: 4em;'>
                 <h3>Spawned Neurons</h3>
                 <table>
                     <thead>

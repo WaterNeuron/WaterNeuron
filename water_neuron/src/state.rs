@@ -3,8 +3,9 @@ use crate::numeric::{nICP, ICP, WTN};
 use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
-    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, InitArg,
-    PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S,
+    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, FeeMetrics,
+    InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S, NEURON_6M_APY,
+    NEURON_8Y_APY, ONE_WEEK_SECONDS, SEC_NANOS,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -12,6 +13,7 @@ use minicbor::{Decode, Encode};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use strum::IntoEnumIterator;
@@ -155,6 +157,8 @@ pub struct State {
     pub total_circulating_nicp: nICP,
     pub governance_fee_share_percent: u64,
 
+    pub previous_week_fee_metrics: VecDeque<FeeMetrics>,
+
     pub transfer_id: TransferId,
     pub withdrawal_id: WithdrawalId,
 
@@ -222,6 +226,7 @@ impl State {
             total_circulating_nicp: nICP::ZERO,
             total_icp_deposited: ICP::ZERO,
             tracked_6m_stake: ICP::ZERO,
+            previous_week_fee_metrics: VecDeque::new(),
             to_disburse: BTreeMap::default(),
             withdrawal_to_split: BTreeSet::default(),
             withdrawal_to_start_dissolving: Default::default(),
@@ -388,6 +393,30 @@ impl State {
         withdrawal_id
     }
 
+    pub fn compute_daily_revenue(&self) -> u64 {
+        self.previous_week_fee_metrics
+            .iter()
+            .map(|m| m.revenue.0)
+            .sum::<u64>()
+            / 7
+    }
+
+    pub fn compute_daily_fees(&self) -> u64 {
+        self.previous_week_fee_metrics
+            .iter()
+            .map(|m| m.fees.0)
+            .sum::<u64>()
+            / 7
+    }
+
+    pub fn compute_nicp_apy(&self) -> f64 {
+        let neuron_share = (100 - self.governance_fee_share_percent) as f64 / 100.0;
+        let rewards_icp = neuron_share
+            * (NEURON_6M_APY * self.main_neuron_6m_staked.0 as f64
+                + NEURON_8Y_APY * self.main_neuron_8y_stake.0 as f64);
+        rewards_icp / self.main_neuron_6m_staked.0 as f64
+    }
+
     pub fn record_upgrade(&mut self, upgrade_arg: UpgradeArg) {
         if let Some(governance_fee_share_percent) = upgrade_arg.governance_fee_share_percent {
             self.governance_fee_share_percent = governance_fee_share_percent;
@@ -497,6 +526,45 @@ impl State {
                 }
             ),
             None
+        );
+    }
+
+    pub fn record_dispatch_icp_rewards(
+        &mut self,
+        neuron_6m_icp_amount: ICP,
+        sns_gov_amount: ICP,
+        timestamp: u64,
+        from_neuron_type: NeuronOrigin,
+    ) {
+        self.previous_week_fee_metrics.push_back(FeeMetrics {
+            revenue: sns_gov_amount,
+            fees: ICP::from_e8s(sns_gov_amount.0 + neuron_6m_icp_amount.0),
+            ts_secs: timestamp / SEC_NANOS,
+        });
+
+        while let Some(fee_metrics) = self.previous_week_fee_metrics.front() {
+            if timestamp_nanos() / SEC_NANOS > fee_metrics.ts_secs + ONE_WEEK_SECONDS {
+                self.previous_week_fee_metrics.pop_front();
+            } else {
+                break;
+            }
+        }
+
+        self.record_icp_pending_transfer(
+            from_neuron_type.to_subaccount(),
+            self.get_6m_neuron_account(),
+            neuron_6m_icp_amount,
+            None,
+        );
+
+        self.tracked_6m_stake += neuron_6m_icp_amount
+            .checked_sub(ICP::from_e8s(DEFAULT_LEDGER_FEE))
+            .unwrap();
+        self.record_icp_pending_transfer(
+            from_neuron_type.to_subaccount(),
+            self.get_sns_account(),
+            sns_gov_amount,
+            None,
         );
     }
 
@@ -1025,5 +1093,53 @@ pub mod test {
 
         let res_3 = state.compute_governance_share_e8s(880_123_000);
         assert_eq!(res_3, 88_012_300);
+    }
+
+    #[test]
+    fn should_compute_fee_metrics() {
+        use crate::{timestamp_nanos, SEC_NANOS};
+
+        let mut state = default_state();
+        let now = timestamp_nanos();
+
+        state.record_dispatch_icp_rewards(
+            ICP::from_e8s(100 * E8S),
+            ICP::from_e8s(10 * E8S),
+            now - 8 * 24 * 3600 * SEC_NANOS,
+            NeuronOrigin::NICPSixMonths,
+        );
+
+        // The dispatch goes out of the deque because it's older than one week.
+        assert_eq!(state.compute_daily_revenue(), 0);
+        assert_eq!(state.compute_daily_fees(), 0);
+
+        state.record_dispatch_icp_rewards(
+            ICP::from_e8s(100 * E8S),
+            ICP::from_e8s(10 * E8S),
+            now - 6 * 24 * 3600 * SEC_NANOS,
+            NeuronOrigin::NICPSixMonths,
+        );
+
+        assert_eq!(state.compute_daily_revenue(), 142857142); // 142857142_e8s = 10/7
+        assert_eq!(state.compute_daily_fees(), 1571428571); // 1571428571_e8s = 110/7
+
+        state.record_dispatch_icp_rewards(
+            ICP::from_e8s(600 * E8S),
+            ICP::from_e8s(59 * E8S),
+            now,
+            NeuronOrigin::NICPSixMonths,
+        );
+
+        assert_eq!(state.compute_daily_revenue(), 985714285); // 985714285_e8s = 69 / 7
+        assert_eq!(state.compute_daily_fees(), 10985714285); // 10985714285_e8s = 769 / 7
+    }
+
+    #[test]
+    fn should_compute_apy() {
+        let mut state = default_state();
+        state.main_neuron_6m_staked = ICP::from_e8s(100 * E8S);
+        state.main_neuron_8y_stake = ICP::from_e8s(400 * E8S);
+
+        assert_eq!(state.compute_nicp_apy(), 0.5751);
     }
 }

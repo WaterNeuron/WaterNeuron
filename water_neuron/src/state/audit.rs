@@ -2,9 +2,7 @@ pub use super::event::{Event, EventType};
 use super::State;
 use crate::state::SNS_GOVERNANCE_SUBACCOUNT;
 use crate::storage::{record_event, with_event_iter};
-use crate::{
-    nICP, timestamp_nanos, DEFAULT_LEDGER_FEE, ICP, INITIAL_NEURON_STAKE, SNS_DISTRIBUTION_MEMO,
-};
+use crate::{nICP, timestamp_nanos, ICP, INITIAL_NEURON_STAKE, SNS_DISTRIBUTION_MEMO};
 
 /// Updates the state to reflect the given state transition.
 /// public because it's used in tests since process_event
@@ -51,23 +49,12 @@ pub fn apply_state_transition(state: &mut State, payload: &EventType, timestamp:
             nicp_amount,
             sns_gov_amount,
             from_neuron_type,
-        } => {
-            state.record_icp_pending_transfer(
-                from_neuron_type.to_subaccount(),
-                state.get_6m_neuron_account(),
-                *nicp_amount,
-                None,
-            );
-            state.tracked_6m_stake += nicp_amount
-                .checked_sub(ICP::from_e8s(DEFAULT_LEDGER_FEE))
-                .unwrap();
-            state.record_icp_pending_transfer(
-                from_neuron_type.to_subaccount(),
-                state.get_sns_account(),
-                *sns_gov_amount,
-                None,
-            );
-        }
+        } => state.record_dispatch_icp_rewards(
+            *nicp_amount,
+            *sns_gov_amount,
+            timestamp,
+            *from_neuron_type,
+        ),
         EventType::SplitNeuron {
             withdrawal_id,
             neuron_id,
