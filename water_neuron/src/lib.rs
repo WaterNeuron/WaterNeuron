@@ -308,7 +308,6 @@ pub fn timer() {
 
                     let runtime = IcCanisterRuntime {};
                     dispatch_icp(&runtime).await;
-                    distribute_icp_to_sns_neurons().await;
 
                     schedule_after(ONE_HOUR, TaskType::MaybeDistributeICP);
                 });
@@ -394,6 +393,8 @@ pub fn timer() {
                         Err(_) => return,
                     };
 
+                    distribute_icp_to_sns_neurons().await;
+
                     let runtime = IcCanisterRuntime {};
                     match crate::sns_governance::process_icp_distribution(&runtime).await {
                         Some(error_count) => {
@@ -402,7 +403,9 @@ pub fn timer() {
                                 schedule_after(RETRY_DELAY, TaskType::MaybeDistributeRewards);
                             }
                         }
-                        None => {}
+                        None => {
+                            schedule_after(ONE_DAY, TaskType::MaybeDistributeRewards);
+                        }
                     }
                 });
             }
@@ -881,6 +884,7 @@ async fn dispatch_icp<R: CanisterRuntime>(runtime: &R) {
                         );
                     });
                     schedule_now(TaskType::ProcessPendingTransfers);
+                    schedule_now(TaskType::MaybeDistributeRewards);
                 } else {
                     log!(
                         DEBUG,

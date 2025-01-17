@@ -1,10 +1,10 @@
 use crate::numeric::ICP;
 use crate::storage::{stable_add_rewards, total_pending_rewards};
 use crate::{
-    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, schedule_now,
-    self_canister_id, stable_sub_rewards, timestamp_nanos, Account, CdkRuntime, DisplayAmount,
-    EventType, ICRC1Client, TaskType, DEBUG, DEFAULT_LEDGER_FEE, E8S, ICP_LEDGER_ID, INFO,
-    MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO, SNS_GOVERNANCE_SUBACCOUNT,
+    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, self_canister_id,
+    stable_sub_rewards, timestamp_nanos, Account, CdkRuntime, DisplayAmount, EventType,
+    ICRC1Client, DEBUG, DEFAULT_LEDGER_FEE, E8S, ICP_LEDGER_ID, INFO, MINIMUM_ICP_DISTRIBUTION,
+    SEC_NANOS, SNS_DISTRIBUTION_MEMO, SNS_GOVERNANCE_SUBACCOUNT,
 };
 use async_trait::async_trait;
 use candid::{Nat, Principal};
@@ -12,7 +12,6 @@ use ic_canister_log::log;
 use ic_sns_governance::pb::v1::{
     ListNeurons, ListNeuronsResponse, Neuron, NeuronId, NeuronPermissionType,
 };
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -73,26 +72,16 @@ impl CanisterRuntime for IcCanisterRuntime {
     }
 
     async fn transfer_icp(&self, to: Principal, amount: u64) -> Result<u64, TransferError> {
-        let client = ICRC1Client {
-            runtime: CdkRuntime,
-            ledger_canister_id: ICP_LEDGER_ID,
-        };
         let amount = amount.checked_sub(DEFAULT_LEDGER_FEE).unwrap();
-        let block_index = client
-            .transfer(TransferArg {
-                from_subaccount: Some(SNS_GOVERNANCE_SUBACCOUNT),
-                to: to.into(),
-                fee: Some(Nat::from(DEFAULT_LEDGER_FEE)),
-                created_at_time: None,
-                memo: Some(SNS_DISTRIBUTION_MEMO.into()),
-                amount: Nat::from(amount),
-            })
-            .await
-            .map_err(|e| TransferError::GenericError {
-                error_code: (Nat::from(e.0 as u32)),
-                message: (e.1),
-            })??;
-        Ok(block_index.0.try_into().unwrap())
+        crate::transfer(
+            to,
+            Nat::from(amount),
+            Some(Nat::from(DEFAULT_LEDGER_FEE)),
+            Some(SNS_GOVERNANCE_SUBACCOUNT),
+            ICP_LEDGER_ID,
+            Some(SNS_DISTRIBUTION_MEMO.into()),
+        )
+        .await
     }
 }
 
@@ -165,7 +154,6 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
         mutate_state(|s| {
             process_event(s, EventType::DistributeICPtoSNSv2);
         });
-        schedule_now(TaskType::MaybeDistributeRewards);
     }
 
     Ok(stakers_count)
