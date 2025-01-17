@@ -409,7 +409,7 @@ impl State {
             / 7
     }
 
-    pub fn compute_apy(&self) -> f64 {
+    pub fn compute_nicp_apy(&self) -> f64 {
         let neuron_share = (100 - self.governance_fee_share_percent) as f64 / 100.0;
         let rewards_icp = neuron_share
             * (NEURON_6M_APY * self.main_neuron_6m_staked.0 as f64
@@ -1140,6 +1140,6 @@ pub mod test {
         state.main_neuron_6m_staked = ICP::from_e8s(100 * E8S);
         state.main_neuron_8y_stake = ICP::from_e8s(400 * E8S);
 
-        assert_eq!(state.compute_apy(), 0.5751);
+        assert_eq!(state.compute_nicp_apy(), 0.5751);
     }
 }
