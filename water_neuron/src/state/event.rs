@@ -54,7 +54,7 @@ pub enum EventType {
     #[n(6)]
     DispatchICPRewards {
         #[n(0)]
-        neuron_6m_amount: ICP,
+        nicp_amount: ICP,
         #[n(1)]
         sns_gov_amount: ICP,
         #[n(2)]

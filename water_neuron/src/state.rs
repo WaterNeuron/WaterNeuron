@@ -393,14 +393,20 @@ impl State {
         withdrawal_id
     }
 
-    pub fn compute_daily_fees(&self) -> (u64, u64) {
-        let mut revenues = 0;
-        let mut rewards = 0;
-        for fee_metric in &self.previous_week_fee_metrics {
-            revenues += fee_metric.revenue.0;
-            rewards += fee_metric.reward.0;
-        }
-        (revenues / 7, rewards / 7)
+    pub fn compute_daily_revenue(&self) -> u64 {
+        self.previous_week_fee_metrics
+            .iter()
+            .map(|m| m.revenue.0)
+            .sum::<u64>()
+            / 7
+    }
+
+    pub fn compute_daily_fees(&self) -> u64 {
+        self.previous_week_fee_metrics
+            .iter()
+            .map(|m| m.fees.0)
+            .sum::<u64>()
+            / 7
     }
 
     pub fn compute_apy(&self) -> f64 {
@@ -532,7 +538,7 @@ impl State {
     ) {
         self.previous_week_fee_metrics.push_back(FeeMetrics {
             revenue: sns_gov_amount,
-            reward: ICP::from_e8s(sns_gov_amount.0 + neuron_6m_icp_amount.0),
+            fees: ICP::from_e8s(sns_gov_amount.0 + neuron_6m_icp_amount.0),
             ts_secs: timestamp / SEC_NANOS,
         });
 
@@ -1104,8 +1110,8 @@ pub mod test {
         );
 
         // The dispatch goes out of the deque because it's older than one week.
-        assert_eq!(state.compute_daily_fees().0, 0);
-        assert_eq!(state.compute_daily_fees().1, 0);
+        assert_eq!(state.compute_daily_revenue(), 0);
+        assert_eq!(state.compute_daily_fees(), 0);
 
         state.record_dispatch_icp_rewards(
             ICP::from_e8s(100 * E8S),
@@ -1114,8 +1120,8 @@ pub mod test {
             NeuronOrigin::NICPSixMonths,
         );
 
-        assert_eq!(state.compute_daily_fees().0, 142857142); // 142857142_e8s = 10/7
-        assert_eq!(state.compute_daily_fees().1, 1571428571); // 1571428571_e8s = 110/7
+        assert_eq!(state.compute_daily_revenue(), 142857142); // 142857142_e8s = 10/7
+        assert_eq!(state.compute_daily_fees(), 1571428571); // 1571428571_e8s = 110/7
 
         state.record_dispatch_icp_rewards(
             ICP::from_e8s(600 * E8S),
@@ -1124,8 +1130,8 @@ pub mod test {
             NeuronOrigin::NICPSixMonths,
         );
 
-        assert_eq!(state.compute_daily_fees().0, 985714285); // 985714285_e8s = 69 / 7
-        assert_eq!(state.compute_daily_fees().1, 10985714285); // 10985714285_e8s = 769 / 7
+        assert_eq!(state.compute_daily_revenue(), 985714285); // 985714285_e8s = 69 / 7
+        assert_eq!(state.compute_daily_fees(), 10985714285); // 10985714285_e8s = 769 / 7
     }
 
     #[test]
