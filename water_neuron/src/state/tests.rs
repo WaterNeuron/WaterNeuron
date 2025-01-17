@@ -90,9 +90,9 @@ fn arb_event_type() -> impl Strategy<Value = EventType> {
                 }
             }
         ),
-        (any::<u64>(), any::<u64>()).prop_map(|(nicp_amount, sns_gov_amount)| {
+        (any::<u64>(), any::<u64>()).prop_map(|(neuron_6m_amount, sns_gov_amount)| {
             EventType::DispatchICPRewards {
-                neuron_6m_amount: ICP::from_e8s(nicp_amount),
+                neuron_6m_amount: ICP::from_e8s(neuron_6m_amount),
                 sns_gov_amount: ICP::from_e8s(sns_gov_amount),
                 from_neuron_type: NeuronOrigin::SnsGovernanceEightYears,
             }
@@ -109,6 +109,8 @@ proptest! {
     }
 }
 
+
+// The following test is to confirm that the encoding should be independent of the field names.
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, CandidType, Deserialize)]
 struct DispatchICPRewards {
     #[n(0)]
