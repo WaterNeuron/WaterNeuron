@@ -5,36 +5,47 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 lazy_static! {
-    static ref CANISTER_PATHS: Vec<(String, PathBuf)> = vec![
-        (
-            "boomerang".into(),
-            match get_wasm_path(CanisterName::Local("boomerang"), false) {
-                Ok(path) => path,
-                Err(e) => panic!("Error: {:?}", e),
-            }
-        ),
-        (
-            "water_neuron".into(),
-            match get_wasm_path(CanisterName::Local("water_neuron"), false) {
-                Ok(path) => path,
-                Err(e) => panic!("Error: {:?}", e),
-            }
-        ),
-        (
-            "water_neuron_self_check".into(),
-            match get_wasm_path(CanisterName::Local("water_neuron"), true) {
-                Ok(path) => path,
-                Err(e) => panic!("Error: {:?}", e),
-            }
-        ),
-        (
-            "sns_module".into(),
-            match get_wasm_path(CanisterName::Local("sns_module"), false) {
-                Ok(path) => path,
-                Err(e) => panic!("Error: {:?}", e),
-            }
-        ),
-    ];
+    static ref LOCAL_CANISTER_PATHS: Vec<(String, PathBuf)> = {
+        let canister_configs = vec![
+            (CanisterName::Local("boomerang"), false),
+            (CanisterName::Local("water_neuron"), false),
+            (CanisterName::Local("water_neuron"), true),
+            (CanisterName::Local("sns_module"), false),
+        ];
+        let mut paths = Vec::with_capacity(canister_configs.len());
+        for (canister_name, is_self_check) in canister_configs {
+            let name = canister_name.to_string();
+            let wasm_path = get_wasm_path(canister_name, is_self_check).unwrap_or_else(|e| {
+                eprintln!("Error getting wasm path for {}: {}", name, e);
+                panic!("Failed to get wasm path for {}", name);
+            });
+            paths.push((name, wasm_path));
+        }
+        paths
+    };
+    static ref DFINITY_CANISTER_PATHS: Vec<(String, PathBuf)> = {
+        let canister_configs = vec![
+            (CanisterName::Ledger, false),
+            (CanisterName::NnsGovernance, false),
+            (CanisterName::Cmc, false),
+            (CanisterName::SnsGovernance, false),
+            (CanisterName::SnsSwap, false),
+            (CanisterName::Sns, false),
+            (CanisterName::SnsRoot, false),
+            (CanisterName::Icrc1Ledger, false),
+            (CanisterName::Icrc1IndexNg, false),
+        ];
+        let mut paths = Vec::with_capacity(canister_configs.len());
+        for (canister_name, is_self_check) in canister_configs {
+            let name = canister_name.to_string();
+            let wasm_path = get_wasm_path(canister_name, is_self_check).unwrap_or_else(|e| {
+                eprintln!("Error getting wasm path for {}: {}", name, e);
+                panic!("Failed to get wasm path for {}", name);
+            });
+            paths.push((name, wasm_path));
+        }
+        paths
+    };
 }
 
 fn check_self_check(path: &Path) -> bool {
@@ -88,13 +99,19 @@ fn check_git(path: &Path) -> bool {
 
 fn main() {
     let mut sums = vec![];
-    for (name, path) in CANISTER_PATHS.iter() {
+    for (name, path) in LOCAL_CANISTER_PATHS.iter() {
         println!("Building {}...", name);
         let data = std::fs::read(path).unwrap_or_else(|_| panic!("Could not read {:?}", path));
         let mut hasher = Sha256::new();
         hasher.update(&data);
         let sum = format!("{:x}", hasher.finalize());
         sums.push((name, path, sum));
+    }
+
+    println!("\nDFINITY canisters path");
+    println!("─────────────────────────────────────────────");
+    for (name, path) in DFINITY_CANISTER_PATHS.iter() {
+        println!("{:<20} {}", name, path.display());
     }
 
     println!("\nSHA256 Checksums:");
