@@ -1,0 +1,18 @@
+[
+	{
+		"match": "**/*",
+		"headers": {
+			"X-Security-Policy": "hardened"
+		},
+		"ignore": false
+	},
+	{
+		"match": ".well-known/ii-alternative-origins",
+		"headers": {
+			"Access-Control-Allow-Origin": "*",
+			"Content-Type": "application/json",
+			"X-Security-Policy": "hardened"
+		},
+		"ignore": false
+	}
+]
