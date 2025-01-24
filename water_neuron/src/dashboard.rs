@@ -12,67 +12,67 @@ pub fn build_dashboard() -> Vec<u8> {
         <head>
             <title>WaterNeuron Dashboard</title>
             <style>
-                body {
+                body {{
                     font-family: monospace;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                }
-                table {
+                }}
+                table {{
                     border: none;
                     text-align: left;
                     border-width: thin;
                     border-collapse: collapse;
                     width: 100%;
-                }
-                .table-container th {
+                }}
+                .table-container th {{
                     position: sticky;
                     top: 0; 
                     z-index: 10; 
                     background: #ffffff;
                     height: 40px;
-                }
-                th, td {
+                }}
+                th, td {{
                     padding: 5px 10px;
-                }
-                h3 {
+                }}
+                h3 {{
                     font-variant: small-caps;
-                }
-                li {
+                }}
+                li {{
                     display: flex; 
                     flex-direction: row; 
                     align-items: center; 
                     gap: 1em;
-                }
-                .table-container {
+                }}
+                .table-container {{
                     max-height: 350px; 
                     overflow: auto;
                     border: 1px solid black;
                     width: 100%;
                     overflow-y: auto;
                     min-width: 400px;
-                }
+                }}
 
-                .metadata-container {
+                .metadata-container {{
                     margin: 0 auto;
                     max-width: fit-content;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                }
+                }}
 
-                .metadata-container table {
+                .metadata-container table {{
                     border: 1px solid black;
-                }
+                }}
 
-                .metadata-container th, .metadata-container td {
+                .metadata-container th, .metadata-container td {{
                     padding: 3px;
-                }
-                body::-webkit-scrollbar {
+                }}
+                body::-webkit-scrollbar {{
                     display: none; 
-                }
+                }}
 
-                tbody tr:nth-child(odd) { background-color: #eeeeee; } 
+                tbody tr:nth-child(odd) {{ background-color: #eeeeee; }} 
             </style>
             <script>
                 document.addEventListener(\"DOMContentLoaded\", function() {{
