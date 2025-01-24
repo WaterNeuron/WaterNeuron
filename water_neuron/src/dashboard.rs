@@ -37,6 +37,7 @@ pub fn build_dashboard() -> Vec<u8> {
                 }}
                 h3 {{
                     font-variant: small-caps;
+                    margin-top: 40px;
                 }}
                 li {{
                     display: flex; 
