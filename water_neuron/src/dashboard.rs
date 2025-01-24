@@ -12,22 +12,67 @@ pub fn build_dashboard() -> Vec<u8> {
         <head>
             <title>WaterNeuron Dashboard</title>
             <style>
-                body {{
+                body {
                     font-family: monospace;
-                }}
-                table {{
-                    border: solid;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+                table {
+                    border: none;
                     text-align: left;
-                    width: 100%;
                     border-width: thin;
-                }}
-                h3 {{
+                    border-collapse: collapse;
+                    width: 100%;
+                }
+                .table-container th {
+                    position: sticky;
+                    top: 0; 
+                    z-index: 10; 
+                    background: #ffffff;
+                    height: 40px;
+                }
+                th, td {
+                    padding: 5px 10px;
+                }
+                h3 {
                     font-variant: small-caps;
-                }}
-                table table {{ font-size: small; }}
-                .background {{ margin: 0; padding: 0; }}
-                .content {{ max-width: 100vw; width: fit-content; margin: 0 auto; }}
-                tbody tr:nth-child(odd) {{ background-color: #eeeeee; }}
+                }
+                li {
+                    display: flex; 
+                    flex-direction: row; 
+                    align-items: center; 
+                    gap: 1em;
+                }
+                .table-container {
+                    max-height: 350px; 
+                    overflow: auto;
+                    border: 1px solid black;
+                    width: 100%;
+                    overflow-y: auto;
+                    min-width: 400px;
+                }
+
+                .metadata-container {
+                    margin: 0 auto;
+                    max-width: fit-content;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+
+                .metadata-container table {
+                    border: 1px solid black;
+                }
+
+                .metadata-container th, .metadata-container td {
+                    padding: 3px;
+                }
+                body::-webkit-scrollbar {
+                    display: none; 
+                }
+
+                tbody tr:nth-child(odd) { background-color: #eeeeee; } 
             </style>
             <script>
                 document.addEventListener(\"DOMContentLoaded\", function() {{
@@ -51,14 +96,16 @@ pub fn build_dashboard() -> Vec<u8> {
             </script>
         </head>
         <body>
-            <div class=\"background content\">
-                <div>
-                    <h3>Metadata</h3>
-                    {}
-                </div>
+            <div class=\"metadata-container\">
+                <h3>Metadata</h3>
+                {}
             </div>
-            <div style='overflow-y: scroll; max-height: 350px; margin-top: 4em;>
-                <h3>Withdrawal Requests</h3>
+            <div style=\"width: 100%;\">
+                <h3>Tasks</h3>
+                <ul>{}</ul>
+            </div>
+            <h3>Withdrawal Requests</h3>
+            <div class=\"table-container\">
                 <table>
                     <thead>
                         <tr>
@@ -77,8 +124,8 @@ pub fn build_dashboard() -> Vec<u8> {
                     </tbody>
                 </table>
             </div>
-            <div style='overflow-y: scroll; max-height: 350px; margin-top: 4em;'>
-                <h3>Deposits History</h3>
+            <h3>Deposits History</h3>
+            <div class=\"table-container\">
                 <table>
                     <thead>
                         <tr>
@@ -93,9 +140,10 @@ pub fn build_dashboard() -> Vec<u8> {
                     </tbody>
                 </table>
             </div>
-            <div>
-                <h3>Maturity Neuron Spawned</h3>
-                <table style='overflow-y: scroll; max-height: 350px; margin-top: 4em;'>
+            <h3>Maturity Neuron Spawned</h3>
+            <div class=\"table-container\">
+
+                <table>
                     <thead>
                         <tr>
                             <th>Neuron Id</th>
@@ -107,8 +155,8 @@ pub fn build_dashboard() -> Vec<u8> {
                     </tbody>
                 </table>
             </div>
-            <div style='overflow-y: scroll; max-height: 350px; margin-top: 4em;'>
-                <h3>Spawned Neurons</h3>
+            <h3>Spawned Neurons</h3>
+            <div class=\"table-container\">
                 <table>
                     <thead>
                         <tr>
@@ -122,21 +170,17 @@ pub fn build_dashboard() -> Vec<u8> {
                 </table>
             </div>
             {}
-            <div>
-                <h3>Tasks</h3>
-                <ul>{}</ul>
-            </div>
         </div>
     </body>
 </html>
     ",
         construct_metadata_table(),
+        display_tasks(),
         construct_withdrawal_table(),
         construct_deposit_table(),
         construct_maturity_neuron_table(),
         construct_to_disburse_table(),
         get_pending_transfer_table(),
-        display_tasks(),
     )
     .into_bytes()
 }
@@ -346,22 +390,22 @@ fn get_pending_transfer_table() -> String {
                 write!(
                     buf,
                     "
-                    <div>
                     <h3>Pending Transfers</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Transfer Id</th>
-                                <th>Receiver</th>
-                                <th>Amount</th>
-                                <th>Unit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {}
-                        </tbody>
-                    </table>
-                </div>
+                    <div class=\"table-container\">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Transfer Id</th>
+                                    <th>Receiver</th>
+                                    <th>Amount</th>
+                                    <th>Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {}
+                            </tbody>
+                        </table>
+                    </div>
                 ",
                     construct_pending_transfer_table()
                 )
