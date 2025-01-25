@@ -27,53 +27,50 @@ pub fn build_dashboard() -> Vec<u8> {
                 }}
                 .table-container th {{
                     position: sticky;
-                    top: 0; 
-                    z-index: 10; 
+                    top: 0;
+                    z-index: 10;
                     background: #ffffff;
                     height: 40px;
                 }}
-                th, td {{
+                th,
+                td {{
                     padding: 5px 10px;
                 }}
                 h3 {{
+                    margin: 40px 0 5px 0;
                     font-variant: small-caps;
-                    margin-top: 40px;
                 }}
                 li {{
-                    display: flex; 
-                    flex-direction: row; 
-                    align-items: center; 
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
                     gap: 1em;
                 }}
                 .table-container {{
-                    max-height: 350px; 
+                    max-height: 350px;
                     overflow: auto;
                     border: 1px solid black;
                     width: 100%;
                     overflow-y: auto;
                     min-width: 400px;
                 }}
-
-                .metadata-container {{
+                .data-container {{
                     margin: 0 auto;
                     max-width: fit-content;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
                 }}
-
-                .metadata-container table {{
+                .metadata table {{
                     border: 1px solid black;
                 }}
-
-                .metadata-container th, .metadata-container td {{
+                .metadata th,
+                .metadata td {{
                     padding: 3px;
                 }}
                 body::-webkit-scrollbar {{
-                    display: none; 
+                    display: none;
                 }}
-
-                tbody tr:nth-child(odd) {{ background-color: #eeeeee; }} 
+                tbody tr:nth-child(odd) {{
+                    background-color: #eeeeee;
+                }}
             </style>
             <script>
                 document.addEventListener(\"DOMContentLoaded\", function() {{
@@ -97,83 +94,81 @@ pub fn build_dashboard() -> Vec<u8> {
             </script>
         </head>
         <body>
-            <div class=\"metadata-container\">
-                <h3>Metadata</h3>
-                {}
-            </div>
-            <div style=\"width: 100%;\">
+            <div class=\"data-container\">
+                <div class=\"metadata\">
+                    <h3>Metadata</h3>
+                    {}
+                </div>
                 <h3>Tasks</h3>
                 <ul>{}</ul>
+                <h3>Withdrawal Requests</h3>
+                <div class=\"table-container\">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Withdrawal Id</th>
+                                <th>Received at</th>
+                                <th>Receiver</th>
+                                <th>nICP Burned Amount</th>
+                                <th>nICP Burn Index</th>
+                                <th>ICP Due Amount</th>
+                                <th>Status</th>
+                                <th>Neuron ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {}
+                        </tbody>
+                    </table>
+                </div>
+                <h3>Deposits History</h3>
+                <div class=\"table-container\">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Transfer Id</th>
+                                <th>Receiver</th>
+                                <th>Amount (nICP)</th>
+                                <th>Block Index</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {}
+                        </tbody>
+                    </table>
+                </div>
+                <h3>Maturity Neuron Spawned</h3>
+                <div class=\"table-container\">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Neuron Id</th>
+                                <th>Block Index</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {}
+                        </tbody>
+                    </table>
+                </div>
+                <h3>Spawned Neurons</h3>
+                <div class=\"table-container\">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Neuron Id</th>
+                                <th>Receiver</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {}
+                        </tbody>
+                    </table>
+                </div>
+                {}
             </div>
-            <h3>Withdrawal Requests</h3>
-            <div class=\"table-container\">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Withdrawal Id</th>
-                            <th>Received at</th>
-                            <th>Receiver</th>
-                            <th>nICP Burned Amount</th>
-                            <th>nICP Burn Index</th>
-                            <th>ICP Due Amount</th>
-                            <th>Status</th>
-                            <th>Neuron ID</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {}
-                    </tbody>
-                </table>
-            </div>
-            <h3>Deposits History</h3>
-            <div class=\"table-container\">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Transfer Id</th>
-                            <th>Receiver</th>
-                            <th>Amount (nICP)</th>
-                            <th>Block Index</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {}
-                    </tbody>
-                </table>
-            </div>
-            <h3>Maturity Neuron Spawned</h3>
-            <div class=\"table-container\">
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Neuron Id</th>
-                            <th>Block Index</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {}
-                    </tbody>
-                </table>
-            </div>
-            <h3>Spawned Neurons</h3>
-            <div class=\"table-container\">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Neuron Id</th>
-                            <th>Receiver</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {}
-                    </tbody>
-                </table>
-            </div>
-            {}
-        </div>
-    </body>
-</html>
+        </body>
+    </html>
     ",
         construct_metadata_table(),
         display_tasks(),
