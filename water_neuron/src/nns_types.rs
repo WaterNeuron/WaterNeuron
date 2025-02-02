@@ -580,6 +580,9 @@ pub enum Topic {
     IcOsVersionElection = 13,
     SnsAndCommunityFund = 14,
     ApiBoundaryNodeManagement = 15,
+    SubnetRental = 16,
+    ProtocolCanisterManagement = 17,
+    ServiceNervousSystemManagement = 18,
     Unknown,
 }
 
@@ -602,6 +605,9 @@ impl fmt::Display for Topic {
             Topic::IcOsVersionElection => "IcOsVersionElection",
             Topic::SnsAndCommunityFund => "SnsAndCommunityFund",
             Topic::ApiBoundaryNodeManagement => "ApiBoundaryNodeManagement",
+            Topic::SubnetRental => "SubnetRental",
+            Topic::ProtocolCanisterManagement => "ProtocolCanisterManagement",
+            Topic::ServiceNervousSystemManagement => "ServiceNervousSystemManagement",
             Topic::Unknown => "Unknown",
         };
         write!(f, "{}", s)
