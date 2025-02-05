@@ -519,7 +519,7 @@ pub fn convert_nns_proposal_to_sns_proposal(proposal_info: &ProposalInfo) -> Opt
             );
             Some(SnsProposal {
                 title: format!(
-                    "{original_title} - {} - NNS Id {proposal_id}",
+                    "{}({proposal_id}): {original_title}",
                     Topic::from(proposal_info.topic)
                 ),
                 // S3: Check how special characters get rendered.
