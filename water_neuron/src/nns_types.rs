@@ -6,6 +6,7 @@ use ic_sns_governance::pb::v1::{
 use minicbor::{Decode, Encode as CborEncode};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
+use strum_macros::EnumIter;
 
 // Custom SNS function to vote on an NNS proposal.
 // https://nns.ic0.app/proposal/?u=jmod6-4iaaa-aaaaq-aadkq-cai&proposal=3
@@ -537,31 +538,7 @@ pub fn convert_nns_proposal_to_sns_proposal(proposal_info: &ProposalInfo) -> Opt
     }
 }
 
-impl From<i32> for Topic {
-    fn from(topic: i32) -> Self {
-        match topic {
-            0 => Self::Unspecified,
-            1 => Self::NeuronManagement,
-            2 => Self::ExchangeRate,
-            3 => Self::NetworkEconomics,
-            4 => Self::Governance,
-            5 => Self::NodeAdmin,
-            6 => Self::ParticipantManagement,
-            7 => Self::SubnetManagement,
-            8 => Self::NetworkCanisterManagement,
-            9 => Self::Kyc,
-            10 => Self::NodeProviderRewards,
-            11 => Self::SnsDecentralizationSale,
-            12 => Self::IcOsVersionDeployment,
-            13 => Self::IcOsVersionElection,
-            14 => Self::SnsAndCommunityFund,
-            15 => Self::ApiBoundaryNodeManagement,
-            _ => Self::Unknown,
-        }
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, EnumIter)]
 #[repr(i32)]
 pub enum Topic {
     Unspecified = 0,
@@ -584,6 +561,33 @@ pub enum Topic {
     ProtocolCanisterManagement = 17,
     ServiceNervousSystemManagement = 18,
     Unknown,
+}
+
+impl From<i32> for Topic {
+    fn from(topic: i32) -> Self {
+        match topic {
+            0 => Self::Unspecified,
+            1 => Self::NeuronManagement,
+            2 => Self::ExchangeRate,
+            3 => Self::NetworkEconomics,
+            4 => Self::Governance,
+            5 => Self::NodeAdmin,
+            6 => Self::ParticipantManagement,
+            7 => Self::SubnetManagement,
+            8 => Self::NetworkCanisterManagement,
+            9 => Self::Kyc,
+            10 => Self::NodeProviderRewards,
+            11 => Self::SnsDecentralizationSale,
+            12 => Self::IcOsVersionDeployment,
+            13 => Self::IcOsVersionElection,
+            14 => Self::SnsAndCommunityFund,
+            15 => Self::ApiBoundaryNodeManagement,
+            16 => Self::SubnetRental,
+            17 => Self::ProtocolCanisterManagement,
+            18 => Self::ServiceNervousSystemManagement,
+            _ => Self::Unknown,
+        }
+    }
 }
 
 impl fmt::Display for Topic {
@@ -611,6 +615,15 @@ impl fmt::Display for Topic {
             Topic::Unknown => "Unknown",
         };
         write!(f, "{}", s)
+    }
+}
+
+#[test]
+fn should_cover_all_the_topics() {
+    use strum::IntoEnumIterator;
+
+    for topic in Topic::iter() {
+        assert_eq!(Topic::from(topic.clone() as i32), topic);
     }
 }
 
