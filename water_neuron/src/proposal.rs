@@ -254,10 +254,6 @@ pub async fn early_voting_on_nns_proposals() {
                         }
                     }
                 }
-                log!(
-                    INFO,
-                    "[early_voting_on_nns_proposals] Failed to fetch SNS proposal, got: {proposal_response:?}"
-                );
             }
             Err(e) => log!(
                 INFO,
