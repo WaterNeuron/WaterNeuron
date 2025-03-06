@@ -247,7 +247,7 @@ impl SnsModuleEnv {
             &assert_reply(
                 self.env
                     .execute_ingress_as(
-                        PrincipalId::new_user_test_id(0),
+                        PrincipalId::from(Principal::from_text(DEV_WALLET).unwrap()),
                         self.sns_module_id,
                         "return_uncommitted_icp",
                         Encode!(&target, &amount).unwrap()

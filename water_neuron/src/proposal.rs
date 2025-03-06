@@ -169,7 +169,7 @@ pub async fn vote_on_nns_proposals() {
                             }
                             Err(e) => log!(
                                 INFO,
-                                "[schedule_voting] Failed to fetch SNS proposal with error: {e}"
+                                "[vote_on_nns_proposals] Failed to fetch SNS proposal with error: {e}"
                             ),
                         }
                     }
@@ -182,7 +182,7 @@ pub async fn vote_on_nns_proposals() {
         Err(error) => {
             log!(
                 INFO,
-                "[schedule_voting] Failed to get pending proposals with error: {error}"
+                "[vote_on_nns_proposals] Failed to get pending proposals with error: {error}"
             );
             schedule_after(RETRY_DELAY_VOTING, TaskType::ProcessVoting);
         }
@@ -223,6 +223,46 @@ async fn vote_on_proposal(proposal_id: ProposalId, vote: bool) {
                 proposal_id.id
             );
             schedule_after(RETRY_DELAY_VOTING, TaskType::ProcessVoting);
+        }
+    }
+}
+
+pub async fn early_voting_on_nns_proposals() {
+    let wtn_governance_id = read_state(|s| s.wtn_governance_id);
+
+    let not_voted: Vec<_> = read_state(|s| {
+        s.proposals
+            .keys()
+            .filter(|&k| !s.voted_proposals.contains(k))
+            .cloned()
+            .collect()
+    });
+
+    for proposal_id in not_voted {
+        match get_sns_proposal(wtn_governance_id, proposal_id.id).await {
+            Ok(proposal_response) => {
+                if let Some(ic_sns_governance::pb::v1::get_proposal_response::Result::Proposal(
+                    proposal_data,
+                )) = proposal_response.result.clone()
+                {
+                    if let Some(tally) = proposal_data.latest_tally {
+                        if tally.no > tally.total / 2 {
+                            vote_on_proposal(proposal_id.clone(), false).await;
+                        }
+                        if tally.yes > tally.total / 2 {
+                            vote_on_proposal(proposal_id.clone(), true).await;
+                        }
+                    }
+                }
+                log!(
+                    INFO,
+                    "[early_voting_on_nns_proposals] Failed to fetch SNS proposal, got: {proposal_response:?}"
+                );
+            }
+            Err(e) => log!(
+                INFO,
+                "[early_voting_on_nns_proposals] Failed to fetch SNS proposal with error: {e}"
+            ),
         }
     }
 }

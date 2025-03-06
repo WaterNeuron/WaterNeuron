@@ -11,7 +11,7 @@ use crate::nns_types::{
     TOPIC_GOVERNANCE, TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
 };
 use crate::numeric::{nICP, ICP};
-use crate::proposal::{mirror_proposals, vote_on_nns_proposals};
+use crate::proposal::{early_voting_on_nns_proposals, mirror_proposals, vote_on_nns_proposals};
 use crate::sns_governance::{CanisterRuntime, IcCanisterRuntime, WTN_MAX_DISSOLVE_DELAY_SECONDS};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
@@ -342,6 +342,21 @@ pub fn timer() {
                     vote_on_nns_proposals().await;
 
                     schedule_after(Duration::from_secs(30 * 60), TaskType::ProcessVoting);
+                });
+            }
+            TaskType::ProcessEarlyVoting => {
+                ic_cdk::spawn(async move {
+                    let _guard = match TaskGuard::new(task_type) {
+                        Ok(guard) => guard,
+                        Err(_) => return,
+                    };
+
+                    early_voting_on_nns_proposals().await;
+
+                    schedule_after(
+                        Duration::from_secs(4 * 60 * 60),
+                        TaskType::ProcessEarlyVoting,
+                    );
                 });
             }
             TaskType::ProcessPendingTransfers => {
@@ -898,12 +913,6 @@ async fn dispatch_icp<R: CanisterRuntime>(runtime: &R) {
                     });
                     schedule_now(TaskType::ProcessPendingTransfers);
                     schedule_now(TaskType::MaybeDistributeRewards);
-                } else {
-                    log!(
-                        DEBUG,
-                        "[dispatch_icp] Canister balance: {} is not big enough to distribute.",
-                        DisplayAmount(balance)
-                    );
                 }
             }
             Err(error) => {
