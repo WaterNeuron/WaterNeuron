@@ -99,6 +99,7 @@ fn setup_timer() {
     schedule_now(TaskType::ProcessLogic);
     schedule_now(TaskType::SpawnNeurons);
     schedule_now(TaskType::ProcessVoting);
+    schedule_now(TaskType::ProcessEarlyVoting);
     schedule_now(TaskType::MaybeDistributeICP);
     schedule_now(TaskType::MaybeDistributeRewards);
     schedule_now(TaskType::ProcessPendingTransfers);

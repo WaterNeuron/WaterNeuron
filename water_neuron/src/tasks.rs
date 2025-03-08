@@ -20,6 +20,7 @@ pub enum TaskType {
     MaybeDistributeICP,
     SpawnNeurons,
     ProcessVoting,
+    ProcessEarlyVoting,
     RefreshShortTerm,
     MaybeDistributeRewards,
 }
