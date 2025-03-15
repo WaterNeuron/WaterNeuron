@@ -25,5 +25,14 @@
   },
   "sns_module": {
     "ic": "zftzm-qqaaa-aaaam-adxfa-cai"
-  }
+  },
+  "dapp_frontend": {
+		"ic": "n3i53-gyaaa-aaaam-acfaq-cai"
+	},
+	"staging_frontend": {
+		"ic": "47pxu-byaaa-aaaap-ahpsa-cai"
+	},
+	"icpswap-pool": {
+		"ic": "e5a7x-pqaaa-aaaag-qkcga-cai"
+	}
 }
