@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use sha2::{Digest, Sha256};
+use std::fmt;
 use std::{collections::BTreeMap, path::PathBuf};
 use thiserror::Error;
 
@@ -33,6 +34,23 @@ pub enum CanisterName<'a> {
     Cmc,
     Icrc1IndexNg,
     Local(&'a str),
+}
+
+impl<'a> fmt::Display for CanisterName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CanisterName::Ledger => write!(f, "ledger"),
+            CanisterName::NnsGovernance => write!(f, "nns-governance"),
+            CanisterName::Icrc1Ledger => write!(f, "icrc1-ledger"),
+            CanisterName::SnsGovernance => write!(f, "sns-governance"),
+            CanisterName::SnsSwap => write!(f, "sns-swap"),
+            CanisterName::Sns => write!(f, "sns"),
+            CanisterName::SnsRoot => write!(f, "sns-root"),
+            CanisterName::Cmc => write!(f, "cmc"),
+            CanisterName::Icrc1IndexNg => write!(f, "icrc1-index"),
+            CanisterName::Local(name) => write!(f, "{}", name),
+        }
+    }
 }
 
 struct WasmBinary {
@@ -103,8 +121,8 @@ lazy_static! {
         map.insert(
             CanisterName::Icrc1Ledger,
             WasmBinary {
-                hash: "4264ce2952c4e9ff802d81a11519d5e3ffdaed4215d5831a6634e59efd72f7d8",
-                ic_version: "a3831c87440df4821b435050c8a8fcb3745d86f6",
+                hash: "4f460b9f1e980b38c2154bf0c30d21a1ed6e824568e46ecef30f76d9cdc8705a",
+                ic_version: "fb3d35d0dddff7359acb8fb0faa9545759705768",
                 name: "ic-icrc1-ledger.wasm.gz",
             },
         );
