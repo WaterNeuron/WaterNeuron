@@ -28,7 +28,7 @@ sha2.workspace = true
 [dev-dependencies]
 candid_parser.workspace = true
 ic-icrc1-ledger.workspace = true
-ic-management-canister-types.workspace = true
+ic-management-canister-types-private.workspace = true
 ic-nns-constants.workspace = true
 ic-nns-governance.workspace = true
 ic-sns-governance.workspace = true

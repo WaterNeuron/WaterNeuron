@@ -4,7 +4,7 @@ use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
-use ic_management_canister_types::CanisterInstallMode;
+use ic_management_canister_types_private::CanisterInstallMode;
 use ic_state_machine_tests::{StateMachine, WasmResult};
 use ic_wasm_utils::{icp_ledger_wasm, ledger_wasm, sns_module_wasm};
 use icp_ledger::{

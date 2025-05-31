@@ -49,4 +49,5 @@ assert_matches.workspace = true
 candid_parser.workspace = true
 ic-icrc1-ledger.workspace = true
 ic-state-machine-tests.workspace = true
+ic-management-canister-types-private.workspace = true
 ic_wasm_utils = { version = "0.1.0", path = "../ic_wasm_utils" }

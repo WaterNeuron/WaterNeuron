@@ -19,11 +19,13 @@ use crate::{
 };
 use assert_matches::assert_matches;
 use candid::{Decode, Encode, Nat, Principal};
-use cycles_minting_canister::{CyclesCanisterInitPayload, CYCLES_LEDGER_CANISTER_ID};
+use cycles_minting_canister::CyclesCanisterInitPayload;
+use ic_base_types::{CanisterId, PrincipalId};
 use ic_icrc1_ledger::{
     ArchiveOptions, InitArgs as LedgerInitArgs, InitArgsBuilder as LedgerInitArgsBuilder,
     LedgerArgument,
 };
+use ic_management_canister_types_private::CanisterInstallMode;
 use ic_nns_constants::{GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::init::GovernanceCanisterInitPayloadBuilder;
@@ -40,10 +42,7 @@ use ic_sns_governance::pb::v1::{
 use ic_sns_init::SnsCanisterInitPayloads;
 use ic_sns_root::pb::v1::SnsRootCanister;
 use ic_sns_swap::pb::v1::{Init as SwapInit, NeuronBasketConstructionParameters};
-use ic_state_machine_tests::{
-    CanisterId, CanisterInstallMode, ErrorCode::CanisterCalledTrap, PrincipalId, StateMachine,
-    UserError, WasmResult,
-};
+use ic_state_machine_tests::{ErrorCode::CanisterCalledTrap, StateMachine, UserError, WasmResult};
 use ic_wasm_utils::{
     cmc_wasm, governance_wasm, icp_ledger_wasm, ledger_wasm, sns_governance_wasm, sns_root_wasm,
     sns_swap_wasm, water_neuron_wasm,
@@ -52,12 +51,14 @@ use icp_ledger::{AccountIdentifier, LedgerCanisterInitPayload, Tokens};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use icrc_ledger_types::icrc2::approve::{ApproveArgs, ApproveError};
-use prost::Message;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
+
+/// 0x2_100_002 (34_603_010): um5iw-rqaaa-aaaaq-qaaba-cai
+const CYCLES_LEDGER_CANISTER_ID: CanisterId = CanisterId::from_u64(0x2100002);
 
 pub fn sha256_hash(data: Vec<u8>) -> Vec<u8> {
     let mut hasher = Sha256::new();
@@ -501,15 +502,18 @@ impl WaterNeuron {
         let env = StateMachine::new();
         let nicp_ledger_id = env.create_canister(None);
 
-        let arg = Governance {
+        let governance_canister_init = Governance {
             economics: Some(NetworkEconomics::with_default_values()),
             wait_for_quiet_threshold_seconds: 60 * 60 * 24 * 4, // 4 days
             short_voting_period_seconds: 60 * 60 * 12,          // 12 hours
             neuron_management_voting_period_seconds: Some(60 * 60 * 48), // 48 hours
             ..Default::default()
         };
+
+        let encoded = Encode!(&governance_canister_init).unwrap();
+
         let governance_id = env
-            .install_canister(governance_wasm(), arg.encode_to_vec(), None)
+            .install_canister(governance_wasm(), encoded, None)
             .unwrap();
 
         let mut initial_balances = HashMap::new();
@@ -648,6 +652,7 @@ impl WaterNeuron {
                     target_method_name: Some("approve_proposal".to_string()),
                     validator_canister_id: Some(self.water_neuron_id.get()),
                     validator_method_name: Some("approve_proposal_validate".to_string()),
+                    topic: None,
                 },
             )),
         };
@@ -1642,6 +1647,7 @@ fn should_cancel_withdrawal_while_voting() {
             limit: 10,
             exclude_type: vec![],
             include_status: vec![],
+            include_topics: vec![],
         },
     );
     assert_eq!(proposals.proposals.len(), 2);
@@ -1892,6 +1898,7 @@ fn should_mirror_proposal() {
             limit: 10,
             exclude_type: vec![],
             include_status: vec![],
+            include_topics: vec![],
         },
     );
     assert_eq!(proposals.proposals.len(), 2);
@@ -2433,6 +2440,7 @@ fn should_mirror_all_proposals() {
             limit: 10,
             exclude_type: vec![],
             include_status: vec![],
+            include_topics: vec![],
         },
     );
     assert_eq!(proposals.proposals.len(), 4);

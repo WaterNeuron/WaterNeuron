@@ -32,7 +32,7 @@ ic-cdk = "0.17.1"
 ic-cdk-macros = "0.17.1"
 ic-canister-log = "0.2.0"
 ic-http-types = "0.1.0"
-ic-management-canister-types = "0.3.0"
+ic-management-canister-types = "0.3.1"
 ic-metrics-encoder = "1.1.1"
 ic-stable-structures = "0.6.7"
 ic0 = "0.23.0"
@@ -64,6 +64,7 @@ cargo_metadata = "0.19.1"
 cycles-minting-canister = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-icrc1-ledger = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
+ic-management-canister-types-private = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-nns-constants = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-nns-governance = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }

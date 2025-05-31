@@ -2,7 +2,7 @@ use crate::{BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess, E8S,
 use candid::{Decode, Encode, Nat, Principal};
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
-use ic_management_canister_types::CanisterInstallMode;
+use ic_management_canister_types_private::CanisterInstallMode;
 use ic_nns_constants::GOVERNANCE_CANISTER_ID;
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::pb::v1::neuron::DissolveState;
@@ -11,10 +11,6 @@ use ic_state_machine_tests::StateMachine;
 use ic_wasm_utils::{
     boomerang_wasm, governance_wasm, icp_ledger_wasm, ledger_wasm, water_neuron_wasm,
 };
-use prost::Message;
-
-use utils::{assert_reply, compute_neuron_staking_subaccount_bytes, setup_sns_canisters};
-
 use icp_ledger::{
     AccountIdentifier, LedgerCanisterInitPayload, Memo, Subaccount, Tokens, TransferArgs,
     TransferError,
@@ -22,6 +18,7 @@ use icp_ledger::{
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError as IcrcTransferError};
 use std::collections::HashMap;
+use utils::{assert_reply, compute_neuron_staking_subaccount_bytes, setup_sns_canisters};
 use water_neuron::{InitArg, LiquidArg, ONE_MONTH_SECONDS};
 
 pub mod tests;
@@ -59,7 +56,7 @@ impl BoomerangSetup {
 
         let nicp_ledger_id = env.create_canister(None);
 
-        let arg = Governance {
+        let governance_canister_init = Governance {
             economics: Some(NetworkEconomics::with_default_values()),
             wait_for_quiet_threshold_seconds: 60 * 60 * 24 * 4, // 4 days
             short_voting_period_seconds: 60 * 60 * 12,          // 12 hours
@@ -67,8 +64,10 @@ impl BoomerangSetup {
             ..Default::default()
         };
 
+        let encoded = Encode!(&governance_canister_init).unwrap();
+
         let _governance_id = env
-            .install_canister(governance_wasm(), arg.encode_to_vec(), None)
+            .install_canister(governance_wasm(), encoded, None)
             .unwrap();
 
         let icp_ledger_id = env.create_canister(None);
