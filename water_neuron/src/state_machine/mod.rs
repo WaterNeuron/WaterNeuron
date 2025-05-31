@@ -18,15 +18,14 @@ use crate::{
     MIN_DISSOLVE_DELAY_FOR_REWARDS, NEURON_LEDGER_FEE, ONE_DAY_SECONDS, ONE_MONTH_SECONDS,
 };
 use assert_matches::assert_matches;
-use candid::{decode_one, encode_one, CandidType, Decode, Deserialize, Encode, Nat, Principal};
+use candid::{decode_one, encode_one, CandidType, Deserialize, Encode, Nat, Principal};
 use cycles_minting_canister::CyclesCanisterInitPayload;
 use ic_base_types::PrincipalId;
 use ic_icrc1_ledger::{
     ArchiveOptions, InitArgs as LedgerInitArgs, InitArgsBuilder as LedgerInitArgsBuilder,
     LedgerArgument,
 };
-use ic_management_canister_types_private::CanisterInstallMode;
-use ic_nns_constants::{GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
+use ic_nns_constants::{CYCLES_LEDGER_CANISTER_ID, GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::init::GovernanceCanisterInitPayloadBuilder;
 use ic_sns_governance::pb::v1::{
@@ -55,9 +54,9 @@ use pocket_ic::{
 };
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashMap};
-use std::str::FromStr;
-use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime};
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::Mutex;
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 
@@ -81,13 +80,9 @@ pub async fn upgrade_canister(
     wasm_module: Vec<u8>,
     arg: Vec<u8>,
 ) -> Result<(), String> {
-    let result = pic
-        .upgrade_canister(canister_id, wasm_module, arg, None)
-        .await;
-    match result {
-        WasmResult::Reply(reply) => Ok(decode_one(&reply).unwrap()),
-        WasmResult::Reject(error) => Err(error),
-    }
+    pic.upgrade_canister(canister_id, wasm_module, arg, None)
+        .await
+        .map_err(|e| format!("{e:?}"))
 }
 
 pub async fn update<T>(
@@ -130,7 +125,7 @@ where
     }
 }
 
-pub async fn nns_governance_make_proposal(
+async fn nns_governance_make_proposal(
     state_machine: &mut WaterNeuron,
     sender: PrincipalId,
     neuron_id: NeuronId,
@@ -149,7 +144,7 @@ async fn manage_neuron(
 ) -> ManageNeuronResponse {
     env.update::<ManageNeuronResponse>(
         sender,
-        GOVERNANCE_CANISTER_ID,
+        GOVERNANCE_CANISTER_ID.into(),
         "manage_neuron",
         Encode!(&ManageNeuron {
             id: Some(neuron_id),
@@ -162,8 +157,7 @@ async fn manage_neuron(
     .unwrap()
 }
 
-#[must_use]
-pub async fn nns_claim_or_refresh_neuron(
+async fn nns_claim_or_refresh_neuron(
     env: &mut WaterNeuron,
     controller: PrincipalId,
     memo: u64,
@@ -186,7 +180,7 @@ pub async fn nns_claim_or_refresh_neuron(
 
     // Call governance.
     let result = env
-        .update(
+        .update::<ManageNeuronResponse>(
             controller,
             GOVERNANCE_CANISTER_ID.into(),
             "manage_neuron",
@@ -194,12 +188,6 @@ pub async fn nns_claim_or_refresh_neuron(
         )
         .await
         .unwrap();
-
-    // Unpack and return result.
-    let result = match result {
-        WasmResult::Reply(reply) => Decode!(&reply, ManageNeuronResponse).unwrap(),
-        _ => panic!("{:?}", result),
-    };
     let neuron_id = match &result.command {
         Some(CommandResponse::ClaimOrRefresh(ClaimOrRefreshResponse {
             refreshed_neuron_id: Some(neuron_id),
@@ -265,7 +253,10 @@ impl SnsTestsInitPayloadBuilder {
                 // 128kb
                 max_message_size_bytes: Some(128 * 1024),
                 // controller_id will be set when the Root canister ID is allocated
-                controller_id: CanisterId::from(0).into(),
+                controller_id: CanisterId::from(
+                    Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap(),
+                )
+                .into(),
                 more_controller_ids: None,
                 cycles_for_archive_creation: Some(0),
                 max_transactions_per_response: None,
@@ -409,39 +400,39 @@ impl SnsTestsInitPayloadBuilder {
 }
 
 pub fn populate_canister_ids(
-    root_canister_id: PrincipalId,
-    governance_canister_id: PrincipalId,
-    ledger_canister_id: PrincipalId,
-    swap_canister_id: PrincipalId,
-    index_canister_id: PrincipalId,
-    archive_canister_ids: Vec<PrincipalId>,
+    root_canister_id: Principal,
+    governance_canister_id: Principal,
+    ledger_canister_id: Principal,
+    swap_canister_id: Principal,
+    index_canister_id: Principal,
+    archive_canister_ids: Vec<Principal>,
     sns_canister_init_payloads: &mut SnsCanisterInitPayloads,
 ) {
     // Root.
     {
         let root = &mut sns_canister_init_payloads.root;
         if root.governance_canister_id.is_none() {
-            root.governance_canister_id = Some(governance_canister_id);
+            root.governance_canister_id = Some(governance_canister_id.into());
         }
         if root.ledger_canister_id.is_none() {
-            root.ledger_canister_id = Some(ledger_canister_id);
+            root.ledger_canister_id = Some(ledger_canister_id.into());
         }
         if root.swap_canister_id.is_none() {
-            root.swap_canister_id = Some(swap_canister_id);
+            root.swap_canister_id = Some(swap_canister_id.into());
         }
         if root.index_canister_id.is_none() {
-            root.index_canister_id = Some(index_canister_id);
+            root.index_canister_id = Some(index_canister_id.into());
         }
         if root.archive_canister_ids.is_empty() {
-            root.archive_canister_ids = archive_canister_ids;
+            root.archive_canister_ids = vec![];
         }
     }
     // Governance canister_init args.
     {
         let governance = &mut sns_canister_init_payloads.governance;
-        governance.ledger_canister_id = Some(ledger_canister_id);
-        governance.root_canister_id = Some(root_canister_id);
-        governance.swap_canister_id = Some(swap_canister_id);
+        governance.ledger_canister_id = Some(ledger_canister_id.into());
+        governance.root_canister_id = Some(root_canister_id.into());
+        governance.swap_canister_id = Some(swap_canister_id.into());
     }
     // Ledger
     {
@@ -450,7 +441,7 @@ pub fn populate_canister_ids(
             //     owner: governance_canister_id.0,
             //     subaccount: None,
             // };
-            ledger.archive_options.controller_id = root_canister_id;
+            ledger.archive_options.controller_id = root_canister_id.into();
         } else {
             panic!("bug: expected Init got Upgrade");
         }
@@ -472,67 +463,78 @@ struct SNSCanisterIds {
     pub ledger: CanisterId,
 }
 
-// fn setup_sns_canisters(env: &StateMachine, neurons: Vec<SnsNeuron>) -> SNSCanisterIds {
-//     let root_canister_id = env.create_canister();
-//     let governance_canister_id = env.create_canister();
-//     let ledger_canister_id = env.create_canister();
-//     let swap_canister_id = env.create_canister();
-//     let index_canister_id = env.create_canister();
+async fn setup_sns_canisters(pic: &PocketIc, neurons: Vec<SnsNeuron>) -> SNSCanisterIds {
+    let root_canister_id = pic.create_canister().await;
+    let governance_canister_id = pic.create_canister().await;
+    let ledger_canister_id = pic.create_canister().await;
+    let swap_canister_id = pic.create_canister().await;
+    let index_canister_id = pic.create_canister().await;
 
-//     let mut payloads = SnsTestsInitPayloadBuilder::new()
-//         .with_initial_neurons(neurons)
-//         .build();
+    pic.add_cycles(root_canister_id, u64::MAX.into()).await;
+    pic.add_cycles(governance_canister_id, u64::MAX.into())
+        .await;
+    pic.add_cycles(ledger_canister_id, u64::MAX.into()).await;
+    pic.add_cycles(swap_canister_id, u64::MAX.into()).await;
+    pic.add_cycles(index_canister_id, u64::MAX.into()).await;
 
-//     populate_canister_ids(
-//         root_canister_id.get(),
-//         governance_canister_id.get(),
-//         ledger_canister_id.get(),
-//         swap_canister_id.get(),
-//         index_canister_id.get(),
-//         vec![],
-//         &mut payloads,
-//     );
+    let mut payloads = SnsTestsInitPayloadBuilder::new()
+        .with_initial_neurons(neurons)
+        .build();
 
-//     let deployed_version = Version {
-//         root_wasm_hash: sha256_hash(sns_root_wasm()),
-//         governance_wasm_hash: sha256_hash(sns_governance_wasm()),
-//         ledger_wasm_hash: sha256_hash(ledger_wasm()),
-//         swap_wasm_hash: sha256_hash(sns_swap_wasm()),
-//         archive_wasm_hash: vec![], // tests don't need it for now so we don't compile it.
-//         index_wasm_hash: vec![],
-//     };
+    populate_canister_ids(
+        root_canister_id,
+        governance_canister_id,
+        ledger_canister_id,
+        swap_canister_id,
+        index_canister_id,
+        vec![],
+        &mut payloads,
+    );
 
-//     payloads.governance.deployed_version = Some(deployed_version);
+    let deployed_version = Version {
+        root_wasm_hash: sha256_hash(sns_root_wasm().await),
+        governance_wasm_hash: sha256_hash(sns_governance_wasm().await),
+        ledger_wasm_hash: sha256_hash(ledger_wasm().await),
+        swap_wasm_hash: sha256_hash(sns_swap_wasm().await),
+        archive_wasm_hash: vec![], // tests don't need it for now so we don't compile it.
+        index_wasm_hash: vec![],
+    };
 
-//     env.install_existing_canister(
-//         governance_canister_id,
-//         sns_governance_wasm(),
-//         Encode!(&payloads.governance).unwrap(),
-//     )
-//     .unwrap();
-//     env.install_existing_canister(
-//         root_canister_id,
-//         sns_root_wasm(),
-//         Encode!(&payloads.root).unwrap(),
-//     )
-//     .unwrap();
-//     env.install_existing_canister(
-//         swap_canister_id,
-//         sns_swap_wasm(),
-//         Encode!(&payloads.swap).unwrap(),
-//     )
-//     .unwrap();
-//     env.install_existing_canister(
-//         ledger_canister_id,
-//         ledger_wasm(),
-//         Encode!(&payloads.ledger).unwrap(),
-//     )
-//     .unwrap();
-//     SNSCanisterIds {
-//         governance: governance_canister_id,
-//         ledger: ledger_canister_id,
-//     }
-// }
+    payloads.governance.deployed_version = Some(deployed_version);
+
+    pic.install_canister(
+        governance_canister_id,
+        sns_governance_wasm().await,
+        Encode!(&payloads.governance).unwrap(),
+        None,
+    )
+    .await;
+    pic.install_canister(
+        root_canister_id,
+        sns_root_wasm().await,
+        Encode!(&payloads.root).unwrap(),
+        None,
+    )
+    .await;
+    pic.install_canister(
+        swap_canister_id,
+        sns_swap_wasm().await,
+        Encode!(&payloads.swap).unwrap(),
+        None,
+    )
+    .await;
+    pic.install_canister(
+        ledger_canister_id,
+        ledger_wasm().await,
+        Encode!(&payloads.ledger).unwrap(),
+        None,
+    )
+    .await;
+    SNSCanisterIds {
+        governance: governance_canister_id,
+        ledger: ledger_canister_id,
+    }
+}
 
 struct WaterNeuron {
     pub env: Arc<Mutex<PocketIc>>,
@@ -567,10 +569,14 @@ impl WaterNeuron {
 
         let encoded = Encode!(&governance_canister_init).unwrap();
 
+        env.create_canister_with_id(None, None, GOVERNANCE_CANISTER_ID.into())
+            .await
+            .unwrap();
+
         let governance_id = env
             .install_canister(
                 GOVERNANCE_CANISTER_ID.into(),
-                governance_wasm(),
+                governance_wasm().await,
                 encoded,
                 None,
             )
@@ -582,10 +588,14 @@ impl WaterNeuron {
             Tokens::from_e8s(22_000_000 * E8S),
         );
 
+        env.create_canister_with_id(None, None, LEDGER_CANISTER_ID.into())
+            .await
+            .unwrap();
+
         let icp_ledger_id = env
             .install_canister(
                 LEDGER_CANISTER_ID.into(),
-                icp_ledger_wasm(),
+                icp_ledger_wasm().await,
                 Encode!(&LedgerCanisterInitPayload::builder()
                     .initial_values(initial_balances)
                     .transfer_fee(Tokens::from_e8s(10_000))
@@ -639,28 +649,51 @@ impl WaterNeuron {
             });
         }
 
+        env.create_canister_with_id(
+            None,
+            None,
+            CanisterId::from(Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap()),
+        )
+        .await
+        .unwrap();
+
+        // env.create_canister_with_id(
+        //     None,
+        //     None,
+        //     CanisterId::from(Principal::from_text("7uieb-cx777-77776-qaaaq-cai").unwrap()),
+        // )
+        // .await
+        // .unwrap();
+
+        env.add_cycles(
+            CanisterId::from(Principal::from_text("7uieb-cx777-77776-qaaaq-cai").unwrap()),
+            u64::MAX.into(),
+        )
+        .await;
+        env.add_cycles(
+            CanisterId::from(Principal::from_text("7tjcv-pp777-77776-qaaaa-cai").unwrap()),
+            u64::MAX.into(),
+        )
+        .await;
+
         let cmc_id = env
             .install_canister(
-                CanisterId::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap(),
-                cmc_wasm(),
+                CanisterId::from(Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap()),
+                cmc_wasm().await,
                 Encode!(&Some(CyclesCanisterInitPayload {
                     ledger_canister_id: Some(LEDGER_CANISTER_ID),
-                    governance_canister_id: Some(GOVERNANCE_CANISTER_ID),
+                    governance_canister_id: Some(GOVERNANCE_CANISTER_ID.into()),
                     exchange_rate_canister: None,
-                    minting_account_id: Some(GOVERNANCE_CANISTER_ID.get().into()),
+                    minting_account_id: Some(GOVERNANCE_CANISTER_ID.into()),
                     last_purged_notification: Some(1),
-                    cycles_ledger_canister_id: Some(
-                        Principal::from_text("um5iw-rqaaa-aaaaq-qaaba-cai")
-                            .unwrap()
-                            .into()
-                    ),
+                    cycles_ledger_canister_id: Some(CYCLES_LEDGER_CANISTER_ID),
                 }))
                 .unwrap(),
                 None,
             )
             .await;
 
-        // let sns = setup_sns_canisters(&env, neurons);
+        let sns = setup_sns_canisters(&env, neurons).await;
 
         env.install_canister(
             water_neuron_id,
@@ -677,7 +710,7 @@ impl WaterNeuron {
 
         env.install_canister(
             nicp_ledger_id,
-            ledger_wasm(),
+            ledger_wasm().await,
             Encode!(&LedgerArgument::Init(
                 LedgerInitArgsBuilder::with_symbol_and_name("nICP", "nICP")
                     .with_minting_account(water_neuron_id)
@@ -690,6 +723,16 @@ impl WaterNeuron {
             None,
         )
         .await;
+
+        env.add_cycles(LEDGER_CANISTER_ID.into(), u64::MAX.into())
+            .await;
+        env.add_cycles(GOVERNANCE_CANISTER_ID.into(), u64::MAX.into())
+            .await;
+        env.add_cycles(nicp_ledger_id, u64::MAX.into()).await;
+        env.add_cycles(sns.ledger, u64::MAX.into()).await;
+        env.add_cycles(sns.governance, u64::MAX.into()).await;
+        env.add_cycles(CanisterId::from(water_neuron_id), u64::MAX.into())
+            .await;
 
         WaterNeuron {
             env: Arc::new(Mutex::new(env)),
@@ -744,7 +787,7 @@ impl WaterNeuron {
         arg: Vec<u8>,
     ) -> Result<(), String> {
         let pic = self.env.lock().await;
-        upgrade_canister(&pic, canister, method, arg).await
+        upgrade_canister(&pic, canister_id, wasm_module, arg).await
     }
 
     async fn query<T>(
@@ -756,7 +799,7 @@ impl WaterNeuron {
     where
         T: for<'a> Deserialize<'a> + CandidType,
     {
-        let pic = self.pic.lock().await;
+        let pic = self.env.lock().await;
         query(&pic, canister, Principal::anonymous(), method, arg).await
     }
 
@@ -825,25 +868,23 @@ impl WaterNeuron {
         amount: u64,
         ledger_id: CanisterId,
     ) -> Nat {
-        &self
-            .update::<Result<Nat, TransferError>>(
-                caller,
-                ledger_id,
-                "icrc1_transfer",
-                Encode!(&TransferArg {
-                    from_subaccount: None,
-                    to: to.into(),
-                    fee: None,
-                    created_at_time: None,
-                    memo: None,
-                    amount: Nat::from(amount),
-                })
-                .unwrap(),
-            )
-            .await
-            .expect("failed to execute token transfer")
-            .unwrap()
-            .expect("token transfer failed")
+        self.update::<Result<Nat, TransferError>>(
+            caller,
+            ledger_id,
+            "icrc1_transfer",
+            Encode!(&TransferArg {
+                from_subaccount: None,
+                to: to.into(),
+                fee: None,
+                created_at_time: None,
+                memo: None,
+                amount: Nat::from(amount),
+            })
+            .unwrap(),
+        )
+        .await
+        .expect("failed to execute token transfer")
+        .unwrap()
     }
 
     async fn approve(&self, caller: PrincipalId, ledger: CanisterId, spender: Account) {
@@ -1057,8 +1098,11 @@ impl WaterNeuron {
 
 #[tokio::test]
 async fn e2e_basic() {
+    dbg!("starting test");
     let mut water_neuron = WaterNeuron::new().await;
-    water_neuron.with_voting_topic();
+    dbg!("finished init");
+
+    water_neuron.with_voting_topic().await;
 
     let caller = PrincipalId::new_user_test_id(212);
 
@@ -1107,13 +1151,15 @@ async fn e2e_basic() {
     let _increase_dissolve_delay_result =
         nns_increase_dissolve_delay(&mut water_neuron, caller, neuron_id, 200 * 24 * 60 * 60).await;
 
-    water_neuron.advance_time_and_tick(70);
+    water_neuron.advance_time_and_tick(70).await;
 
-    water_neuron.approve(
-        caller,
-        water_neuron.icp_ledger_id,
-        water_neuron.water_neuron_id.into(),
-    );
+    water_neuron
+        .approve(
+            caller,
+            water_neuron.icp_ledger_id,
+            water_neuron.water_neuron_id.into(),
+        )
+        .await;
 
     let icp_to_wrap = 100 * E8S;
 
@@ -1215,7 +1261,7 @@ async fn e2e_basic() {
         Nat::from(999_980_000_u64)
     );
 
-    water_neuron.advance_time_and_tick(60 * 60 * 24 + 1);
+    water_neuron.advance_time_and_tick(60 * 60 * 24 + 1).await;
 
     assert_eq!(
         water_neuron
@@ -1230,7 +1276,7 @@ async fn e2e_basic() {
         Nat::from(0_u8)
     );
 
-    water_neuron.advance_time_and_tick(60 * 60);
+    water_neuron.advance_time_and_tick(60 * 60).await;
 
     let info = water_neuron.get_info().await;
     assert_eq!(info.exchange_rate, E8S);
@@ -1383,7 +1429,7 @@ async fn e2e_basic() {
         WithdrawalStatus::WaitingToSplitNeuron
     );
 
-    water_neuron.advance_time_and_tick(60 * 60);
+    water_neuron.advance_time_and_tick(60 * 60).await;
 
     let neuron_id = match water_neuron
         .get_withdrawal_requests(caller.0)
@@ -1404,85 +1450,71 @@ async fn e2e_basic() {
     assert_eq!(full_neuron.cached_neuron_stake_e8s, 1000155632);
 }
 
-async fn init_wtn_withdrawal_setup(water_neuron: &mut WaterNeuron) {
-    water_neuron.with_voting_topic();
+async fn init_wtn_withdrawal_setup(wtn: &mut WaterNeuron) {
+    wtn.with_voting_topic().await;
 
     let caller = PrincipalId::new_user_test_id(212);
 
-    let water_neuron_principal: Principal = water_neuron.water_neuron_id.into();
+    let water_neuron_principal: Principal = wtn.water_neuron_id.into();
 
     assert_eq!(
-        water_neuron
-            .transfer(
-                water_neuron.minter,
-                water_neuron_principal,
-                10 * E8S,
-                water_neuron.icp_ledger_id
-            )
-            .await,
+        wtn.transfer(
+            wtn.minter,
+            water_neuron_principal,
+            10 * E8S,
+            wtn.icp_ledger_id
+        )
+        .await,
         Nat::from(1_u8)
     );
     assert_eq!(
-        water_neuron
-            .transfer(
-                water_neuron.minter,
-                caller.0,
-                110 * E8S,
-                water_neuron.icp_ledger_id
-            )
+        wtn.transfer(wtn.minter, caller.0, 110 * E8S, wtn.icp_ledger_id)
             .await,
         Nat::from(2_u8)
     );
 
     assert_eq!(
-        water_neuron
-            .transfer(
-                water_neuron.minter,
-                Account {
-                    owner: GOVERNANCE_CANISTER_ID.into(),
-                    subaccount: Some(compute_neuron_staking_subaccount_bytes(caller.into(), 0))
-                },
-                11 * E8S,
-                water_neuron.icp_ledger_id
-            )
-            .await,
+        wtn.transfer(
+            wtn.minter,
+            Account {
+                owner: GOVERNANCE_CANISTER_ID.into(),
+                subaccount: Some(compute_neuron_staking_subaccount_bytes(caller.into(), 0))
+            },
+            11 * E8S,
+            wtn.icp_ledger_id
+        )
+        .await,
         Nat::from(3_u8)
     );
 
-    let neuron_id = nns_claim_or_refresh_neuron(&mut water_neuron, caller, 0).await;
+    let neuron_id = nns_claim_or_refresh_neuron(wtn, caller, 0).await;
 
     let _increase_dissolve_delay_result =
-        nns_increase_dissolve_delay(&mut water_neuron, caller, neuron_id, 200 * 24 * 60 * 60).await;
+        nns_increase_dissolve_delay(wtn, caller, neuron_id, 200 * 24 * 60 * 60).await;
 
-    water_neuron.advance_time_and_tick(70);
+    wtn.advance_time_and_tick(70).await;
 
-    water_neuron.approve(
-        caller,
-        water_neuron.icp_ledger_id,
-        water_neuron.water_neuron_id.into(),
-    );
+    wtn.approve(caller, wtn.icp_ledger_id, wtn.water_neuron_id.into())
+        .await;
 
     assert_eq!(
-        water_neuron
-            .balance_of(water_neuron.icp_ledger_id, caller.0)
-            .await,
+        wtn.balance_of(wtn.icp_ledger_id, caller.0).await,
         Nat::from(10_999_990_000_u64)
     );
 
     let icp_to_wrap = 100 * E8S;
 
-    water_neuron.advance_time_and_tick(60).await;
+    wtn.advance_time_and_tick(60).await;
 
-    let info = water_neuron.get_info().await;
+    let info = wtn.get_info().await;
     assert_eq!(
-        water_neuron
-            .balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account)
+        wtn.balance_of(wtn.icp_ledger_id, info.neuron_6m_account)
             .await,
         Nat::from(E8S + 42)
     );
 
     assert_eq!(
-        water_neuron.icp_to_nicp(caller.0.into(), icp_to_wrap).await,
+        wtn.icp_to_nicp(caller.0.into(), icp_to_wrap).await,
         Ok(DepositSuccess {
             block_index: Nat::from(7_u8),
             transfer_id: 0,
@@ -1491,35 +1523,23 @@ async fn init_wtn_withdrawal_setup(water_neuron: &mut WaterNeuron) {
     );
 
     assert_eq!(
-        water_neuron
-            .balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account)
+        wtn.balance_of(wtn.icp_ledger_id, info.neuron_6m_account)
             .await,
         Nat::from(E8S + 42 + icp_to_wrap)
     );
     assert_eq!(
-        water_neuron
-            .balance_of(water_neuron.nicp_ledger_id, caller.0)
-            .await,
+        wtn.balance_of(wtn.nicp_ledger_id, caller.0).await,
         Nat::from(icp_to_wrap)
     );
     assert_eq!(
-        water_neuron
-            .balance_of(water_neuron.icp_ledger_id, caller.0)
-            .await,
+        wtn.balance_of(wtn.icp_ledger_id, caller.0).await,
         Nat::from(999_980_000_u64)
     );
 
-    water_neuron
-        .approve(
-            caller,
-            water_neuron.nicp_ledger_id,
-            water_neuron.water_neuron_id.into(),
-        )
+    wtn.approve(caller, wtn.nicp_ledger_id, wtn.water_neuron_id.into())
         .await;
     assert_eq!(
-        water_neuron
-            .balance_of(water_neuron.nicp_ledger_id, caller.0)
-            .await,
+        wtn.balance_of(wtn.nicp_ledger_id, caller.0).await,
         Nat::from(9_999_990_000_u64)
     );
 }
@@ -1918,7 +1938,7 @@ async fn should_cancel_withdrawal() {
 #[tokio::test]
 async fn should_mirror_proposal() {
     let mut water_neuron = WaterNeuron::new().await;
-    water_neuron.with_voting_topic();
+    water_neuron.with_voting_topic().await;
 
     let water_neuron_principal: Principal = water_neuron.water_neuron_id.into();
     let caller = PrincipalId::new_user_test_id(212);
@@ -1982,14 +2002,14 @@ async fn should_mirror_proposal() {
         })
     );
 
-    water_neuron.advance_time_and_tick(70);
+    water_neuron.advance_time_and_tick(70).await;
 
     let neuron_id = nns_claim_or_refresh_neuron(&mut water_neuron, caller, 0).await;
 
     let _increase_dissolve_delay_result =
         nns_increase_dissolve_delay(&mut water_neuron, caller, neuron_id, 200 * 24 * 60 * 60).await;
 
-    water_neuron.advance_time_and_tick(70);
+    water_neuron.advance_time_and_tick(70).await;
 
     let proposal = Proposal {
         title: Some("Yellah".to_string()),
@@ -2123,11 +2143,13 @@ async fn should_distribute_icp_to_sns_neurons() {
 
     water_neuron.advance_time_and_tick(60).await;
 
-    water_neuron.approve(
-        caller,
-        water_neuron.icp_ledger_id,
-        water_neuron.water_neuron_id.into(),
-    );
+    water_neuron
+        .approve(
+            caller,
+            water_neuron.icp_ledger_id,
+            water_neuron.water_neuron_id.into(),
+        )
+        .await;
 
     let icp_to_wrap = 10 * E8S;
 
@@ -2140,7 +2162,7 @@ async fn should_distribute_icp_to_sns_neurons() {
         })
     );
 
-    water_neuron.advance_time_and_tick(70);
+    water_neuron.advance_time_and_tick(70).await;
 
     assert_eq!(
         water_neuron
@@ -2154,7 +2176,7 @@ async fn should_distribute_icp_to_sns_neurons() {
         Nat::from(0_u8)
     );
 
-    water_neuron.advance_time_and_tick(0);
+    water_neuron.tick().await;
 
     assert_eq!(
         water_neuron
@@ -2177,7 +2199,7 @@ async fn should_distribute_icp_to_sns_neurons() {
         })
     );
 
-    water_neuron.advance_time_and_tick(0);
+    water_neuron.tick().await;
 
     assert_eq!(
         water_neuron.get_airdrop_allocation(caller.0).await,
@@ -2212,7 +2234,7 @@ async fn should_distribute_icp_to_sns_neurons() {
         Nat::from(100 * E8S)
     );
 
-    water_neuron.advance_time_and_tick(60 * 60 * 24 * 7);
+    water_neuron.advance_time_and_tick(60 * 60 * 24 * 7).await;
 
     assert_eq!(
         water_neuron
@@ -2238,11 +2260,13 @@ async fn should_distribute_icp_to_sns_neurons() {
     //         UserError::new(CanisterCalledTrap, "Canister r7inp-6aaaa-aaaaa-aaabq-cai trapped explicitly: all rewards must be allocated before being claimable".to_string())
     //     ));
 
-    water_neuron.approve(
-        water_neuron.minter.into(),
-        water_neuron.icp_ledger_id,
-        water_neuron.water_neuron_id.into(),
-    );
+    water_neuron
+        .approve(
+            water_neuron.minter.into(),
+            water_neuron.icp_ledger_id,
+            water_neuron.water_neuron_id.into(),
+        )
+        .await;
 
     assert!(water_neuron
         .icp_to_nicp(water_neuron.minter.into(), 21_000_000 * E8S)
@@ -2307,11 +2331,13 @@ async fn transfer_ids_are_as_expected() {
         Nat::from(2_u8)
     );
 
-    water_neuron.approve(
-        caller,
-        water_neuron.icp_ledger_id,
-        water_neuron.water_neuron_id.into(),
-    );
+    water_neuron
+        .approve(
+            caller,
+            water_neuron.icp_ledger_id,
+            water_neuron.water_neuron_id.into(),
+        )
+        .await;
 
     let icp_to_wrap = 100 * E8S;
 
@@ -2391,11 +2417,13 @@ async fn should_compute_exchange_rate() {
 
     water_neuron.advance_time_and_tick(60).await;
 
-    water_neuron.approve(
-        water_neuron.minter,
-        water_neuron.icp_ledger_id,
-        water_neuron.water_neuron_id.into(),
-    );
+    water_neuron
+        .approve(
+            water_neuron.minter,
+            water_neuron.icp_ledger_id,
+            water_neuron.water_neuron_id.into(),
+        )
+        .await;
 
     assert_matches!(
         water_neuron
@@ -2404,7 +2432,7 @@ async fn should_compute_exchange_rate() {
         Ok(_)
     );
 
-    water_neuron.advance_time_and_tick(70);
+    water_neuron.advance_time_and_tick(70).await;
 
     let water_neuron_principal: Principal = water_neuron.water_neuron_id.into();
 
@@ -2423,7 +2451,7 @@ async fn should_compute_exchange_rate() {
         Nat::from(7_u8)
     );
 
-    water_neuron.advance_time_and_tick(60 * 60);
+    water_neuron.advance_time_and_tick(60 * 60).await;
 
     assert_matches!(
         water_neuron
@@ -2432,8 +2460,8 @@ async fn should_compute_exchange_rate() {
         Ok(_)
     );
 
-    water_neuron.advance_time_and_tick(7 * 24 * 60 * 60);
-    water_neuron.advance_time_and_tick(60 * 60);
+    water_neuron.advance_time_and_tick(7 * 24 * 60 * 60).await;
+    water_neuron.advance_time_and_tick(60 * 60).await;
 
     let info = water_neuron.get_info().await;
     let previous_rate = info.tracked_6m_stake;
@@ -2462,9 +2490,9 @@ async fn should_compute_exchange_rate() {
     let info = water_neuron.get_info().await;
     assert_eq!(info.nicp_supply, prev);
 
-    water_neuron.advance_time_and_tick(0);
+    water_neuron.tick().await;
 
-    water_neuron.advance_time_and_tick(60 * 60);
+    water_neuron.advance_time_and_tick(60 * 60).await;
     let info = water_neuron.get_info().await;
     assert_eq!(
         water_neuron
@@ -2479,7 +2507,7 @@ async fn should_compute_exchange_rate() {
 #[tokio::test]
 async fn should_mirror_all_proposals() {
     let mut water_neuron = WaterNeuron::new().await;
-    water_neuron.with_voting_topic();
+    water_neuron.with_voting_topic().await;
 
     let water_neuron_principal: Principal = water_neuron.water_neuron_id.into();
     let caller = PrincipalId::new_user_test_id(212);
@@ -2524,11 +2552,13 @@ async fn should_mirror_all_proposals() {
         Nat::from(5_u8)
     );
 
-    water_neuron.approve(
-        water_neuron.minter,
-        water_neuron.icp_ledger_id,
-        water_neuron.water_neuron_id.into(),
-    );
+    water_neuron
+        .approve(
+            water_neuron.minter,
+            water_neuron.icp_ledger_id,
+            water_neuron.water_neuron_id.into(),
+        )
+        .await;
 
     assert_eq!(
         water_neuron
@@ -2541,14 +2571,14 @@ async fn should_mirror_all_proposals() {
         })
     );
 
-    water_neuron.advance_time_and_tick(70);
+    water_neuron.advance_time_and_tick(70).await;
 
     let neuron_id = nns_claim_or_refresh_neuron(&mut water_neuron, caller, 0).await;
 
     let _increase_dissolve_delay_result =
         nns_increase_dissolve_delay(&mut water_neuron, caller, neuron_id, 200 * 24 * 60 * 60).await;
 
-    water_neuron.advance_time_and_tick(70);
+    water_neuron.advance_time_and_tick(70).await;
 
     assert_matches!(
         water_neuron

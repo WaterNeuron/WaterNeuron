@@ -22,7 +22,7 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, Hash, Eq, PartialOrd, Ord, PartialEq)]
-pub enum CanisterName<'a> {
+pub enum CanisterName {
     Ledger,
     NnsGovernance,
     Icrc1Ledger,
@@ -32,7 +32,7 @@ pub enum CanisterName<'a> {
     SnsRoot,
     Cmc,
     Icrc1IndexNg,
-    Local(&'a str),
+    Local(String),
 }
 
 struct WasmBinary {
@@ -42,21 +42,21 @@ struct WasmBinary {
 }
 
 lazy_static! {
-    static ref DFINITY_CANISTERS: BTreeMap<CanisterName<'static>, WasmBinary> = {
+    static ref DFINITY_CANISTERS: BTreeMap<CanisterName, WasmBinary> = {
         let mut map = BTreeMap::new();
         map.insert(
             CanisterName::Ledger,
             WasmBinary {
-                hash: "e31a3b38bbb3704876d8825bb826101d6f1f1843ad99c21a0d563e80bdd6e2f6",
-                ic_version: "de29a1a55b589428d173b31cdb8cec0923245657",
+                hash: "f22fad42381adead11adf14e45353e5d71513ab1bea480543e62c354debc8dcd",
+                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
                 name: "ledger-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::NnsGovernance,
             WasmBinary {
-                hash: "8f76b2de37197b3ff0ae188f1ef99ddd5bd75cb8f83fb87c2889822ece0b5576",
-                ic_version: "ad5629caa17ac8a4545bc2e3cf0ecc990c9f681e",
+                hash: "ae8a264f2f8d3397dd16d2e4db8336a7fc9e5bd5ea931a9d047272796601eca5",
+                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
                 name: "governance-canister.wasm.gz",
             },
         );
@@ -71,16 +71,16 @@ lazy_static! {
         map.insert(
             CanisterName::SnsGovernance,
             WasmBinary {
-                hash: "e6b285a50237a46d7cf72eb27ae4840222b98ecc02c20954a7946d039cab59f0",
-                ic_version: "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+                hash: "9891697f10e2e17d61da662ce4b9543bbf6b99f13d31a8cf3fe9210c4ea7bd61",
+                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
                 name: "sns-governance-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::SnsSwap,
             WasmBinary {
-                hash: "2bbaf53b7cbb8f20cdd6b30bf709f461a47d10b02b38cb1d54d52789c907f202",
-                ic_version: "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+                hash: "2c45a7215f907ffc4aaf2fb88a332d841b421012fe656e593e74e47fa74262cf",
+                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
                 name: "sns-swap-canister.wasm.gz",
             },
         );
@@ -88,23 +88,23 @@ lazy_static! {
             CanisterName::Sns,
             WasmBinary {
                 hash: "a6ffc60e50d7c59ce5b3bfbfa1a234287891e9396c85be312c8e725a2510fb35",
-                ic_version: "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
                 name: "sns-wasm-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::SnsRoot,
             WasmBinary {
-                hash: "dd0b6dfe7a25852ed6d421ce71382f30f7275046aed7c64d870c8e0bb4bba6ea",
-                ic_version: "80e0363393ea26a36b77e8c75f7f183cb521f67f",
+                hash: "5aa759f84eebb3a653307af8c0935f2138ed0b0b6bfdc8e8e3f9703fbe1e7f51",
+                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
                 name: "sns-root-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::Icrc1Ledger,
             WasmBinary {
-                hash: "4264ce2952c4e9ff802d81a11519d5e3ffdaed4215d5831a6634e59efd72f7d8",
-                ic_version: "a3831c87440df4821b435050c8a8fcb3745d86f6",
+                hash: "f5784af7c5a4caa5b73eff0511569898d60d2d7b8e5fca1980ba9a9590f12968",
+                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
                 name: "ic-icrc1-ledger.wasm.gz",
             },
         );
@@ -112,7 +112,7 @@ lazy_static! {
             CanisterName::Icrc1IndexNg,
             WasmBinary {
                 hash: "cac207cf438df8c9fba46d4445c097f05fd8228a1eeacfe0536b7e9ddefc5f1c",
-                ic_version: "a3831c87440df4821b435050c8a8fcb3745d86f6",
+                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
                 name: "ic-icrc1-index-ng.wasm.gz",
             },
         );
@@ -124,22 +124,33 @@ lazy_static! {
         .expect("Failed to get workspace root")
         .workspace_root
         .into();
-    static ref BOOMERANG_WASM: Vec<u8> = get_wasm(CanisterName::Local("boomerang"), false).unwrap();
+    static ref BOOMERANG_WASM: Vec<u8> = get_wasm_sync(CanisterName::Local("boomerang".to_string()), false).unwrap();
     static ref WATER_NEURON_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("water_neuron"), true).unwrap();
+        get_wasm_sync(CanisterName::Local("water_neuron".to_string()), true).unwrap();
     static ref SNS_MODULE_WASM: Vec<u8> =
-        get_wasm(CanisterName::Local("sns_module"), false).unwrap();
+        get_wasm_sync(CanisterName::Local("sns_module".to_string()), false).unwrap();
 }
 
-pub fn get_wasm_path(name: CanisterName, self_check: bool) -> Result<PathBuf> {
+pub async fn get_wasm_path(name: CanisterName, self_check: bool) -> Result<PathBuf> {
     match name {
-        CanisterName::Local(name) => build_local_wasm(name, self_check),
-        remote => fetch_remote_wasm(&remote),
+        CanisterName::Local(name) => build_local_wasm(&name, self_check),
+        remote => fetch_remote_wasm(remote).await,
     }
 }
 
-fn get_wasm(name: CanisterName, self_check: bool) -> Result<Vec<u8>> {
-    Ok(std::fs::read(get_wasm_path(name, self_check)?)?)
+ fn get_wasm_path_sync(name: CanisterName, self_check: bool) -> Result<PathBuf> {
+    match name {
+        CanisterName::Local(name) => build_local_wasm(&name, self_check),
+        _remote => unreachable!(),
+    }
+}
+
+async fn get_wasm(name: CanisterName, self_check: bool) -> Result<Vec<u8>> {
+    Ok(std::fs::read(get_wasm_path(name, self_check).await?)?)
+}
+
+fn get_wasm_sync(name: CanisterName, self_check: bool) -> Result<Vec<u8>> {
+    Ok(std::fs::read(get_wasm_path_sync(name, self_check)?)?)
 }
 
 fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
@@ -185,9 +196,9 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
     Ok(WORKSPACE_ROOT.join(format!("artifacts/{}.wasm.gz", file_name)))
 }
 
-fn fetch_remote_wasm(canister: &CanisterName) -> Result<PathBuf> {
+async fn fetch_remote_wasm(canister: CanisterName) -> Result<PathBuf> {
     let wasm = DFINITY_CANISTERS
-        .get(canister)
+        .get(&canister)
         .ok_or(Error::UnknownCanister)?;
     let cache_path = WORKSPACE_ROOT.join("artifacts").join(wasm.name);
 
@@ -200,16 +211,18 @@ fn fetch_remote_wasm(canister: &CanisterName) -> Result<PathBuf> {
     }
 
     std::fs::create_dir_all(cache_path.parent().unwrap())?;
-    let data = reqwest::blocking::get(format!(
+    let url = format!(
         "https://download.dfinity.systems/ic/{}/canisters/{}",
         wasm.ic_version, wasm.name
-    ))?
-    .bytes()?
-    .to_vec();
+    );
+    
+    let response = reqwest::get(&url).await?;
+    let data = response.bytes().await?.to_vec();
 
     let mut hasher = Sha256::new();
     hasher.update(&data);
-    if format!("{:x}", hasher.finalize()) != wasm.hash {
+    if format!("{:x}", hasher.clone().finalize()) != wasm.hash {
+        dbg!(wasm.name, hex::encode(hasher.finalize()));
         return Err(Error::HashMismatch);
     }
 
@@ -227,24 +240,24 @@ pub fn sns_module_wasm() -> Vec<u8> {
     SNS_MODULE_WASM.to_vec()
 }
 
-pub fn icp_ledger_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Ledger, false).unwrap()
+pub async fn icp_ledger_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Ledger, false).await.unwrap()
 }
-pub fn governance_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::NnsGovernance, false).unwrap()
+pub async fn governance_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::NnsGovernance, false).await.unwrap()
 }
-pub fn ledger_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Icrc1Ledger, false).unwrap()
+pub async fn ledger_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Icrc1Ledger, false).await.unwrap()
 }
-pub fn sns_governance_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::SnsGovernance, false).unwrap()
+pub async fn sns_governance_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::SnsGovernance, false).await.unwrap()
 }
-pub fn sns_root_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::SnsRoot, false).unwrap()
+pub async fn sns_root_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::SnsRoot, false).await.unwrap()
 }
-pub fn sns_swap_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::SnsSwap, false).unwrap()
+pub async fn sns_swap_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::SnsSwap, false).await.unwrap()
 }
-pub fn cmc_wasm() -> Vec<u8> {
-    get_wasm(CanisterName::Cmc, false).unwrap()
+pub async fn cmc_wasm() -> Vec<u8> {
+    get_wasm(CanisterName::Cmc, false).await.unwrap()
 }
