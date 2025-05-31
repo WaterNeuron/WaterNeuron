@@ -63,6 +63,7 @@ lazy_static.workspace = true
 mockall.workspace = true
 num-bigint.workspace = true
 num-traits.workspace = true
+pocket-ic.workspace = true
 proptest.workspace = true
 prost.workspace = true
 tokio.workspace = true
