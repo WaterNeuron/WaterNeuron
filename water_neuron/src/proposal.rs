@@ -6,8 +6,8 @@ use crate::{
     TaskType, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
 };
 use ic_canister_log::log;
-use ic_sns_governance::pb::v1::manage_neuron::Command as CommandSns;
-use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandSnsResponse;
+use ic_sns_governance_api::pb::v1::manage_neuron::Command as CommandSns;
+use ic_sns_governance_api::pb::v1::manage_neuron_response::Command as CommandSnsResponse;
 
 const BATCH_SIZE_LIMIT: u32 = 100;
 const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;
@@ -153,7 +153,7 @@ pub async fn vote_on_nns_proposals() {
                     {
                         match get_sns_proposal(wtn_governance_id, sns_proposal_id.id).await {
                             Ok(proposal_response) => {
-                                if let Some(ic_sns_governance::pb::v1::get_proposal_response::Result::Proposal(proposal_data)) =
+                                if let Some(ic_sns_governance_api::pb::v1::get_proposal_response::Result::Proposal(proposal_data)) =
                                     proposal_response.result.clone()
                                 {
                                     if let Some(tally) = proposal_data.latest_tally {
@@ -241,9 +241,11 @@ pub async fn early_voting_on_nns_proposals() {
     for proposal_id in not_voted {
         match get_sns_proposal(wtn_governance_id, proposal_id.id).await {
             Ok(proposal_response) => {
-                if let Some(ic_sns_governance::pb::v1::get_proposal_response::Result::Proposal(
-                    proposal_data,
-                )) = proposal_response.result.clone()
+                if let Some(
+                    ic_sns_governance_api::pb::v1::get_proposal_response::Result::Proposal(
+                        proposal_data,
+                    ),
+                ) = proposal_response.result.clone()
                 {
                     if let Some(tally) = proposal_data.latest_tally {
                         if tally.no > tally.total / 2 {

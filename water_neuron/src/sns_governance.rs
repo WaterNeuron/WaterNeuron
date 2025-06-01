@@ -79,7 +79,7 @@ impl CanisterRuntime for IcCanisterRuntime {
             Some(Nat::from(DEFAULT_LEDGER_FEE)),
             Some(SNS_GOVERNANCE_SUBACCOUNT),
             ICP_LEDGER_ID,
-            Some(SNS_DISTRIBUTION_MEMO.into()),
+            Some(SNS_DISTRIBUTION_MEMO),
         )
         .await
     }

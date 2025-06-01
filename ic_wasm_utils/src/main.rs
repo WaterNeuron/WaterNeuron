@@ -1,4 +1,4 @@
-use ic_wasm_utils::{get_wasm_path, CanisterName};
+use ic_wasm_utils::{get_wasm_path_sync, CanisterName};
 use lazy_static::lazy_static;
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
@@ -8,28 +8,21 @@ lazy_static! {
     static ref CANISTER_PATHS: Vec<(String, PathBuf)> = vec![
         (
             "boomerang".into(),
-            match get_wasm_path(CanisterName::Local("boomerang"), false) {
+            match get_wasm_path_sync(CanisterName::Local("boomerang".to_string()), false) {
                 Ok(path) => path,
                 Err(e) => panic!("Error: {:?}", e),
             }
         ),
         (
             "water_neuron".into(),
-            match get_wasm_path(CanisterName::Local("water_neuron"), false) {
+            match get_wasm_path_sync(CanisterName::Local("water_neuron".to_string()), false) {
                 Ok(path) => path,
                 Err(e) => panic!("Error: {:?}", e),
             }
         ),
         (
             "water_neuron_self_check".into(),
-            match get_wasm_path(CanisterName::Local("water_neuron"), true) {
-                Ok(path) => path,
-                Err(e) => panic!("Error: {:?}", e),
-            }
-        ),
-        (
-            "sns_module".into(),
-            match get_wasm_path(CanisterName::Local("sns_module"), false) {
+            match get_wasm_path_sync(CanisterName::Local("water_neuron".to_string()), true) {
                 Ok(path) => path,
                 Err(e) => panic!("Error: {:?}", e),
             }

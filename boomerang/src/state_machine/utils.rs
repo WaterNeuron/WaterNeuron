@@ -1,5 +1,5 @@
 use candid::{Encode, Nat, Principal};
-use ic_base_types::{CanisterId, PrincipalId};
+use ic_base_types::PrincipalId;
 use ic_icrc1_ledger::{
     ArchiveOptions, InitArgs as LedgerInitArgs, InitArgsBuilder as LedgerInitArgsBuilder,
     LedgerArgument,
@@ -8,13 +8,14 @@ use ic_nns_constants::{GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
 use ic_sns_governance::init::GovernanceCanisterInitPayloadBuilder;
 use ic_sns_governance::pb::v1::governance::Version;
 use ic_sns_governance::pb::v1::Neuron;
+use ic_sns_governance::pb::v1::Neuron as SnsNeuron;
 use ic_sns_init::SnsCanisterInitPayloads;
 use ic_sns_root::pb::v1::SnsRootCanister;
 use ic_sns_swap::pb::v1::{Init as SwapInit, NeuronBasketConstructionParameters};
-use ic_state_machine_tests::{StateMachine, WasmResult};
 use ic_wasm_utils::{ledger_wasm, sns_governance_wasm, sns_root_wasm, sns_swap_wasm};
 use icp_ledger::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
+use pocket_ic::{management_canister::CanisterId, nonblocking::PocketIc, WasmResult};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 
@@ -45,7 +46,7 @@ impl SnsTestsInitPayloadBuilder {
                 // 128kb
                 max_message_size_bytes: Some(128 * 1024),
                 // controller_id will be set when the Root canister ID is allocated
-                controller_id: CanisterId::from_u64(0).into(),
+                controller_id: CanisterId::from(Principal::anonymous()).into(),
                 more_controller_ids: None,
                 cycles_for_archive_creation: Some(0),
                 max_transactions_per_response: None,
@@ -247,68 +248,79 @@ fn populate_canister_ids(
     }
 }
 
-pub struct SnsCanisterIds {
+pub struct SNSCanisterIds {
     pub governance: CanisterId,
     pub ledger: CanisterId,
 }
 
-pub fn setup_sns_canisters(env: &StateMachine, neurons: Vec<Neuron>) -> SnsCanisterIds {
-    let root_canister_id = env.create_canister(None);
-    let governance_canister_id = env.create_canister(None);
-    let ledger_canister_id = env.create_canister(None);
-    let swap_canister_id = env.create_canister(None);
-    let index_canister_id = env.create_canister(None);
+pub async fn setup_sns_canisters(pic: &PocketIc, neurons: Vec<SnsNeuron>) -> SNSCanisterIds {
+    let root_canister_id = pic.create_canister().await;
+    let governance_canister_id = pic.create_canister().await;
+    let ledger_canister_id = pic.create_canister().await;
+    let swap_canister_id = pic.create_canister().await;
+    let index_canister_id = pic.create_canister().await;
+
+    pic.add_cycles(root_canister_id, u64::MAX.into()).await;
+    pic.add_cycles(governance_canister_id, u64::MAX.into())
+        .await;
+    pic.add_cycles(ledger_canister_id, u64::MAX.into()).await;
+    pic.add_cycles(swap_canister_id, u64::MAX.into()).await;
+    pic.add_cycles(index_canister_id, u64::MAX.into()).await;
 
     let mut payloads = SnsTestsInitPayloadBuilder::new()
         .with_initial_neurons(neurons)
         .build();
 
     populate_canister_ids(
-        root_canister_id.get(),
-        governance_canister_id.get(),
-        ledger_canister_id.get(),
-        swap_canister_id.get(),
-        index_canister_id.get(),
+        PrincipalId(root_canister_id),
+        PrincipalId(governance_canister_id),
+        PrincipalId(ledger_canister_id),
+        PrincipalId(swap_canister_id),
+        PrincipalId(index_canister_id),
         vec![],
         &mut payloads,
     );
 
     let deployed_version = Version {
-        root_wasm_hash: sha256_hash(sns_root_wasm()),
-        governance_wasm_hash: sha256_hash(sns_governance_wasm()),
-        ledger_wasm_hash: sha256_hash(ledger_wasm()),
-        swap_wasm_hash: sha256_hash(sns_swap_wasm()),
+        root_wasm_hash: sha256_hash(sns_root_wasm().await),
+        governance_wasm_hash: sha256_hash(sns_governance_wasm().await),
+        ledger_wasm_hash: sha256_hash(ledger_wasm().await),
+        swap_wasm_hash: sha256_hash(sns_swap_wasm().await),
         archive_wasm_hash: vec![], // tests don't need it for now so we don't compile it.
         index_wasm_hash: vec![],
     };
 
     payloads.governance.deployed_version = Some(deployed_version);
 
-    env.install_existing_canister(
+    pic.install_canister(
         governance_canister_id,
-        sns_governance_wasm(),
+        sns_governance_wasm().await,
         Encode!(&payloads.governance).unwrap(),
+        None,
     )
-    .unwrap();
-    env.install_existing_canister(
+    .await;
+    pic.install_canister(
         root_canister_id,
-        sns_root_wasm(),
+        sns_root_wasm().await,
         Encode!(&payloads.root).unwrap(),
+        None,
     )
-    .unwrap();
-    env.install_existing_canister(
+    .await;
+    pic.install_canister(
         swap_canister_id,
-        sns_swap_wasm(),
+        sns_swap_wasm().await,
         Encode!(&payloads.swap).unwrap(),
+        None,
     )
-    .unwrap();
-    env.install_existing_canister(
+    .await;
+    pic.install_canister(
         ledger_canister_id,
-        ledger_wasm(),
+        ledger_wasm().await,
         Encode!(&payloads.ledger).unwrap(),
+        None,
     )
-    .unwrap();
-    SnsCanisterIds {
+    .await;
+    SNSCanisterIds {
         governance: governance_canister_id,
         ledger: ledger_canister_id,
     }

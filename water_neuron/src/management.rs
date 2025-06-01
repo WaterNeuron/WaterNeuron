@@ -12,7 +12,7 @@ use crate::nns_types::{
 use crate::state::{read_state, NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE};
 use crate::{compute_neuron_staking_subaccount_bytes, CommandResponse};
 use candid::{Nat, Principal};
-use ic_sns_governance::pb::v1::{
+use ic_sns_governance_api::pb::v1::{
     manage_neuron::Command as SnsCommand, GetProposal, GetProposalResponse,
     ManageNeuron as ManageSnsNeuron, ManageNeuronResponse as ManageSnsNeuronResponse,
 };
@@ -103,7 +103,7 @@ pub async fn get_sns_proposal(
     proposal_id: u64,
 ) -> Result<GetProposalResponse, String> {
     let arg = GetProposal {
-        proposal_id: Some(ic_sns_governance::pb::v1::ProposalId { id: proposal_id }),
+        proposal_id: Some(ic_sns_governance_api::pb::v1::ProposalId { id: proposal_id }),
     };
 
     let res_gov: Result<(GetProposalResponse,), (i32, String)> =
