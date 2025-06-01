@@ -103,7 +103,7 @@ pub struct WithdrawalRequest {
     pub timestamp: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct WithdrawalDetails {
     pub status: WithdrawalStatus,
     pub request: WithdrawalRequest,
@@ -122,7 +122,7 @@ pub struct ExchangeRate {
     pub timestamp: u64,
 }
 
-#[derive(CandidType, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(CandidType, Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub enum WithdrawalStatus {
     WaitingToSplitNeuron,
     WaitingToStartDissolving { neuron_id: NeuronId },

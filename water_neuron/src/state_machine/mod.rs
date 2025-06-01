@@ -25,7 +25,6 @@ use ic_icrc1_ledger::{
     ArchiveOptions, InitArgs as LedgerInitArgs, InitArgsBuilder as LedgerInitArgsBuilder,
     LedgerArgument,
 };
-use ic_nns_common::types::UpdateIcpXdrConversionRatePayload;
 use ic_nns_constants::{CYCLES_LEDGER_CANISTER_ID, GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::init::GovernanceCanisterInitPayloadBuilder;
@@ -33,7 +32,6 @@ use ic_sns_governance::pb::v1::{
     governance::Version, neuron::DissolveState, Neuron as SnsNeuron, NeuronId as SnsNeuronId,
     NeuronPermission, NeuronPermissionType,
 };
-use ic_sns_governance_api::pb::v1::topics::{ListTopicsRequest, ListTopicsResponse};
 use ic_sns_governance_api::pb::v1::{
     manage_neuron::Command as SnsCommand,
     nervous_system_function::{FunctionType, GenericNervousSystemFunction},
@@ -43,8 +41,6 @@ use ic_sns_governance_api::pb::v1::{
     ManageNeuronResponse as SnsManageNeuronResponse, NervousSystemFunction,
     Proposal as SnsProposal,
 };
-use std::time::SystemTime;
-
 use ic_sns_init::SnsCanisterInitPayloads;
 use ic_sns_root::pb::v1::SnsRootCanister;
 use ic_sns_swap::pb::v1::{Init as SwapInit, NeuronBasketConstructionParameters};
@@ -421,7 +417,6 @@ pub fn populate_canister_ids(
     ledger_canister_id: Principal,
     swap_canister_id: Principal,
     index_canister_id: Principal,
-    archive_canister_ids: Vec<Principal>,
     sns_canister_init_payloads: &mut SnsCanisterInitPayloads,
 ) {
     // Root.
@@ -503,7 +498,6 @@ async fn setup_sns_canisters(pic: &PocketIc, neurons: Vec<SnsNeuron>) -> SNSCani
         ledger_canister_id,
         swap_canister_id,
         index_canister_id,
-        vec![],
         &mut payloads,
     );
 
@@ -589,7 +583,7 @@ impl WaterNeuron {
             .await
             .unwrap();
 
-        let governance_id = env
+        let _governance_id = env
             .install_canister(
                 GOVERNANCE_CANISTER_ID.into(),
                 governance_wasm().await,
@@ -617,7 +611,7 @@ impl WaterNeuron {
             .await
             .unwrap();
 
-        let icp_ledger_id = env
+        let _icp_ledger_id = env
             .install_canister(
                 LEDGER_CANISTER_ID.into(),
                 icp_ledger_wasm().await,
@@ -704,7 +698,7 @@ impl WaterNeuron {
         let cycles_minting_canister_id =
             CanisterId::from(Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap());
 
-        let cmc_id = env
+        let _cmc_id = env
             .install_canister(
                 cycles_minting_canister_id,
                 cmc_wasm().await,
@@ -778,11 +772,6 @@ impl WaterNeuron {
         let pic = self.env.lock().await;
         pic.advance_time(Duration::from_secs(1)).await;
         pic.tick().await;
-    }
-
-    pub async fn advance_time(&self, duration: Duration) {
-        let pic = self.env.lock().await;
-        pic.advance_time(duration).await;
     }
 
     pub async fn advance_time_and_tick(&self, duration_secs: u64) {
@@ -1039,11 +1028,7 @@ impl WaterNeuron {
             .expect("failed to get get_transfer_statuses")
     }
 
-    async fn approve_proposal(
-        &self,
-        id: u64,
-        caller: Principal,
-    ) -> Result<ManageNeuronResponse, String> {
+    async fn approve_proposal(&self, id: u64) -> Result<ManageNeuronResponse, String> {
         self.update::<Result<ManageNeuronResponse, String>>(
             PrincipalId::from(self.wtn_governance_id),
             self.water_neuron_id,
@@ -1108,12 +1093,6 @@ impl WaterNeuron {
         self.query::<ListProposalsResponse>(canister, "list_proposals", arg)
             .await
             .expect("failed to list_proposals")
-    }
-
-    async fn list_topics(&self, canister: CanisterId) -> ListTopicsResponse {
-        self.query::<ListTopicsResponse>(canister, "list_topics", ListTopicsRequest {})
-            .await
-            .expect("failed to list_topics")
     }
 }
 
@@ -1339,23 +1318,21 @@ async fn e2e_basic() {
         })),
     };
 
-    let _proposal_id =
-        match nns_governance_make_proposal(&mut water_neuron, caller, neuron_id, &proposal)
-            .await
-            .command
-            .unwrap()
-        {
-            CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
-            _ => panic!("unexpected response"),
-        };
-
-    loop {
-        water_neuron.advance_time(Duration::from_secs(60 * 60)).await;
-        water_neuron.tick().await;
-        let neuron_6m_stake_e8s_after_proposal = water_neuron.get_info().await.neuron_6m_stake_e8s;
-        if neuron_6m_stake_e8s_before_proposal < neuron_6m_stake_e8s_after_proposal {
-            break;
-        }
+    for _ in 0..8 {
+        let _proposal_id =
+            match nns_governance_make_proposal(&mut water_neuron, caller, neuron_id, &proposal)
+                .await
+                .command
+                .unwrap()
+            {
+                CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
+                _ => panic!("unexpected response"),
+            };
+        water_neuron.advance_time_and_tick(15 * 60).await;
+        water_neuron.advance_time_and_tick(15 * 60).await;
+        water_neuron
+            .advance_time_and_tick(4 * 60 * 60 * 24 - 60 * 60)
+            .await;
     }
 
     let neuron_6m_stake_e8s_after_proposal = water_neuron.get_info().await.neuron_6m_stake_e8s;
@@ -1369,7 +1346,7 @@ async fn e2e_basic() {
 
     dbg!(events.clone());
 
-    assert_eq!(events.total_event_count, 21);
+    assert_eq!(events.total_event_count, 32);
 
     assert!(water_neuron
         .get_events()
@@ -1380,7 +1357,7 @@ async fn e2e_basic() {
         .any(|payload| payload
             == &DisbursedUserNeuron {
                 withdrawal_id: 0,
-                transfer_block_height: 9,
+                transfer_block_height: 10,
             }),);
 
     let count = water_neuron
@@ -1392,7 +1369,7 @@ async fn e2e_basic() {
         .filter(|payload| matches!(payload, DisbursedMaturityNeuron { .. }))
         .count();
 
-    assert_eq!(count, 2);
+    assert_eq!(count, 3);
 
     let info = water_neuron.get_info().await;
 
@@ -1402,9 +1379,19 @@ async fn e2e_basic() {
             .await,
         Nat::from(info.tracked_6m_stake.0)
     );
-    assert_eq!(info.exchange_rate, 5_270);
+    assert_eq!(info.exchange_rate, 270_525);
 
     assert_eq!(info.governance_fee_share_percent, 10);
+
+    let info = water_neuron.get_info().await;
+    dbg!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
+
+    water_neuron.advance_time_and_tick(60).await;
+    dbg!(
+        water_neuron
+            .balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account)
+            .await
+    );
 
     assert_matches!(
         water_neuron
@@ -1422,8 +1409,19 @@ async fn e2e_basic() {
 
     water_neuron.advance_time_and_tick(60).await;
     let info = water_neuron.get_info().await;
+    dbg!(
+        water_neuron
+            .balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account)
+            .await
+    );
+    assert_eq!(
+        water_neuron
+            .balance_of(water_neuron.icp_ledger_id, info.neuron_6m_account)
+            .await,
+        Nat::from(info.tracked_6m_stake.0)
+    );
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
-    assert_eq!(info.exchange_rate, 5_270);
+    assert_eq!(info.exchange_rate, 180_635);
     assert_eq!(info.governance_fee_share_percent, 20);
 
     assert_eq!(
@@ -1432,16 +1430,16 @@ async fn e2e_basic() {
             .await
             .unwrap()
             .nicp_amount,
-        Some(nICP::from_e8s(5_270))
+        Some(nICP::from_e8s(180_635))
     );
 
     assert_eq!(
         water_neuron
-            .nicp_to_icp(caller.0.into(), 5_2711)
+            .nicp_to_icp(caller.0.into(), E8S)
             .await
             .unwrap()
             .icp_amount,
-        Some(ICP::from_e8s(1000165632))
+        Some(ICP::from_e8s(55360331711))
     );
 
     assert_eq!(
@@ -1455,16 +1453,19 @@ async fn e2e_basic() {
     );
 
     water_neuron.advance_time_and_tick(60 * 60).await;
+    water_neuron.advance_time_and_tick(60 * 60).await;
 
-    let neuron_id = match water_neuron
+    let result = &water_neuron
         .get_withdrawal_requests(caller.0)
         .await
         .last()
         .unwrap()
         .status
-    {
+        .clone();
+
+    let neuron_id = match result.clone() {
         WithdrawalStatus::WaitingDissolvement { neuron_id } => neuron_id,
-        _ => panic!(""),
+        _ => panic!("{result}"),
     };
 
     let full_neuron = water_neuron
@@ -1472,7 +1473,7 @@ async fn e2e_basic() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(full_neuron.cached_neuron_stake_e8s, 1000155632);
+    assert_eq!(full_neuron.cached_neuron_stake_e8s, 55360321711);
 }
 
 async fn init_wtn_withdrawal_setup(wtn: &mut WaterNeuron) {
@@ -1804,9 +1805,7 @@ async fn should_cancel_withdrawal_while_voting() {
     use crate::CommandResponse::RegisterVote;
 
     assert_eq!(
-        water_neuron
-            .approve_proposal(proposal_id.id, water_neuron.wtn_governance_id.into())
-            .await,
+        water_neuron.approve_proposal(proposal_id.id).await,
         Ok(ManageNeuronResponse {
             command: Some(RegisterVote(Empty {}))
         })
@@ -2110,9 +2109,7 @@ async fn should_mirror_proposal() {
     use crate::CommandResponse::RegisterVote;
 
     assert_eq!(
-        water_neuron
-            .approve_proposal(proposal_id.id, water_neuron.wtn_governance_id.into())
-            .await,
+        water_neuron.approve_proposal(proposal_id.id).await,
         Ok(ManageNeuronResponse {
             command: Some(RegisterVote(Empty {}))
         })
