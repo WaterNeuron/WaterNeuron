@@ -27,13 +27,6 @@ lazy_static! {
                 Err(e) => panic!("Error: {:?}", e),
             }
         ),
-        (
-            "sns_module".into(),
-            match get_wasm_path_sync(CanisterName::Local("sns_module".to_string()), false) {
-                Ok(path) => path,
-                Err(e) => panic!("Error: {:?}", e),
-            }
-        ),
     ];
 }
 

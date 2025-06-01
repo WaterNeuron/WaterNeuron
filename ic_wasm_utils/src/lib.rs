@@ -128,8 +128,6 @@ lazy_static! {
         get_wasm_sync(CanisterName::Local("boomerang".to_string()), false).unwrap();
     static ref WATER_NEURON_WASM: Vec<u8> =
         get_wasm_sync(CanisterName::Local("water_neuron".to_string()), true).unwrap();
-    static ref SNS_MODULE_WASM: Vec<u8> =
-        get_wasm_sync(CanisterName::Local("sns_module".to_string()), false).unwrap();
 }
 
 pub async fn get_wasm_path(name: CanisterName, self_check: bool) -> Result<PathBuf> {
@@ -235,9 +233,6 @@ pub fn boomerang_wasm() -> Vec<u8> {
 }
 pub fn water_neuron_wasm() -> Vec<u8> {
     WATER_NEURON_WASM.to_vec()
-}
-pub fn sns_module_wasm() -> Vec<u8> {
-    SNS_MODULE_WASM.to_vec()
 }
 
 pub async fn icp_ledger_wasm() -> Vec<u8> {
