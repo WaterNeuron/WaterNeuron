@@ -635,39 +635,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "boomerang"
-version = "0.1.0"
-dependencies = [
- "candid",
- "candid_parser",
- "ic-base-types",
- "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ic-cdk",
- "ic-icrc1-ledger",
- "ic-management-canister-types-private",
- "ic-nns-constants",
- "ic-nns-governance",
- "ic-sns-governance",
- "ic-sns-init",
- "ic-sns-root",
- "ic-sns-swap",
- "ic-state-machine-tests",
- "ic_wasm_utils",
- "icp-ledger",
- "icrc-ledger-client-cdk",
- "icrc-ledger-types",
- "lazy_static",
- "num-traits",
- "prost 0.12.6",
- "serde",
- "serde_bytes",
- "serde_cbor",
- "serde_json",
- "sha2",
- "water_neuron",
-]
-
-[[package]]
 name = "borsh"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9493,46 +9460,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "sns_module"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "async-trait",
- "candid",
- "candid_parser",
- "ciborium",
- "hex",
- "ic-base-types",
- "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ic-cdk",
- "ic-cdk-macros",
- "ic-http-types 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ic-icrc1-ledger",
- "ic-management-canister-types",
- "ic-management-canister-types-private",
- "ic-metrics-encoder",
- "ic-sns-governance",
- "ic-stable-structures",
- "ic-state-machine-tests",
- "ic0 0.23.0",
- "ic_wasm_utils",
- "icp-ledger",
- "icrc-ledger-client-cdk",
- "icrc-ledger-types",
- "lazy_static",
- "minicbor 0.24.4",
- "minicbor-derive 0.15.3",
- "rust_decimal_macros",
- "scopeguard",
- "serde",
- "serde_bytes",
- "serde_cbor",
- "serde_json",
- "sha2",
- "strum_macros",
 ]
 
 [[package]]

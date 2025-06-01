@@ -243,21 +243,27 @@ pub fn sns_module_wasm() -> Vec<u8> {
 pub async fn icp_ledger_wasm() -> Vec<u8> {
     get_wasm(CanisterName::Ledger, false).await.unwrap()
 }
+
 pub async fn governance_wasm() -> Vec<u8> {
     get_wasm(CanisterName::NnsGovernance, false).await.unwrap()
 }
+
 pub async fn ledger_wasm() -> Vec<u8> {
     get_wasm(CanisterName::Icrc1Ledger, false).await.unwrap()
 }
+
 pub async fn sns_governance_wasm() -> Vec<u8> {
     get_wasm(CanisterName::SnsGovernance, false).await.unwrap()
 }
+
 pub async fn sns_root_wasm() -> Vec<u8> {
     get_wasm(CanisterName::SnsRoot, false).await.unwrap()
 }
+
 pub async fn sns_swap_wasm() -> Vec<u8> {
     get_wasm(CanisterName::SnsSwap, false).await.unwrap()
 }
+
 pub async fn cmc_wasm() -> Vec<u8> {
     get_wasm(CanisterName::Cmc, false).await.unwrap()
 }

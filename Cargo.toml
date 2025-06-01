@@ -1,5 +1,5 @@
 [workspace]
-members = ["sns_module", "boomerang", "ic_wasm_utils", "water_neuron"]
+members = ["ic_wasm_utils", "water_neuron"]
 resolver = "2"
 
 [workspace.package]
