@@ -1,13 +1,11 @@
 use crate::{BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess, E8S, TRANSFER_FEE};
-use candid::{Decode, Encode, Nat, Principal};
-use ic_base_types::{CanisterId, PrincipalId};
+use candid::{decode_one, encode_one, CandidType, Deserialize, Encode, Nat, Principal};
+use ic_base_types::PrincipalId;
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
-use ic_management_canister_types_private::CanisterInstallMode;
 use ic_nns_constants::GOVERNANCE_CANISTER_ID;
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_sns_governance::pb::v1::neuron::DissolveState;
 use ic_sns_governance::pb::v1::{Neuron, NeuronId, NeuronPermission, NeuronPermissionType};
-use ic_state_machine_tests::StateMachine;
 use ic_wasm_utils::{
     boomerang_wasm, governance_wasm, icp_ledger_wasm, ledger_wasm, water_neuron_wasm,
 };
@@ -17,30 +15,80 @@ use icp_ledger::{
 };
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError as IcrcTransferError};
+use pocket_ic::{
+    management_canister::CanisterId, nonblocking::PocketIc, PocketIcBuilder, WasmResult,
+};
 use std::collections::HashMap;
-use utils::{assert_reply, compute_neuron_staking_subaccount_bytes, setup_sns_canisters};
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use utils::{compute_neuron_staking_subaccount_bytes, setup_sns_canisters};
+use water_neuron::state::ICP_LEDGER_ID;
 use water_neuron::{InitArg, LiquidArg, ONE_MONTH_SECONDS};
 
 pub mod tests;
 pub mod utils;
 
-#[derive(Debug)]
+pub async fn update<T>(
+    pic: &PocketIc,
+    canister: CanisterId,
+    caller: Principal,
+    method: &str,
+    arg: impl CandidType,
+) -> Result<T, String>
+where
+    T: for<'a> Deserialize<'a> + CandidType,
+{
+    let result = pic
+        .update_call(canister, caller, method, encode_one(arg).unwrap())
+        .await
+        .map_err(|e| format!("Failed to call {method} of {canister} with error: {e}"))?;
+    match result {
+        WasmResult::Reply(reply) => Ok(decode_one(&reply).unwrap()),
+        WasmResult::Reject(error) => Err(error),
+    }
+}
+
+pub async fn query<T>(
+    pic: &PocketIc,
+    canister: CanisterId,
+    caller: Principal,
+    method: &str,
+    arg: impl CandidType,
+) -> Result<T, String>
+where
+    T: for<'a> Deserialize<'a> + CandidType,
+{
+    let result = pic
+        .query_call(canister.into(), caller, method, encode_one(arg).unwrap())
+        .await
+        .unwrap();
+    match result {
+        WasmResult::Reply(reply) => Ok(decode_one(&reply).unwrap()),
+        WasmResult::Reject(error) => Err(error),
+    }
+}
+
 pub struct BoomerangSetup {
-    pub env: StateMachine,
+    pub env: Arc<Mutex<PocketIc>>,
     pub minter: PrincipalId,
-    pub boomerang_id: CanisterId,
-    pub water_neuron_id: CanisterId,
-    pub wtn_ledger_id: CanisterId,
-    pub icp_ledger_id: CanisterId,
-    pub nicp_ledger_id: CanisterId,
+    pub boomerang_id: Principal,
+    pub water_neuron_id: Principal,
+    pub wtn_ledger_id: Principal,
+    pub icp_ledger_id: Principal,
+    pub nicp_ledger_id: Principal,
 }
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 const USER_PRINCIPAL_ID: u64 = 212;
 
 impl BoomerangSetup {
-    fn new() -> Self {
-        let env = StateMachine::new();
+    async fn new() -> Self {
+        let env = PocketIcBuilder::new()
+            .with_nns_subnet()
+            .with_sns_subnet()
+            .with_ii_subnet()
+            .build_async()
+            .await;
         let minter = PrincipalId::new_user_test_id(DEFAULT_PRINCIPAL_ID);
         let caller = PrincipalId::new_user_test_id(USER_PRINCIPAL_ID);
 
@@ -54,7 +102,9 @@ impl BoomerangSetup {
             Tokens::from_e8s(1_000 * E8S + TRANSFER_FEE),
         );
 
-        let nicp_ledger_id = env.create_canister(None);
+        let nicp_ledger_id = env.create_canister().await;
+
+        env.add_cycles(nicp_ledger_id, u64::MAX.into()).await;
 
         let governance_canister_init = Governance {
             economics: Some(NetworkEconomics::with_default_values()),
@@ -66,14 +116,24 @@ impl BoomerangSetup {
 
         let encoded = Encode!(&governance_canister_init).unwrap();
 
-        let _governance_id = env
-            .install_canister(governance_wasm(), encoded, None)
+        let governance_id = env
+            .create_canister_with_id(None, None, GOVERNANCE_CANISTER_ID.into())
+            .await
             .unwrap();
 
-        let icp_ledger_id = env.create_canister(None);
-        env.install_existing_canister(
+        env.add_cycles(governance_id, u64::MAX.into()).await;
+
+        env.install_canister(governance_id, governance_wasm().await, encoded, None)
+            .await;
+
+        let icp_ledger_id = env
+            .create_canister_with_id(None, None, ICP_LEDGER_ID.into())
+            .await
+            .unwrap();
+        env.add_cycles(icp_ledger_id, u64::MAX.into()).await;
+        env.install_canister(
             icp_ledger_id,
-            icp_ledger_wasm(),
+            icp_ledger_wasm().await,
             Encode!(&LedgerCanisterInitPayload::builder()
                 .initial_values(initial_balances)
                 .transfer_fee(Tokens::from_e8s(TRANSFER_FEE))
@@ -83,11 +143,13 @@ impl BoomerangSetup {
                 .build()
                 .unwrap())
             .unwrap(),
+            None,
         )
-        .unwrap();
+        .await;
 
-        let water_neuron_id = env.create_canister(None);
-        let water_neuron_principal = water_neuron_id.get().0;
+        let water_neuron_id = env.create_canister().await;
+        env.add_cycles(water_neuron_id, u64::MAX.into()).await;
+        let water_neuron_principal = water_neuron_id;
 
         let mut neurons = vec![];
         neurons.push(Neuron {
@@ -126,55 +188,58 @@ impl BoomerangSetup {
             });
         }
 
-        let sns = setup_sns_canisters(&env, neurons);
+        let sns = setup_sns_canisters(&env, neurons).await;
 
-        env.install_wasm_in_mode(
+        env.install_canister(
             water_neuron_id,
-            CanisterInstallMode::Install,
             water_neuron_wasm(),
             Encode!(&LiquidArg::Init(InitArg {
                 wtn_governance_id: sns.governance.into(),
                 wtn_ledger_id: sns.ledger.into(),
-                nicp_ledger_id: nicp_ledger_id.get().0,
+                nicp_ledger_id: nicp_ledger_id,
             }))
             .unwrap(),
+            None,
         )
-        .unwrap();
+        .await;
 
-        env.install_wasm_in_mode(
+        env.install_canister(
             nicp_ledger_id,
-            CanisterInstallMode::Install,
-            ledger_wasm(),
+            ledger_wasm().await,
             Encode!(&LedgerArgument::Init(
                 LedgerInitArgsBuilder::with_symbol_and_name("nICP", "nICP")
-                    .with_minting_account(water_neuron_id.get().0)
+                    .with_minting_account(water_neuron_id)
                     .with_transfer_fee(TRANSFER_FEE)
                     .with_decimals(8)
                     .with_feature_flags(ic_icrc1_ledger::FeatureFlags { icrc2: true })
                     .build(),
             ))
             .unwrap(),
+            None,
         )
-        .unwrap();
+        .await;
 
-        let boomerang_id = env
-            .install_canister(
-                boomerang_wasm(),
-                Encode!(
-                    &(CanisterIds {
-                        water_neuron_id: water_neuron_id.into(),
-                        icp_ledger_id: icp_ledger_id.into(),
-                        nicp_ledger_id: nicp_ledger_id.into(),
-                        wtn_ledger_id: sns.ledger.into()
-                    })
-                )
-                .unwrap(),
-                None,
+        let boomerang_id = env.create_canister().await;
+        env.add_cycles(boomerang_id, u64::MAX.into()).await;
+
+        env.install_canister(
+            boomerang_id,
+            boomerang_wasm(),
+            Encode!(
+                &(CanisterIds {
+                    water_neuron_id: water_neuron_id.into(),
+                    icp_ledger_id: icp_ledger_id.into(),
+                    nicp_ledger_id: nicp_ledger_id.into(),
+                    wtn_ledger_id: sns.ledger.into()
+                })
             )
-            .unwrap();
+            .unwrap(),
+            None,
+        )
+        .await;
 
         Self {
-            env,
+            env: Arc::new(Mutex::new(env)),
             minter,
             boomerang_id,
             water_neuron_id,
@@ -184,227 +249,181 @@ impl BoomerangSetup {
         }
     }
 
-    pub fn icp_transfer(
+    pub async fn icp_transfer(
         &self,
         caller: Principal,
         from_subaccount: Option<Subaccount>,
         transfer_amount: u64,
         target: AccountIdentifier,
     ) -> Result<u64, TransferError> {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller.into(),
-                        self.icp_ledger_id,
-                        "transfer",
-                        Encode!(
-                            &(TransferArgs {
-                                memo: Memo(0),
-                                amount: Tokens::from_e8s(transfer_amount),
-                                fee: Tokens::from_e8s(TRANSFER_FEE),
-                                from_subaccount,
-                                created_at_time: None,
-                                to: target.to_address(),
-                            })
-                        )
-                        .unwrap()
-                    )
-                    .expect("failed canister call in icp_transfer")
-            ),
-            Result<u64, TransferError>
+        let pic = self.env.lock().await;
+        update::<Result<u64, TransferError>>(
+            &pic,
+            self.icp_ledger_id,
+            caller.into(),
+            "transfer",
+            TransferArgs {
+                memo: Memo(0),
+                amount: Tokens::from_e8s(transfer_amount),
+                fee: Tokens::from_e8s(TRANSFER_FEE),
+                from_subaccount,
+                created_at_time: None,
+                to: target.to_address(),
+            },
         )
-        .expect("failed to decode result in icp_transfer")
+        .await
+        .expect("failed canister call in icp_transfer")
     }
 
-    pub fn advance_time_and_tick(&self, seconds: u64) {
-        self.env
-            .advance_time(std::time::Duration::from_secs(seconds));
+    pub async fn advance_time_and_tick(&self, seconds: u64) {
+        let pic = self.env.lock().await;
+        pic.advance_time(std::time::Duration::from_secs(seconds))
+            .await;
         const MAX_TICKS: u8 = 10;
         for _ in 0..MAX_TICKS {
-            self.env.tick();
+            pic.tick().await;
         }
     }
 
-    pub fn nicp_transfer(
+    pub async fn nicp_transfer(
         &self,
         caller: Principal,
         from_subaccount: Option<[u8; 32]>,
         transfer_amount: u64,
         target: Account,
     ) -> Result<Nat, IcrcTransferError> {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller.into(),
-                        self.nicp_ledger_id,
-                        "icrc1_transfer",
-                        Encode!(
-                            &(TransferArg {
-                                memo: None,
-                                amount: transfer_amount.into(),
-                                fee: None,
-                                from_subaccount,
-                                created_at_time: None,
-                                to: target,
-                            })
-                        )
-                        .unwrap()
-                    )
-                    .expect("failed canister call in nicp_transfer")
-            ),
-            Result<Nat, IcrcTransferError>
+        let pic = self.env.lock().await;
+        update::<Result<Nat, IcrcTransferError>>(
+            &pic,
+            self.nicp_ledger_id,
+            caller.into(),
+            "icrc1_transfer",
+            TransferArg {
+                memo: None,
+                amount: transfer_amount.into(),
+                fee: None,
+                from_subaccount,
+                created_at_time: None,
+                to: target,
+            },
         )
-        .expect("failed to decode result in nicp_transfer")
+        .await
+        .expect("failed canister call in nicp_transfer")
     }
 
-    pub fn notify_icp_deposit(&self, caller: Principal) -> Result<DepositSuccess, BoomerangError> {
-        Decode!(
-            &assert_reply(
-                    self.env.execute_ingress_as(
-                        caller.into(),
-                        self.boomerang_id,
-                        "notify_icp_deposit",
-                        Encode!(&(caller)).unwrap()
-                    )
-                    .expect("failed canister call in notify_icp_deposit")
-            ),
-            Result<DepositSuccess, BoomerangError>
+    pub async fn notify_icp_deposit(
+        &self,
+        caller: Principal,
+    ) -> Result<DepositSuccess, BoomerangError> {
+        let pic = self.env.lock().await;
+        update::<Result<DepositSuccess, BoomerangError>>(
+            &pic,
+            self.boomerang_id,
+            caller.into(),
+            "notify_icp_deposit",
+            caller,
         )
+        .await
         .expect("failed to decode result in notify_icp_deposit")
     }
 
-    pub fn notify_nicp_deposit(
+    pub async fn notify_nicp_deposit(
         &self,
         caller: Principal,
     ) -> Result<WithdrawalSuccess, BoomerangError> {
-        Decode!(
-            &assert_reply(
-                    self.env.execute_ingress_as(
-                        caller.into(),
-                        self.boomerang_id,
-                        "notify_nicp_deposit",
-                        Encode!(&(caller)).unwrap()
-                    )
-                    .expect("failed canister call in notify_nicp_deposit")
-            ),
-            Result<WithdrawalSuccess, BoomerangError>
+        let pic = self.env.lock().await;
+        update::<Result<WithdrawalSuccess, BoomerangError>>(
+            &pic,
+            self.boomerang_id,
+            caller.into(),
+            "notify_nicp_deposit",
+            caller,
         )
-        .expect("failed to decode result in notify_nicp_deposit")
+        .await
+        .expect("failed to decode result in notify_icp_deposit")
     }
 
-    fn get_staking_account(&self, caller: Principal) -> Account {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller.into(),
-                        self.boomerang_id,
-                        "get_staking_account",
-                        Encode!(&(caller)).unwrap()
-                    )
-                    .expect("failed canister call in get_staking_account")
-            ),
-            Account
+    async fn get_staking_account(&self, caller: Principal) -> Account {
+        let pic = self.env.lock().await;
+        update::<Account>(
+            &pic,
+            self.boomerang_id,
+            caller.into(),
+            "get_staking_account",
+            caller,
         )
-        .expect("failed to decode result in get_staking_account")
+        .await
+        .expect("failed to decode result in notify_icp_deposit")
     }
 
-    fn get_unstaking_account(&self, caller: Principal) -> Account {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller.into(),
-                        self.boomerang_id,
-                        "get_unstaking_account",
-                        Encode!(&(caller)).unwrap()
-                    )
-                    .expect("failed canister call in get_unstaking_account")
-            ),
-            Account
+    async fn get_unstaking_account(&self, caller: Principal) -> Account {
+        let pic = self.env.lock().await;
+        update::<Account>(
+            &pic,
+            self.boomerang_id,
+            caller.into(),
+            "get_unstaking_account",
+            caller,
         )
-        .expect("failed to decode result in get_unstaking_account")
+        .await
+        .expect("failed to decode result in notify_icp_deposit")
     }
 
-    pub fn icp_balance(&self, caller: Principal) -> Nat {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller.into(),
-                        self.icp_ledger_id,
-                        "icrc1_balance_of",
-                        Encode!(
-                            &(Account {
-                                owner: caller,
-                                subaccount: None
-                            })
-                        )
-                        .unwrap()
-                    )
-                    .expect("failed canister call in icp_balance")
-            ),
-            Nat
+    pub async fn icp_balance(&self, caller: Principal) -> Nat {
+        let pic = self.env.lock().await;
+        update::<Nat>(
+            &pic,
+            self.icp_ledger_id,
+            caller.into(),
+            "icrc1_balance_of",
+            &(Account {
+                owner: caller,
+                subaccount: None,
+            }),
         )
-        .expect("failed to decode result in icp_balance")
+        .await
+        .expect("failed to decode result in notify_icp_deposit")
     }
 
-    pub fn nicp_balance(&self, caller: Principal) -> Nat {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller.into(),
-                        self.nicp_ledger_id,
-                        "icrc1_balance_of",
-                        Encode!(
-                            &(Account {
-                                owner: caller,
-                                subaccount: None
-                            })
-                        )
-                        .unwrap()
-                    )
-                    .expect("failed canister call in nicp_balance")
-            ),
-            Nat
+    pub async fn nicp_balance(&self, caller: Principal) -> Nat {
+        let pic = self.env.lock().await;
+        update::<Nat>(
+            &pic,
+            self.nicp_ledger_id,
+            caller.into(),
+            "icrc1_balance_of",
+            &(Account {
+                owner: caller,
+                subaccount: None,
+            }),
         )
+        .await
         .expect("failed to decode result in nicp_balance")
     }
 
-    pub fn retrieve_nicp(&self, caller: Principal) -> Result<Nat, BoomerangError> {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller.into(),
-                        self.boomerang_id,
-                        "retrieve_nicp",
-                        Encode!(&(caller)).unwrap()
-                    )
-                    .expect("failed canister call in retrieve_nicp")
-            ),
-            Result<Nat, BoomerangError>
+    pub async fn retrieve_nicp(&self, caller: Principal) -> Result<Nat, BoomerangError> {
+        let pic = self.env.lock().await;
+        update::<Result<Nat, BoomerangError>>(
+            &pic,
+            self.boomerang_id,
+            caller.into(),
+            "retrieve_nicp",
+            caller,
         )
+        .await
         .expect("failed to decode result in retrieve_nicp")
     }
 
-    pub fn try_retrieve_icp(&self, caller: Principal) -> Result<Nat, BoomerangError> {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(
-                        caller.into(),
-                        self.boomerang_id,
-                        "try_retrieve_icp",
-                        Encode!(&(caller)).unwrap()
-                    )
-                    .expect("failed canister call in try_retrieve_icp")
-            ),
-            Result<Nat, BoomerangError>
+    pub async fn try_retrieve_icp(&self, caller: Principal) -> Result<Nat, BoomerangError> {
+        let pic = self.env.lock().await;
+        update::<Result<Nat, BoomerangError>>(
+            &pic,
+            self.boomerang_id,
+            caller.into(),
+            "try_retrieve_icp",
+            caller,
         )
-        .expect("failed to decode result in try_retrieve_icp")
+        .await
+        .expect("failed to decode result in retrieve_nicp")
     }
 }

@@ -124,7 +124,8 @@ lazy_static! {
         .expect("Failed to get workspace root")
         .workspace_root
         .into();
-    static ref BOOMERANG_WASM: Vec<u8> = get_wasm_sync(CanisterName::Local("boomerang".to_string()), false).unwrap();
+    static ref BOOMERANG_WASM: Vec<u8> =
+        get_wasm_sync(CanisterName::Local("boomerang".to_string()), false).unwrap();
     static ref WATER_NEURON_WASM: Vec<u8> =
         get_wasm_sync(CanisterName::Local("water_neuron".to_string()), true).unwrap();
     static ref SNS_MODULE_WASM: Vec<u8> =
@@ -215,7 +216,7 @@ async fn fetch_remote_wasm(canister: CanisterName) -> Result<PathBuf> {
         "https://download.dfinity.systems/ic/{}/canisters/{}",
         wasm.ic_version, wasm.name
     );
-    
+
     let response = reqwest::get(&url).await?;
     let data = response.bytes().await?.to_vec();
 

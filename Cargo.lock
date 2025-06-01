@@ -635,6 +635,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "boomerang"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_parser",
+ "ic-base-types",
+ "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ic-cdk",
+ "ic-icrc1-ledger",
+ "ic-management-canister-types-private",
+ "ic-nns-constants",
+ "ic-nns-governance",
+ "ic-sns-governance",
+ "ic-sns-init",
+ "ic-sns-root",
+ "ic-sns-swap",
+ "ic-state-machine-tests",
+ "ic_wasm_utils",
+ "icp-ledger",
+ "icrc-ledger-client-cdk",
+ "icrc-ledger-types",
+ "lazy_static",
+ "num-traits",
+ "pocket-ic",
+ "prost 0.12.6",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "water_neuron",
+]
+
+[[package]]
 name = "borsh"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
