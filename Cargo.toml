@@ -79,9 +79,3 @@ ic-utils-ensure = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7e
 icp-ledger = { git = "https://github.com/dfinity/ic", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 icrc-ledger-client-cdk = { git = "https://github.com/dfinity/ic", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 icrc-ledger-types = { git = "https://github.com/dfinity/ic", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
-
-#[patch.crates-io]
-#lmdb-rkv-sys = { git = "https://github.com/dfinity-lab/lmdb-rs", rev = "f62018b2deb79ea0d53914d5502389433fc3e6da", patches = [
-#    ".cargo/lmdb-patch.diff",
-#] }
-#
