@@ -1,6 +1,6 @@
 use candid::Encode;
 use candid::{CandidType, Principal};
-use ic_sns_governance::pb::v1::{
+use ic_sns_governance_api::pb::v1::{
     proposal::Action as ActionSns, ExecuteGenericNervousSystemFunction, Proposal as SnsProposal,
 };
 use minicbor::{Decode, Encode as CborEncode};

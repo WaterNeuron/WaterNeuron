@@ -138,7 +138,7 @@ pub async fn get_wasm_path(name: CanisterName, self_check: bool) -> Result<PathB
     }
 }
 
- fn get_wasm_path_sync(name: CanisterName, self_check: bool) -> Result<PathBuf> {
+pub fn get_wasm_path_sync(name: CanisterName, self_check: bool) -> Result<PathBuf> {
     match name {
         CanisterName::Local(name) => build_local_wasm(&name, self_check),
         _remote => unreachable!(),

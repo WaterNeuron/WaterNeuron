@@ -502,8 +502,8 @@ async fn neuron_8y_follows_6m() -> Result<(), String> {
 }
 
 async fn configure_sns_voting_neuron() {
-    use ic_sns_governance::pb::v1::manage_neuron::configure::Operation as OperationSns;
-    use ic_sns_governance::pb::v1::manage_neuron::{
+    use ic_sns_governance_api::pb::v1::manage_neuron::configure::Operation as OperationSns;
+    use ic_sns_governance_api::pb::v1::manage_neuron::{
         Command as CommandSns, Configure as ConfigureSns,
         IncreaseDissolveDelay as IncreaseDissolveDelaySns,
     };

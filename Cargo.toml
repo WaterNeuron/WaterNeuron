@@ -9,7 +9,7 @@ edition = "2021"
 [workspace.dependencies]
 assert_matches = "1.5.0"
 async-trait = "0.1.80"
-candid = "0.10.11"
+candid = "0.10.14"
 candid_parser = "0.1.4"
 ciborium = "0.2.1"
 clap = { version = "4.5.9", features = ["derive", "string"] }
@@ -67,8 +67,10 @@ ic-base-types = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7ea7
 ic-icrc1-ledger = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-management-canister-types-private = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-nns-constants = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
+ic-nns-common = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-nns-governance = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
+ic-sns-governance-api = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-sns-init = { git = "https://github.com/dfinity/ic.git", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 ic-sns-root = { git = "https://github.com/dfinity/ic.git", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 ic-sns-swap = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
