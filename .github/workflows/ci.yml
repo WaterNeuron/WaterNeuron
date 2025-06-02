@@ -20,6 +20,8 @@ jobs:
         run: nix develop -i -k HOME -c bash -c "cargo clippy"
       - name: Run `cargo fmt`
         run: nix develop -i -k HOME -c bash -c "cargo fmt --check"
+      - name: Run `cargo test`
+        run: nix develop -i -k HOME -c bash -c "cargo test"
       - name: Compile canisters
         run: ./build.sh
       - name: Upload artifacts

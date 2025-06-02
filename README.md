@@ -11,30 +11,8 @@ We recommend the Determinate Systems nix install tool which you can find [here](
 ./build.sh
 ```
 
-## Dev
-You need the following packages to run system tests.
-
 ```bash
-sudo apt update && sudo apt install \
-        curl \
-        git \
-        gcc \
-        lld \
-        sudo \
-        wget \
-        tree \
-        cmake \
-        wabt \
-        build-essential \
-        pkg-config \
-        libssl-dev \
-        libunwind-dev \
-        libusb-1.0-0-dev \
-        libsqlite3-dev \
-        zlib1g-dev \
-        libclang-18-dev \
-        protobuf-compiler \
-        llvm \
-        liblmdb-dev \
-        liblzma-dev
-``
+# run tests
+nix develop
+cargo t
+```
