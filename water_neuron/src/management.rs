@@ -1,21 +1,23 @@
-use crate::nns_types::manage_neuron::claim_or_refresh::{By, MemoAndController};
-use crate::nns_types::manage_neuron::configure::Operation;
-use crate::nns_types::manage_neuron::{
-    Command, Configure, Disburse, IncreaseDissolveDelay, Merge, NeuronIdOrSubaccount, Spawn, Split,
-    StartDissolving, StopDissolving,
-};
-use crate::nns_types::{
-    AccountIdentifier, DisburseResponse, Empty, GovernanceError, ListNeurons, ListNeuronsResponse,
-    ListProposalInfo, ListProposalInfoResponse, ManageNeuron, ManageNeuronResponse, Neuron,
-    NeuronId, ProposalId,
-};
+use crate::compute_neuron_staking_subaccount_bytes;
+use crate::nns_types::{NeuronId, ProposalId};
 use crate::state::{read_state, NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE};
-use crate::{compute_neuron_staking_subaccount_bytes, CommandResponse};
 use candid::{Nat, Principal};
+use ic_nns_governance_api::{
+    manage_neuron::{
+        claim_or_refresh::{By, MemoAndController},
+        configure::Operation,
+        ClaimOrRefresh, Command, Configure, Disburse, Follow, IncreaseDissolveDelay, Merge,
+        NeuronIdOrSubaccount, RegisterVote, Spawn, Split, StartDissolving, StopDissolving,
+    },
+    manage_neuron_response::{Command as CommandResponse, ConfigureResponse, DisburseResponse},
+    GovernanceError, ListNeurons, ListNeuronsResponse, ListProposalInfo, ListProposalInfoResponse,
+    ManageNeuron, ManageNeuronResponse, Neuron, Topic,
+};
 use ic_sns_governance_api::pb::v1::{
     manage_neuron::Command as SnsCommand, GetProposal, GetProposalResponse,
     ManageNeuron as ManageSnsNeuron, ManageNeuronResponse as ManageSnsNeuronResponse,
 };
+use icp_ledger::protobuf::AccountIdentifier;
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
@@ -128,13 +130,11 @@ pub async fn register_vote(
 
     let arg = ManageNeuron {
         id: None,
-        neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::NeuronId(neuron_id)),
-        command: Some(Command::RegisterVote(
-            crate::nns_types::manage_neuron::RegisterVote {
-                proposal: Some(proposal_id),
-                vote,
-            },
-        )),
+        neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::NeuronId(neuron_id.to_pb())),
+        command: Some(Command::RegisterVote(RegisterVote {
+            proposal: Some(proposal_id.to_pb()),
+            vote,
+        })),
     };
     let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
         ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "manage_neuron", (arg,))
@@ -174,15 +174,17 @@ pub async fn manage_neuron_sns(
 
 pub async fn follow_neuron(
     neuron_id: NeuronId,
-    topic: i32,
+    topic: Topic,
     neuron_to_follow: NeuronId,
 ) -> Result<ManageNeuronResponse, String> {
     let arg = ManageNeuron {
         id: None,
-        neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::NeuronId(neuron_id)),
-        command: Some(Command::Follow(crate::nns_types::manage_neuron::Follow {
-            topic,
-            followees: vec![neuron_to_follow],
+        neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::NeuronId(neuron_id.to_pb())),
+        command: Some(Command::Follow(Follow {
+            topic: topic as i32,
+            followees: vec![ic_nns_common::pb::v1::NeuronId {
+                id: neuron_to_follow.id,
+            }],
         })),
     };
     let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
@@ -259,7 +261,7 @@ async fn manage_neuron(
     neuron_nonce_or_id: NeuronNonceOrId,
 ) -> Result<ManageNeuronResponse, String> {
     let neuron_id_or_subaccount = match neuron_nonce_or_id {
-        NeuronNonceOrId::Id(neuron_id) => NeuronIdOrSubaccount::NeuronId(neuron_id),
+        NeuronNonceOrId::Id(neuron_id) => NeuronIdOrSubaccount::NeuronId(neuron_id.to_pb()),
         NeuronNonceOrId::Nonce(neuron_nonce) => {
             let subaccount = compute_neuron_staking_subaccount_bytes(ic_cdk::id(), neuron_nonce);
             NeuronIdOrSubaccount::Subaccount(subaccount.to_vec())
@@ -328,7 +330,7 @@ pub async fn merge_neuron_into_six_months(
     assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
     manage_neuron(
         Command::Merge(Merge {
-            source_neuron_id: Some(neuron_id),
+            source_neuron_id: Some(neuron_id.to_pb()),
         }),
         NeuronNonceOrId::Nonce(SIX_MONTHS_NEURON_NONCE),
     )
@@ -338,7 +340,7 @@ pub async fn merge_neuron_into_six_months(
 #[derive(Debug)]
 pub enum SpawnMaturityError {
     FailedToCall(String),
-    UnexpectedAnswer(ManageNeuronResponse),
+    UnexpectedAnswer(Box<ManageNeuronResponse>),
 }
 
 impl From<String> for SpawnMaturityError {
@@ -359,17 +361,19 @@ pub async fn spawn_all_maturity(neuron_id: NeuronId) -> Result<NeuronId, SpawnMa
     .await?;
     if let Some(CommandResponse::Spawn(spawn_response)) = manage_neuron_response.command.clone() {
         if let Some(neuron_id) = spawn_response.created_neuron_id {
-            return Ok(neuron_id);
+            return Ok(NeuronId { id: neuron_id.id });
         }
     }
 
-    Err(SpawnMaturityError::UnexpectedAnswer(manage_neuron_response))
+    Err(SpawnMaturityError::UnexpectedAnswer(Box::new(
+        manage_neuron_response,
+    )))
 }
 
 #[derive(Debug)]
 pub enum StartDissolvingError {
     FailedToCall(String),
-    UnexpectedAnswer(ManageNeuronResponse),
+    UnexpectedAnswer(Box<ManageNeuronResponse>),
     NotAllowedToDissolve(String),
 }
 
@@ -393,18 +397,18 @@ pub async fn start_dissolving(neuron_id: NeuronId) -> Result<(), StartDissolving
         NeuronNonceOrId::Id(neuron_id),
     )
     .await?;
-    if Some(CommandResponse::Configure(Empty {})) == manage_neuron_response.command {
+    if Some(CommandResponse::Configure(ConfigureResponse {})) == manage_neuron_response.command {
         return Ok(());
     }
-    Err(StartDissolvingError::UnexpectedAnswer(
+    Err(StartDissolvingError::UnexpectedAnswer(Box::new(
         manage_neuron_response,
-    ))
+    )))
 }
 
 #[derive(Debug)]
 pub enum DisburseError {
     FailedToCall(String),
-    UnexpectedAnswer(ManageNeuronResponse),
+    UnexpectedAnswer(Box<ManageNeuronResponse>),
 }
 
 impl From<String> for DisburseError {
@@ -431,21 +435,21 @@ pub async fn disburse(
     if let Some(CommandResponse::Disburse(disburse_response)) = manage_neuron_response.command {
         return Ok(disburse_response);
     }
-    Err(DisburseError::UnexpectedAnswer(manage_neuron_response))
+    Err(DisburseError::UnexpectedAnswer(Box::new(
+        manage_neuron_response,
+    )))
 }
 
 pub async fn refresh_neuron(neuron_nonce: u64) -> Result<ManageNeuronResponse, String> {
     let arg = ManageNeuron {
         id: None,
         neuron_id_or_subaccount: None,
-        command: Some(Command::ClaimOrRefresh(
-            crate::nns_types::manage_neuron::ClaimOrRefresh {
-                by: Some(By::MemoAndController(MemoAndController {
-                    controller: Some(ic_cdk::id()),
-                    memo: neuron_nonce,
-                })),
-            },
-        )),
+        command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
+            by: Some(By::MemoAndController(MemoAndController {
+                controller: Some(ic_base_types::PrincipalId::from(ic_cdk::id())),
+                memo: neuron_nonce,
+            })),
+        })),
     };
     let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
         ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "manage_neuron", (arg,))

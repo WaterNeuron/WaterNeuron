@@ -1,13 +1,15 @@
 use crate::management::{get_sns_proposal, list_proposals, manage_neuron_sns};
-use crate::nns_types::{convert_nns_proposal_to_sns_proposal, ListProposalInfo};
+use crate::nns_types::{convert_nns_proposal_to_sns_proposal, ProposalId};
 use crate::{
     compute_neuron_staking_subaccount_bytes, mutate_state, process_event, read_state,
-    register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType, ProposalId,
-    TaskType, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
+    register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType, TaskType, INFO,
+    ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
 };
 use ic_canister_log::log;
-use ic_sns_governance_api::pb::v1::manage_neuron::Command as CommandSns;
-use ic_sns_governance_api::pb::v1::manage_neuron_response::Command as CommandSnsResponse;
+use ic_nns_governance_api::ListProposalInfo;
+use ic_sns_governance_api::pb::v1::{
+    manage_neuron::Command as CommandSns, manage_neuron_response::Command as CommandSnsResponse,
+};
 
 const BATCH_SIZE_LIMIT: u32 = 100;
 const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;
@@ -28,9 +30,11 @@ pub async fn mirror_proposals() -> Result<(), String> {
     match list_proposals(list_proposals_args).await {
         Ok(mut pending_proposals) => {
             read_state(|s| {
-                pending_proposals
-                    .proposal_info
-                    .retain(|p| !s.proposals.contains_key(&p.id.clone().unwrap()))
+                pending_proposals.proposal_info.retain(|p| {
+                    !s.proposals.contains_key(&ProposalId {
+                        id: p.id.unwrap().id,
+                    })
+                })
             });
             log!(
                 INFO,
@@ -43,7 +47,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
             });
 
             for proposal_info in pending_proposals.proposal_info {
-                let proposal_id = match proposal_info.id.clone() {
+                let proposal_id = match proposal_info.id {
                     Some(proposal_id) => proposal_id,
                     None => {
                         log!(INFO, "[mirror_proposals] bug: found a proposal without id",);
@@ -79,7 +83,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
                                     process_event(
                                         s,
                                         EventType::MirroredProposal {
-                                            nns_proposal_id: proposal_id.clone(),
+                                            nns_proposal_id: ProposalId { id: proposal_id.id },
                                             sns_proposal_id: crate::ProposalId {
                                                 id: sns_proposal_id.id,
                                             },
@@ -144,6 +148,7 @@ pub async fn vote_on_nns_proposals() {
                     Some(proposal_id) => proposal_id,
                     None => continue,
                 };
+                let proposal_id = ProposalId { id: proposal_id.id };
                 let diff_secs = deadline_timestamp_seconds
                     .saturating_sub(timestamp_nanos() / SEC_NANOS)
                     .saturating_sub(ONE_HOUR_SECONDS);
