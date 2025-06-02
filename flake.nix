@@ -49,8 +49,6 @@
           src = pkgs.fetchurl {
             url =
               "https://github.com/dfinity/pocketic/releases/download/${pocketIcVersion}/pocket-ic-x86_64-${platform}.gz";
-            # Replace with the real hash (run `nix-prefetch-url --unpack <url>`
-            # once per platform).  This placeholder lets the flake evaluate.
             sha256 = "sha256-CTXubs4xJxmq5Oq93sLfxq801e2930069TvM0bNjYEQ=";
           };
           phases = [ "unpackPhase" "installPhase" ];
@@ -69,32 +67,30 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            # binaries
             which curl git gcc wabt ic-wasm pkg-config protobuf
 
-            # toolchain
             rustToolchain
 
-            # libraries
             libunwind lmdb
 
             llvmPackages_18.clang
-            llvmPkgs.libclang          # the .so that bindgen dlopens
-            stdenv.cc.cc.lib           # brings in libstdc++.so.6
+            llvmPkgs.libclang
+            stdenv.cc.cc.lib
 
             pocket-ic
           ];
 
           TZ = "UTC";
 
-          # Tell bindgen exactly where libclang lives
           LIBCLANG_PATH = "${llvmPkgs.libclang.lib}/lib";
 
-          # Make sure the loader can find libstdc++ (and libclang itself)
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
             llvmPkgs.libclang
-            pkgs.stdenv.cc.cc.lib      # ← qualified with `pkgs.` (fix)
+            pkgs.stdenv.cc.cc.lib
           ];
+
+          LMDB_H_PATH             = "${pkgs.lmdb.dev}/include/lmdb.h";
+          BINDGEN_EXTRA_CLANG_ARGS = "-I${pkgs.lmdb.dev}/include";
 
           POCKET_IC_BIN = "${pocket-ic}/bin/pocket-ic";
         };
