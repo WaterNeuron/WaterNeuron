@@ -32,7 +32,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
             read_state(|s| {
                 pending_proposals.proposal_info.retain(|p| {
                     !s.proposals.contains_key(&ProposalId {
-                        id: p.id.clone().unwrap().id,
+                        id: p.id.unwrap().id,
                     })
                 })
             });
@@ -47,7 +47,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
             });
 
             for proposal_info in pending_proposals.proposal_info {
-                let proposal_id = match proposal_info.id.clone() {
+                let proposal_id = match proposal_info.id {
                     Some(proposal_id) => proposal_id,
                     None => {
                         log!(INFO, "[mirror_proposals] bug: found a proposal without id",);
@@ -83,9 +83,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
                                     process_event(
                                         s,
                                         EventType::MirroredProposal {
-                                            nns_proposal_id: ProposalId {
-                                                id: proposal_id.clone().id,
-                                            },
+                                            nns_proposal_id: ProposalId { id: proposal_id.id },
                                             sns_proposal_id: crate::ProposalId {
                                                 id: sns_proposal_id.id,
                                             },

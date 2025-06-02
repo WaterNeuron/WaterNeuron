@@ -340,7 +340,7 @@ pub async fn merge_neuron_into_six_months(
 #[derive(Debug)]
 pub enum SpawnMaturityError {
     FailedToCall(String),
-    UnexpectedAnswer(ManageNeuronResponse),
+    UnexpectedAnswer(Box<ManageNeuronResponse>),
 }
 
 impl From<String> for SpawnMaturityError {
@@ -365,13 +365,15 @@ pub async fn spawn_all_maturity(neuron_id: NeuronId) -> Result<NeuronId, SpawnMa
         }
     }
 
-    Err(SpawnMaturityError::UnexpectedAnswer(manage_neuron_response))
+    Err(SpawnMaturityError::UnexpectedAnswer(Box::new(
+        manage_neuron_response,
+    )))
 }
 
 #[derive(Debug)]
 pub enum StartDissolvingError {
     FailedToCall(String),
-    UnexpectedAnswer(ManageNeuronResponse),
+    UnexpectedAnswer(Box<ManageNeuronResponse>),
     NotAllowedToDissolve(String),
 }
 
@@ -398,15 +400,15 @@ pub async fn start_dissolving(neuron_id: NeuronId) -> Result<(), StartDissolving
     if Some(CommandResponse::Configure(ConfigureResponse {})) == manage_neuron_response.command {
         return Ok(());
     }
-    Err(StartDissolvingError::UnexpectedAnswer(
+    Err(StartDissolvingError::UnexpectedAnswer(Box::new(
         manage_neuron_response,
-    ))
+    )))
 }
 
 #[derive(Debug)]
 pub enum DisburseError {
     FailedToCall(String),
-    UnexpectedAnswer(ManageNeuronResponse),
+    UnexpectedAnswer(Box<ManageNeuronResponse>),
 }
 
 impl From<String> for DisburseError {
@@ -433,7 +435,9 @@ pub async fn disburse(
     if let Some(CommandResponse::Disburse(disburse_response)) = manage_neuron_response.command {
         return Ok(disburse_response);
     }
-    Err(DisburseError::UnexpectedAnswer(manage_neuron_response))
+    Err(DisburseError::UnexpectedAnswer(Box::new(
+        manage_neuron_response,
+    )))
 }
 
 pub async fn refresh_neuron(neuron_nonce: u64) -> Result<ManageNeuronResponse, String> {

@@ -64,14 +64,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 
-// #[derive(Debug, candid::CandidType, candid::Deserialize, Clone, PartialEq)]
-// pub struct ListTopicsResponse {
-//     pub topics: Option<Vec<TopicInfo<NervousSystemFunctions>>>,
-
-//     /// Functions that are not categorized into any topic.
-//     pub uncategorized_functions: Option<Vec<NervousSystemFunction>>,
-// }
-
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 
 pub fn sha256_hash(data: Vec<u8>) -> Vec<u8> {
@@ -1974,12 +1966,6 @@ async fn should_mirror_proposal() {
     let mut water_neuron = WaterNeuron::new().await;
     water_neuron.with_voting_topic().await;
 
-    // dbg!(
-    //     water_neuron
-    //         .list_topics(water_neuron.wtn_governance_id)
-    //         .await
-    // );
-
     let water_neuron_principal: Principal = water_neuron.water_neuron_id.into();
     let caller = PrincipalId::new_user_test_id(212);
 
@@ -2296,14 +2282,18 @@ async fn should_distribute_icp_to_sns_neurons() {
 
     assert_eq!(water_neuron.get_events().await.total_event_count, 8);
 
-    // assert_eq!(water_neuron.update(
-    //         PrincipalId::from(caller),
-    //         water_neuron.water_neuron_id,
-    //         "claim_airdrop",
-    //         Encode!(&caller).unwrap()
-    //     ).await , Err(
-    //         UserError::new(CanisterCalledTrap, "Canister r7inp-6aaaa-aaaaa-aaabq-cai trapped explicitly: all rewards must be allocated before being claimable".to_string())
-    //     ));
+    {
+        let pic = water_neuron.env.lock().await;
+        assert_eq!(update::<Result<u64, ConversionError>>(
+            &pic,
+            water_neuron.water_neuron_id,
+            caller.into(),
+            "claim_airdrop",
+            caller
+        ).await , Err(
+           "Failed to call claim_airdrop of 7uieb-cx777-77776-qaaaq-cai with error: IC0503: Error from Canister 7uieb-cx777-77776-qaaaq-cai: Canister called `ic0.trap` with message: all rewards must be allocated before being claimable.\nConsider gracefully handling failures from this canister or altering the canister to handle exceptions. See documentation: http://internetcomputer.org/docs/current/references/execution-errors#trapped-explicitly"
+           .to_string()));
+    }
 
     water_neuron
         .approve(
