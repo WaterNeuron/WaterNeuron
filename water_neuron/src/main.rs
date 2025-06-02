@@ -3,6 +3,9 @@ use ic_canister_log::log;
 use ic_cdk_macros::{init, post_upgrade, query, update};
 use ic_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_metrics_encoder::MetricsEncoder;
+use ic_nns_governance_api::{
+    manage_neuron_response::MergeResponse, GovernanceError, ManageNeuronResponse, Neuron,
+};
 use icrc_ledger_types::icrc1::account::Account;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
 use water_neuron::dashboard::DisplayAmount;
@@ -10,9 +13,7 @@ use water_neuron::guards::GuardPrincipal;
 use water_neuron::icrc21::{ConsentInfo, ConsentMessageRequest, Icrc21Error, StandardRecord};
 use water_neuron::logs::INFO;
 use water_neuron::management::register_vote;
-use water_neuron::nns_types::{
-    GovernanceError, ManageNeuronResponse, MergeResponse, Neuron, NeuronId, ProposalId,
-};
+use water_neuron::nns_types::{NeuronId, ProposalId};
 use water_neuron::numeric::{ICP, WTN};
 use water_neuron::sns_distribution::compute_rewards;
 use water_neuron::state::audit::{process_event, replay_events};

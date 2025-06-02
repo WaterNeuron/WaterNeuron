@@ -1,5 +1,8 @@
 use candid::Encode;
 use candid::{CandidType, Principal};
+use ic_nns_governance_api::{
+    Neuron as PbNeuron, NeuronState as PbNeuronState, ProposalInfo as ProposalInfoPb,
+};
 use ic_sns_governance_api::pb::v1::{
     proposal::Action as ActionSns, ExecuteGenericNervousSystemFunction, Proposal as SnsProposal,
 };
@@ -7,6 +10,51 @@ use minicbor::{Decode, Encode as CborEncode};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
 use strum_macros::EnumIter;
+
+pub fn time_left_seconds(neuron: &PbNeuron, now_secs: u64) -> Option<u64> {
+    match neuron.dissolve_state {
+        Some(ic_nns_governance_api::neuron::DissolveState::DissolveDelaySeconds(d)) => Some(d),
+        Some(ic_nns_governance_api::neuron::DissolveState::WhenDissolvedTimestampSeconds(ts)) => {
+            if ts > now_secs {
+                Some(ts - now_secs)
+            } else {
+                Some(0)
+            }
+        }
+        None => None,
+    }
+}
+
+pub fn state(neuron: &PbNeuron, now_seconds: u64) -> PbNeuronState {
+    if neuron.spawn_at_timestamp_seconds.is_some() {
+        return PbNeuronState::Spawning;
+    }
+    match neuron.dissolve_state {
+        Some(ic_nns_governance_api::neuron::DissolveState::DissolveDelaySeconds(d)) => {
+            if d > 0 {
+                PbNeuronState::NotDissolving
+            } else {
+                PbNeuronState::Dissolved
+            }
+        }
+        Some(ic_nns_governance_api::neuron::DissolveState::WhenDissolvedTimestampSeconds(ts)) => {
+            if ts > now_seconds {
+                PbNeuronState::Dissolving
+            } else {
+                PbNeuronState::Dissolved
+            }
+        }
+        None => PbNeuronState::Dissolved,
+    }
+}
+
+pub fn is_dissolved(neuron: &PbNeuron, current_ts: u64) -> bool {
+    let now_seconds = current_ts / crate::SEC_NANOS;
+    if neuron.state(now_seconds) == PbNeuronState::Dissolved {
+        return true;
+    }
+    false
+}
 
 // Custom SNS function to vote on an NNS proposal.
 // https://nns.ic0.app/proposal/?u=jmod6-4iaaa-aaaaq-aadkq-cai&proposal=3
@@ -510,7 +558,7 @@ pub struct ProposalInfo {
     pub executed_timestamp_seconds: u64,
 }
 
-pub fn convert_nns_proposal_to_sns_proposal(proposal_info: &ProposalInfo) -> Option<SnsProposal> {
+pub fn convert_nns_proposal_to_sns_proposal(proposal_info: &ProposalInfoPb) -> Option<SnsProposal> {
     match &proposal_info.proposal {
         Some(proposal) => {
             let original_title = proposal.title.clone().unwrap_or_default();
@@ -912,6 +960,10 @@ impl NeuronId {
     pub fn to_dashboard_link(&self) -> String {
         format!("https://dashboard.internetcomputer.org/neuron/{}", self.id)
     }
+
+    pub fn to_pb(&self) -> ic_nns_common::pb::v1::NeuronId {
+        ic_nns_common::pb::v1::NeuronId { id: self.id }
+    }
 }
 
 impl From<u64> for NeuronId {
@@ -937,6 +989,12 @@ impl From<u64> for NeuronId {
 pub struct ProposalId {
     #[n(0)]
     pub id: u64,
+}
+
+impl ProposalId {
+    pub fn to_pb(&self) -> ic_nns_common::pb::v1::ProposalId {
+        ic_nns_common::pb::v1::ProposalId { id: self.id }
+    }
 }
 
 impl From<u64> for ProposalId {

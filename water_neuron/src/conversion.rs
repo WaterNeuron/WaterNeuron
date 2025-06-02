@@ -1,7 +1,7 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::INFO;
 use crate::management::{merge_neuron_into_six_months, stop_dissolvement};
-use crate::nns_types::{CommandResponse, MergeResponse, NeuronId};
+use crate::nns_types::{time_left_seconds, NeuronId};
 use crate::numeric::{nICP, ICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
@@ -13,6 +13,9 @@ use crate::{
 };
 use candid::Nat;
 use ic_canister_log::log;
+use ic_nns_governance_api::{
+    manage_neuron_response::Command as CommandResponse, manage_neuron_response::MergeResponse,
+};
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
@@ -29,7 +32,7 @@ pub async fn cancel_withdrawal(
 
     match get_full_neuron(neuron_id.id).await {
         Ok(result) => match result {
-            Ok(neuron) => match neuron.time_left_seconds(timestamp_nanos() / crate::SEC_NANOS) {
+            Ok(neuron) => match time_left_seconds(&neuron, timestamp_nanos() / crate::SEC_NANOS) {
                 Some(time) => {
                     if time < ONE_DAY_SECONDS * 14 {
                         return Err(CancelWithdrawalError::TooLate);
@@ -92,7 +95,7 @@ pub async fn cancel_withdrawal(
             });
             schedule_now(TaskType::ProcessPendingTransfers);
             schedule_now(TaskType::RefreshShortTerm);
-            Ok(*response)
+            Ok(response)
         }
         CommandResponse::Error(e) => Err(CancelWithdrawalError::GovernanceError(e)),
         other => Err(CancelWithdrawalError::BadCommand {

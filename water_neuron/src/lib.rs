@@ -6,10 +6,7 @@ use crate::management::{
     increase_dissolve_delay, list_neurons, manage_neuron_sns, refresh_neuron, register_vote,
     spawn_all_maturity, split_neuron, start_dissolving, transfer,
 };
-use crate::nns_types::{
-    neuron::DissolveState, CommandResponse, GovernanceError, ListNeurons, NeuronId, ProposalId,
-    TOPIC_GOVERNANCE, TOPIC_SNS_AND_COMMUNITY_FUND, TOPIC_UNSPECIFIED,
-};
+use crate::nns_types::{is_dissolved, NeuronId, ProposalId};
 use crate::numeric::{nICP, ICP};
 use crate::proposal::{early_voting_on_nns_proposals, mirror_proposals, vote_on_nns_proposals};
 use crate::sns_governance::{CanisterRuntime, IcCanisterRuntime, WTN_MAX_DISSOLVE_DELAY_SECONDS};
@@ -23,6 +20,10 @@ use crate::storage::{get_rewards_ready_to_be_distributed, stable_sub_rewards};
 use crate::tasks::{schedule_after, schedule_now, TaskType};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_canister_log::log;
+use ic_nns_governance_api::{
+    manage_neuron_response::Command as CommandResponse, neuron::DissolveState, GovernanceError,
+    ListNeurons, Topic,
+};
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferError;
@@ -244,7 +245,7 @@ pub enum ConversionError {
     GenericError { code: i32, message: String },
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum CancelWithdrawalError {
     GuardError { guard_error: GuardError },
     GenericError { code: i32, message: String },
@@ -490,13 +491,13 @@ async fn neuron_8y_follows_6m() -> Result<(), String> {
     // following. That is, if no followees are specified for a given
     // topic, the followees for this topic are used instead.
     // https://github.com/dfinity/ic/blob/master/rs/nns/governance/proto/ic_nns_governance/pb/v1/governance.proto#L45
-    follow_neuron(neuron_id_8y, TOPIC_UNSPECIFIED, neuron_id_6m).await?;
+    follow_neuron(neuron_id_8y, Topic::Unspecified, neuron_id_6m).await?;
 
     // For the GOVERNANCE and the SNS topics, the default following doesn't apply.
     // We need to also follow the 6 months neuron with those topics.
     // https://github.com/dfinity/ic/blob/17df8febdb922c3981475035d830f09d9b990a5a/rs/nns/governance/src/governance.rs#L5408
-    follow_neuron(neuron_id_8y, TOPIC_GOVERNANCE, neuron_id_6m).await?;
-    follow_neuron(neuron_id_8y, TOPIC_SNS_AND_COMMUNITY_FUND, neuron_id_6m).await?;
+    follow_neuron(neuron_id_8y, Topic::Governance, neuron_id_6m).await?;
+    follow_neuron(neuron_id_8y, Topic::SnsAndCommunityFund, neuron_id_6m).await?;
 
     Ok(())
 }
@@ -680,7 +681,7 @@ async fn initialize_main_neuron(
                     );
                 }
             }
-            Ok(neuron_id)
+            Ok(NeuronId { id: neuron_id.id })
         }
         Err(error) => Err(format!("failed to get full neuron with error: {error:?}")),
     }
@@ -748,15 +749,21 @@ async fn process_disburse() {
         match list_neurons(ListNeurons {
             neuron_ids: chunk,
             include_neurons_readable_by_caller: false,
+            include_empty_neurons_readable_by_caller: None,
+            include_public_neurons_in_full_neurons: None,
+            page_number: None,
+            page_size: None,
+            neuron_subaccounts: None,
         })
         .await
         {
             Ok(response) => {
                 for neuron in response.full_neurons {
-                    if !neuron.is_dissolved(timestamp_nanos()) {
+                    if !is_dissolved(&neuron, timestamp_nanos()) {
                         continue;
                     }
                     if let Some(neuron_id) = neuron.id {
+                        let neuron_id = NeuronId { id: neuron_id.id };
                         if let Some(req) = read_state(|s| s.to_disburse.get(&neuron_id).cloned()) {
                             log!(
                                 INFO,
@@ -989,7 +996,9 @@ pub async fn process_witdhrawals_splitting() {
                                     s,
                                     EventType::SplitNeuron {
                                         withdrawal_id: request.withdrawal_id,
-                                        neuron_id: created_neuron_id,
+                                        neuron_id: NeuronId {
+                                            id: created_neuron_id.id,
+                                        },
                                     },
                                 );
                             });

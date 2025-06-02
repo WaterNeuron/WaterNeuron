@@ -1,10 +1,4 @@
 use crate::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
-use crate::nns_types::{
-    manage_neuron, manage_neuron::claim_or_refresh,
-    manage_neuron::claim_or_refresh::MemoAndController, neuron, proposal::Action,
-    ClaimOrRefreshResponse, CommandResponse, GovernanceError, ManageNeuron, ManageNeuronResponse,
-    MergeResponse, Neuron, Proposal, ProposalInfo,
-};
 use crate::sns_distribution::EXPECTED_INITIAL_BALANCE;
 use crate::state::event::{GetEventsArg, GetEventsResult};
 use crate::state::{
@@ -27,6 +21,17 @@ use ic_icrc1_ledger::{
 };
 use ic_nns_constants::{CYCLES_LEDGER_CANISTER_ID, GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
 use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
+use ic_nns_governance_api::{
+    manage_neuron,
+    manage_neuron::claim_or_refresh,
+    manage_neuron::claim_or_refresh::MemoAndController,
+    manage_neuron_response::{
+        ClaimOrRefreshResponse, Command as CommandResponse, MergeResponse
+    },
+    neuron,
+    proposal::Action,
+    GovernanceError, ManageNeuron, ManageNeuronResponse, Motion, Neuron, Proposal, ProposalInfo,
+};
 use ic_sns_governance::init::GovernanceCanisterInitPayloadBuilder;
 use ic_sns_governance::pb::v1::{
     governance::Version, neuron::DissolveState, Neuron as SnsNeuron, NeuronId as SnsNeuronId,
@@ -142,7 +147,7 @@ async fn nns_governance_make_proposal(
     neuron_id: NeuronId,
     proposal: &Proposal,
 ) -> ManageNeuronResponse {
-    let command = manage_neuron::Command::MakeProposal(*Box::new(proposal.clone()));
+    let command = manage_neuron::Command::MakeProposal(Box::new(proposal.clone()));
 
     manage_neuron(state_machine, sender, neuron_id, command).await
 }
@@ -158,7 +163,7 @@ async fn manage_neuron(
         GOVERNANCE_CANISTER_ID.into(),
         "manage_neuron",
         ManageNeuron {
-            id: Some(neuron_id),
+            id: Some(neuron_id.to_pb()),
             command: Some(command),
             neuron_id_or_subaccount: None,
         },
@@ -203,7 +208,7 @@ async fn nns_claim_or_refresh_neuron(
         })) => neuron_id,
         _ => panic!("{:?}", result),
     };
-    *neuron_id
+    NeuronId { id: neuron_id.id }
 }
 
 async fn nns_increase_dissolve_delay(
@@ -1313,7 +1318,7 @@ async fn e2e_basic() {
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::Motion(crate::nns_types::Motion {
+        action: Some(Action::Motion(Motion {
             motion_text: "".to_string(),
         })),
     };
@@ -1767,7 +1772,7 @@ async fn should_cancel_withdrawal_while_voting() {
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::Motion(crate::nns_types::Motion {
+        action: Some(Action::Motion(Motion {
             motion_text: "".to_string(),
         })),
     };
@@ -1801,13 +1806,14 @@ async fn should_cancel_withdrawal_while_voting() {
         .await;
     assert_eq!(proposals.proposals.len(), 2);
 
-    use crate::nns_types::Empty;
-    use crate::CommandResponse::RegisterVote;
-
     assert_eq!(
         water_neuron.approve_proposal(proposal_id.id).await,
         Ok(ManageNeuronResponse {
-            command: Some(RegisterVote(Empty {}))
+            command: Some(
+                ic_nns_governance_api::manage_neuron_response::Command::RegisterVote(
+                    ic_nns_governance_api::manage_neuron_response::RegisterVoteResponse {}
+                )
+            )
         })
     );
 
@@ -1831,7 +1837,7 @@ async fn should_cancel_withdrawal_while_voting() {
             let target_neuron_info = response.target_neuron_info.unwrap().clone();
             let source_neuron_info = response.source_neuron_info.unwrap().clone();
             let target_neuron = response.target_neuron.unwrap().clone();
-            assert_eq!(target_neuron.id.unwrap(), info.neuron_id_6m.unwrap());
+            assert_eq!(target_neuron.id.unwrap().id, info.neuron_id_6m.unwrap().id);
             assert_eq!(
                 target_neuron_info.dissolve_delay_seconds,
                 15_865_200 // 6 months
@@ -1908,7 +1914,7 @@ async fn should_cancel_withdrawal() {
             let target_neuron_info = response.target_neuron_info.unwrap().clone();
             let source_neuron_info = response.source_neuron_info.unwrap().clone();
             let target_neuron = response.target_neuron.unwrap().clone();
-            assert_eq!(target_neuron.id.unwrap(), info.neuron_id_6m.unwrap());
+            assert_eq!(target_neuron.id.unwrap().id, info.neuron_id_6m.unwrap().id);
             assert_eq!(
                 target_neuron_info.dissolve_delay_seconds,
                 15_865_200 // 6 months
@@ -2054,7 +2060,7 @@ async fn should_mirror_proposal() {
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::Motion(crate::nns_types::Motion {
+        action: Some(Action::Motion(Motion {
             motion_text: "".to_string(),
         })),
     };
@@ -2105,13 +2111,14 @@ async fn should_mirror_proposal() {
         .await
         .is_err());
 
-    use crate::nns_types::Empty;
-    use crate::CommandResponse::RegisterVote;
-
     assert_eq!(
         water_neuron.approve_proposal(proposal_id.id).await,
         Ok(ManageNeuronResponse {
-            command: Some(RegisterVote(Empty {}))
+            command: Some(
+                ic_nns_governance_api::manage_neuron_response::Command::RegisterVote(
+                    ic_nns_governance_api::manage_neuron_response::RegisterVoteResponse {}
+                )
+            )
         })
     );
 
@@ -2641,7 +2648,7 @@ async fn should_mirror_all_proposals() {
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::Motion(crate::nns_types::Motion {
+        action: Some(Action::Motion(Motion {
             motion_text: "Some text".to_string(),
         })),
     });
@@ -2652,7 +2659,7 @@ async fn should_mirror_all_proposals() {
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
         action: Some(Action::ManageNetworkEconomics(
-            crate::nns_types::NetworkEconomics {
+            ic_nns_governance_api::NetworkEconomics {
                 reject_cost_e8s: 0,
                 neuron_minimum_stake_e8s: 0,
                 neuron_management_fee_per_proposal_e8s: 0,
@@ -2661,6 +2668,8 @@ async fn should_mirror_all_proposals() {
                 maximum_node_provider_rewards_e8s: 0,
                 transaction_fee_e8s: 0,
                 max_proposals_to_keep_per_topic: 0,
+                voting_power_economics: None,
+                neurons_fund_economics: None,
             },
         )),
     });
@@ -2671,7 +2680,7 @@ async fn should_mirror_all_proposals() {
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
         action: Some(Action::ManageNetworkEconomics(
-            crate::nns_types::NetworkEconomics {
+            ic_nns_governance_api::NetworkEconomics {
                 reject_cost_e8s: 0,
                 neuron_minimum_stake_e8s: 0,
                 neuron_management_fee_per_proposal_e8s: 0,
@@ -2680,6 +2689,8 @@ async fn should_mirror_all_proposals() {
                 maximum_node_provider_rewards_e8s: 0,
                 transaction_fee_e8s: 0,
                 max_proposals_to_keep_per_topic: 0,
+                voting_power_economics: None,
+                neurons_fund_economics: None,
             },
         )),
     });

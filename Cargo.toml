@@ -69,12 +69,12 @@ ic-management-canister-types-private = { git = "https://github.com/dfinity/ic.gi
 ic-nns-constants = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-nns-common = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-nns-governance = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
+ic-nns-governance-api = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-sns-governance-api = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
 ic-sns-init = { git = "https://github.com/dfinity/ic.git", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 ic-sns-root = { git = "https://github.com/dfinity/ic.git", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 ic-sns-swap = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic.git", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 ic-utils-ensure = { git = "https://github.com/dfinity/ic", rev = "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 icp-ledger = { git = "https://github.com/dfinity/ic", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}
 icrc-ledger-client-cdk = { git = "https://github.com/dfinity/ic", rev =  "250daf4dd0cf7ea74c496b45457dd47ced16368c"}

@@ -1,4 +1,5 @@
-type Account = record { owner : principal; subaccount : opt blob };
+type Account = record { owner : opt principal; subaccount : opt blob };
+type Account_1 = record { owner : principal; subaccount : opt blob };
 type BallotInfo = record { vote : int32; proposal_id : opt NeuronId };
 type CancelWithdrawalError = variant {
   GenericError : record { code : int32; message : text };
@@ -14,7 +15,7 @@ type CancelWithdrawalError = variant {
   GetFullNeuronError : record { message : text };
 };
 type CanisterInfo = record {
-  neuron_6m_account : Account;
+  neuron_6m_account : Account_1;
   latest_distribution_icp_per_vp : opt float64;
   neuron_id_6m : opt NeuronId;
   neuron_id_8y : opt NeuronId;
@@ -22,7 +23,7 @@ type CanisterInfo = record {
   minimum_withdraw_amount : nat64;
   neuron_8y_stake_e8s : nat64;
   governance_fee_share_percent : nat64;
-  neuron_8y_account : Account;
+  neuron_8y_account : Account_1;
   minimum_deposit_amount : nat64;
   neuron_6m_stake_e8s : nat64;
   exchange_rate : nat64;
@@ -90,17 +91,16 @@ type EventType = variant {
   };
   NeuronEightYears : NeuronId;
   DistributeICPtoSNS : record { amount : nat64; receiver : principal };
-  DistributeICPtoSNSv2;
   NIcpWithdrawal : record {
     nicp_burned : nat64;
     nicp_burn_index : nat64;
-    receiver : Account;
+    receiver : Account_1;
   };
   MergeNeuron : record { neuron_id : NeuronId };
   IcpDeposit : record {
     block_index : nat64;
     amount : nat64;
-    receiver : Account;
+    receiver : Account_1;
   };
   DisbursedUserNeuron : record {
     withdrawal_id : nat64;
@@ -116,6 +116,7 @@ type EventType = variant {
     sns_gov_amount : nat64;
     from_neuron_type : NeuronOrigin;
   };
+  DistributeICPtoSNSv2;
   SplitNeuron : record { withdrawal_id : nat64; neuron_id : NeuronId };
 };
 type ExecutedTransfer = record {
@@ -142,6 +143,12 @@ type InitArg = record {
 type KnownNeuronData = record { name : text; description : opt text };
 type LineDisplayPage = record { lines : vec text };
 type LiquidArg = variant { Upgrade : opt UpgradeArg; Init : InitArg };
+type MaturityDisbursement = record {
+  timestamp_of_disbursement_seconds : opt nat64;
+  amount_e8s : opt nat64;
+  account_to_disburse_to : opt Account;
+  finalize_disbursement_timestamp_seconds : opt nat64;
+};
 type MergeResponse = record {
   target_neuron : opt Neuron;
   source_neuron : opt Neuron;
@@ -153,10 +160,13 @@ type Neuron = record {
   staked_maturity_e8s_equivalent : opt nat64;
   controller : opt principal;
   recent_ballots : vec BallotInfo;
+  voting_power_refreshed_timestamp_seconds : opt nat64;
   kyc_verified : bool;
+  potential_voting_power : opt nat64;
   neuron_type : opt int32;
   not_for_profit : bool;
   maturity_e8s_equivalent : nat64;
+  deciding_voting_power : opt nat64;
   cached_neuron_stake_e8s : nat64;
   created_timestamp_seconds : nat64;
   auto_stake_maturity : opt bool;
@@ -164,9 +174,11 @@ type Neuron = record {
   hot_keys : vec principal;
   account : blob;
   joined_community_fund_timestamp_seconds : opt nat64;
+  maturity_disbursements_in_progress : opt vec MaturityDisbursement;
   dissolve_state : opt DissolveState;
   followees : vec record { int32; Followees };
   neuron_fees_e8s : nat64;
+  visibility : opt int32;
   transfer : opt NeuronStakeTransfer;
   known_neuron_data : opt KnownNeuronData;
   spawn_at_timestamp_seconds : opt nat64;
@@ -175,12 +187,16 @@ type NeuronId = record { id : nat64 };
 type NeuronInfo = record {
   dissolve_delay_seconds : nat64;
   recent_ballots : vec BallotInfo;
+  voting_power_refreshed_timestamp_seconds : opt nat64;
+  potential_voting_power : opt nat64;
   neuron_type : opt int32;
+  deciding_voting_power : opt nat64;
   created_timestamp_seconds : nat64;
   state : int32;
   stake_e8s : nat64;
   joined_community_fund_timestamp_seconds : opt nat64;
   retrieved_at_timestamp_seconds : nat64;
+  visibility : opt int32;
   known_neuron_data : opt KnownNeuronData;
   voting_power : nat64;
   age_seconds : nat64;
@@ -201,14 +217,14 @@ type PendingTransfer = record {
   from_subaccount : opt blob;
   transfer_id : nat64;
   amount : nat64;
-  receiver : Account;
+  receiver : Account_1;
 };
 type Result = variant { Ok : MergeResponse; Err : CancelWithdrawalError };
 type Result_1 = variant { Ok : nat64; Err : ConversionError };
 type Result_2 = variant { Ok : NeuronId; Err : NeuronId };
 type Result_3 = variant { Ok : DepositSuccess; Err : ConversionError };
-type Result_5 = variant { Ok : ConsentInfo; Err : Icrc21Error };
-type Result_4 = variant { Ok : WithdrawalSuccess; Err : ConversionError };
+type Result_4 = variant { Ok : ConsentInfo; Err : Icrc21Error };
+type Result_5 = variant { Ok : WithdrawalSuccess; Err : ConversionError };
 type StandardRecord = record { url : text; name : text };
 type TransferError = variant {
   GenericError : record { message : text; error_code : nat };
@@ -248,7 +264,7 @@ type WithdrawalRequest = record {
   icp_due : nat64;
   nicp_burn_index : nat64;
   timestamp : nat64;
-  receiver : Account;
+  receiver : Account_1;
   neuron_id : opt NeuronId;
 };
 type WithdrawalStatus = variant {
@@ -266,17 +282,18 @@ type WithdrawalSuccess = record {
 };
 service : (LiquidArg) -> {
   get_airdrop_allocation : (opt principal) -> (nat64) query;
-  get_pending_rewards : (opt principal) -> (nat64) query;
   get_events : (GetEventsArg) -> (GetEventsResult) query;
   get_info : () -> (CanisterInfo) query;
+  get_pending_rewards : (opt principal) -> (nat64) query;
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
-  get_withdrawal_requests : (opt Account) -> (vec WithdrawalDetails) query;
+  get_withdrawal_requests : (opt Account_1) -> (vec WithdrawalDetails) query;
   get_wtn_proposal_id : (nat64) -> (Result_2) query;
+
   icrc10_supported_standards : () -> (vec StandardRecord) query;
-  icrc21_canister_call_consent_message : (ConsentMessageRequest) -> (Result_5);
+  icrc21_canister_call_consent_message : (ConsentMessageRequest) -> (Result_4);
 
   icp_to_nicp : (ConversionArg) -> (Result_3);
-  nicp_to_icp : (ConversionArg) -> (Result_4);
-  cancel_withdrawal : (NeuronId) -> (Result);
+  nicp_to_icp : (ConversionArg) -> (Result_5);
   claim_airdrop : () -> (Result_1);
+  cancel_withdrawal : (NeuronId) -> (Result);
 }
