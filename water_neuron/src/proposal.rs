@@ -7,8 +7,7 @@ use crate::{
 };
 use ic_canister_log::log;
 use ic_nns_governance_api::ListProposalInfo;
-use ic_sns_governance_api::pb::v1::manage_neuron::Command as CommandSns;
-use ic_sns_governance_api::pb::v1::manage_neuron_response::Command as CommandSnsResponse;
+use ic_sns_governance_api::pb::v1::{manage_neuron_response::Command as CommandSnsResponse, manage_neuron::Command as CommandSns};
 
 const BATCH_SIZE_LIMIT: u32 = 100;
 const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;

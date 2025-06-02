@@ -25,9 +25,7 @@ use ic_nns_governance_api::{
     manage_neuron,
     manage_neuron::claim_or_refresh,
     manage_neuron::claim_or_refresh::MemoAndController,
-    manage_neuron_response::{
-        ClaimOrRefreshResponse, Command as CommandResponse, MergeResponse
-    },
+    manage_neuron_response::{ClaimOrRefreshResponse, Command as CommandResponse, MergeResponse},
     neuron,
     proposal::Action,
     GovernanceError, ManageNeuron, ManageNeuronResponse, Motion, Neuron, Proposal, ProposalInfo,
