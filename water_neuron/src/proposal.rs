@@ -2,8 +2,8 @@ use crate::management::{get_sns_proposal, list_proposals, manage_neuron_sns};
 use crate::nns_types::{convert_nns_proposal_to_sns_proposal, ProposalId};
 use crate::{
     compute_neuron_staking_subaccount_bytes, mutate_state, process_event, read_state,
-    register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType, TaskType, INFO,
-    ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
+    register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType, TaskType, DEBUG,
+    INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
 };
 use ic_canister_log::log;
 use ic_nns_governance_api::ListProposalInfo;
@@ -37,7 +37,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
                 })
             });
             log!(
-                INFO,
+                DEBUG,
                 "[mirror_proposals] found {} new pending proposals",
                 pending_proposals.proposal_info.len()
             );
@@ -197,7 +197,7 @@ pub async fn vote_on_nns_proposals() {
 async fn vote_on_proposal(proposal_id: ProposalId, vote: bool) {
     if read_state(|s| s.voted_proposals.contains(&proposal_id)) {
         log!(
-            INFO,
+            DEBUG,
             "[VoteOnProposal] Already voted {vote} on proposal {}",
             proposal_id.id
         );
