@@ -1,10 +1,10 @@
 use crate::numeric::ICP;
 use crate::storage::{stable_add_rewards, total_pending_rewards};
 use crate::{
-    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, self_canister_id,
-    stable_sub_rewards, timestamp_nanos, Account, CdkRuntime, DisplayAmount, EventType,
-    ICRC1Client, DEBUG, DEFAULT_LEDGER_FEE, E8S, ICP_LEDGER_ID, INFO, MINIMUM_ICP_DISTRIBUTION,
-    SEC_NANOS, SNS_DISTRIBUTION_MEMO, SNS_GOVERNANCE_SUBACCOUNT,
+    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, schedule_after,
+    self_canister_id, stable_sub_rewards, timestamp_nanos, Account, CdkRuntime, DisplayAmount,
+    EventType, ICRC1Client, TaskType, DEBUG, DEFAULT_LEDGER_FEE, E8S, ICP_LEDGER_ID, INFO,
+    MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO, SNS_GOVERNANCE_SUBACCOUNT,
 };
 use async_trait::async_trait;
 use candid::{Nat, Principal};
@@ -85,32 +85,58 @@ impl CanisterRuntime for IcCanisterRuntime {
     }
 }
 
-pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option<u64> {
-    let mut error_count = 0;
-    let rewards = get_rewards_ready_to_be_distributed();
-    if rewards.is_empty() {
-        return None;
-    }
-
-    for (to, reward) in rewards {
-        stable_sub_rewards(to, reward);
-        match runtime.transfer_icp(to, reward).await {
-            Ok(block_index) => {
-                log!(
+async fn do_transfer<R: CanisterRuntime>(
+    runtime: &R,
+    to: Principal,
+    reward: u64,
+) -> Result<(), ()> {
+    stable_sub_rewards(to, reward);
+    match runtime.transfer_icp(to, reward).await {
+        Ok(block_index) => {
+            log!(
                     INFO,
                     "[process_icp_distribution] successfully transferred {} ICP to {to} at {block_index}",
                     DisplayAmount(reward),
                 );
-            }
-            Err(e) => {
-                log!(
-                    DEBUG,
-                    "[process_icp_distribution] failed to transfer for {to} with error: {e}",
-                );
+            Ok(())
+        }
+        Err(e) => {
+            log!(
+                DEBUG,
+                "[process_icp_distribution] failed to transfer for {to} with error: {e}",
+            );
+            stable_add_rewards(to, reward);
+            Err(())
+        }
+    }
+}
+
+pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option<u64> {
+    let mut error_count = 0;
+    let rewards = get_rewards_ready_to_be_distributed(8);
+    if rewards.is_empty() {
+        return None;
+    }
+
+    let awaiting: Vec<_> = rewards
+        .into_iter()
+        .map(|(principal, rewards)| do_transfer(runtime, principal, rewards))
+        .collect();
+
+    if !awaiting.is_empty() {
+        let results = futures::future::join_all(awaiting).await;
+        for result in results {
+            if result.is_err() {
                 error_count += 1;
-                stable_add_rewards(to, reward);
             }
         }
+    }
+
+    if !get_rewards_ready_to_be_distributed(8).is_empty() {
+        schedule_after(
+            std::time::Duration::from_secs(10),
+            TaskType::MaybeDistributeRewards,
+        );
     }
 
     Some(error_count)
@@ -147,7 +173,7 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
             stakers_count += 1;
             log!(
                 INFO,
-                "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner}",
+                "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner} with voting power {voting_power} (share: {share:.2}%)",
             );
         }
 
