@@ -16,6 +16,7 @@ use icrc_ledger_types::icrc1::transfer::TransferError;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const WTN_MAX_DISSOLVE_DELAY_SECONDS: u64 = 94_672_800;
+const WTN_MIN_DISSOLVE_DELAY_SECONDS: u64 = 7_890_048;
 const WTN_MAX_NEURON_AGE_FOR_AGE_BONUS: u64 = 94_672_800;
 const WTN_MAX_DISSOLVE_DELAY_BONUS_PERCENTAGE: u64 = 100;
 const WTN_MAX_AGE_BONUS_PERCENTAGE: u64 = 100;
@@ -173,10 +174,10 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
             stakers_count += 1;
             log!(
                 INFO,
-                "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner} with voting power {voting_power} (share: {share:.2}%)",
+                "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner} with voting power {voting_power} (share: {:.4}%)",
+                share * 100.0
             );
         }
-
         mutate_state(|s| {
             process_event(s, EventType::DistributeICPtoSNSv2);
         });
@@ -186,6 +187,10 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
 }
 
 fn get_rounded_voting_power(neuron: &Neuron, now_seconds: u64) -> u64 {
+    if neuron.dissolve_delay_seconds(now_seconds) < WTN_MIN_DISSOLVE_DELAY_SECONDS {
+        // Not eligible due to dissolve delay.
+        return 0;
+    }
     neuron.voting_power(
         now_seconds,
         WTN_MAX_DISSOLVE_DELAY_SECONDS,
@@ -241,8 +246,8 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
                     } else {
                         log!(
                             INFO,
-                            "[fetch_sns_neurons] failed to get neuron owner of neuron with id: {:?}",
-                            neuron.id
+                            "[fetch_sns_neurons] failed to get neuron owner of neuron with id: {}",
+                            neuron.id.unwrap()
                         );
                     }
                 }
@@ -519,5 +524,23 @@ mod test {
         let vp = get_rounded_voting_power(&neuron, 1_720_683_746);
 
         assert_eq!(vp, 2_858_913);
+
+        let neuron = Neuron {
+            id: Some(NeuronId { id: vec![] }),
+            permissions: vec![],
+            cached_neuron_stake_e8s: 1_400_000 * E8S,
+            maturity_e8s_equivalent: 0,
+            staked_maturity_e8s_equivalent: None,
+            neuron_fees_e8s: 0,
+            created_timestamp_seconds: 1_718_691_769,
+            aging_since_timestamp_seconds: 1_718_691_769,
+            voting_power_percentage_multiplier: 100,
+            dissolve_state: Some(DissolveState::DissolveDelaySeconds(0)),
+            ..Default::default()
+        };
+
+        let vp = get_rounded_voting_power(&neuron, 1_720_683_746);
+
+        assert_eq!(vp, 0);
     }
 }
