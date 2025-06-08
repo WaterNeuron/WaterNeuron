@@ -28,3 +28,5 @@ jobs:
           name: canisters
           path: artifacts/
           retention-days: 30
+      - name: Test canisters
+        run: nix develop -i -k HOME -c bash -c "cargo t"
