@@ -16,7 +16,9 @@ use crate::state::{
     mutate_state, read_state, NeuronOrigin, TransferId, EIGHT_YEARS_NEURON_NONCE, ICP_LEDGER_ID,
     NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE, SNS_GOVERNANCE_SUBACCOUNT,
 };
-use crate::storage::{get_rewards_ready_to_be_distributed, stable_sub_rewards};
+use crate::storage::{
+    are_rewards_distributed, get_rewards_ready_to_be_distributed, stable_sub_rewards,
+};
 use crate::tasks::{schedule_after, schedule_now, TaskType};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_canister_log::log;
@@ -417,23 +419,45 @@ pub fn timer() {
             }
             TaskType::MaybeDistributeRewards => {
                 ic_cdk::spawn(async move {
+                    let _transfer_guard = match TaskGuard::new(TaskType::ProcessRewardsTransfer) {
+                        Ok(guard) => guard,
+                        Err(_) => return,
+                    };
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
                     };
 
-                    distribute_icp_to_sns_neurons().await;
+                    if are_rewards_distributed() {
+                        distribute_icp_to_sns_neurons().await;
+                    }
+
+                    if !are_rewards_distributed() {
+                        schedule_now(TaskType::ProcessRewardsTransfer);
+                    } else {
+                        schedule_after(ONE_DAY, TaskType::MaybeDistributeRewards);
+                    }
+                });
+            }
+            TaskType::ProcessRewardsTransfer => {
+                ic_cdk::spawn(async move {
+                    let _guard = match TaskGuard::new(task_type) {
+                        Ok(guard) => guard,
+                        Err(_) => return,
+                    };
 
                     let runtime = IcCanisterRuntime {};
                     match crate::sns_governance::process_icp_distribution(&runtime).await {
                         Some(error_count) => {
                             if error_count > 0 {
-                                log!(INFO, "[MaybeDistributeRewards] Failed to process {error_count} transfers, rescheduling task.");
-                                schedule_after(RETRY_DELAY, TaskType::MaybeDistributeRewards);
+                                log!(INFO, "[ProcessRewardsTransfer] Failed to process {error_count} transfers, rescheduling task.");
+                                schedule_after(RETRY_DELAY, TaskType::ProcessRewardsTransfer);
                             }
                         }
                         None => {
-                            schedule_after(ONE_DAY, TaskType::MaybeDistributeRewards);
+                            if !are_rewards_distributed() {
+                                schedule_now(TaskType::ProcessRewardsTransfer);
+                            }
                         }
                     }
                 });
@@ -858,7 +882,6 @@ async fn distribute_icp_to_sns_neurons() {
                     .await
                 {
                     Ok(stakers_count) => {
-                        schedule_now(TaskType::ProcessPendingTransfers);
                         log!(
                             INFO,
                             "[distribute_icp_to_sns_neurons] Distributed {} ICP to {} stakers.",

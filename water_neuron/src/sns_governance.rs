@@ -1,10 +1,11 @@
 use crate::numeric::ICP;
 use crate::storage::{stable_add_rewards, total_pending_rewards};
 use crate::{
-    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, schedule_after,
-    self_canister_id, stable_sub_rewards, timestamp_nanos, Account, CdkRuntime, DisplayAmount,
-    EventType, ICRC1Client, TaskType, DEBUG, DEFAULT_LEDGER_FEE, E8S, ICP_LEDGER_ID, INFO,
-    MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO, SNS_GOVERNANCE_SUBACCOUNT,
+    are_rewards_distributed, get_rewards_ready_to_be_distributed, mutate_state, process_event,
+    read_state, schedule_after, self_canister_id, stable_sub_rewards, timestamp_nanos, Account,
+    CdkRuntime, DisplayAmount, EventType, ICRC1Client, TaskType, DEBUG, DEFAULT_LEDGER_FEE, E8S,
+    ICP_LEDGER_ID, INFO, MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO,
+    SNS_GOVERNANCE_SUBACCOUNT,
 };
 use async_trait::async_trait;
 use candid::{Nat, Principal};
@@ -95,16 +96,16 @@ async fn do_transfer<R: CanisterRuntime>(
     match runtime.transfer_icp(to, reward).await {
         Ok(block_index) => {
             log!(
-                    INFO,
-                    "[process_icp_distribution] successfully transferred {} ICP to {to} at {block_index}",
-                    DisplayAmount(reward),
-                );
+                INFO,
+                "[do_transfer] successfully transferred {} ICP to {to} at {block_index}",
+                DisplayAmount(reward),
+            );
             Ok(())
         }
         Err(e) => {
             log!(
                 DEBUG,
-                "[process_icp_distribution] failed to transfer for {to} with error: {e}",
+                "[do_transfer] failed to transfer for {to} with error: {e}",
             );
             stable_add_rewards(to, reward);
             Err(())
@@ -133,10 +134,10 @@ pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option
         }
     }
 
-    if !get_rewards_ready_to_be_distributed(8).is_empty() {
+    if !are_rewards_distributed() {
         schedule_after(
             std::time::Duration::from_secs(10),
-            TaskType::MaybeDistributeRewards,
+            TaskType::ProcessRewardsTransfer,
         );
     }
 
