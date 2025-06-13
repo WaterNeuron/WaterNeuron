@@ -9,7 +9,9 @@ use crate::management::{
 use crate::nns_types::{is_dissolved, NeuronId, ProposalId};
 use crate::numeric::{nICP, ICP};
 use crate::proposal::{early_voting_on_nns_proposals, mirror_proposals, vote_on_nns_proposals};
-use crate::sns_governance::{CanisterRuntime, IcCanisterRuntime, WTN_MAX_DISSOLVE_DELAY_SECONDS};
+use crate::sns_governance::{
+    process_icp_distribution, CanisterRuntime, IcCanisterRuntime, WTN_MAX_DISSOLVE_DELAY_SECONDS,
+};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
 use crate::state::{
@@ -447,17 +449,10 @@ pub fn timer() {
                     };
 
                     let runtime = IcCanisterRuntime {};
-                    match crate::sns_governance::process_icp_distribution(&runtime).await {
-                        Some(error_count) => {
-                            if error_count > 0 {
-                                log!(INFO, "[ProcessRewardsTransfer] Failed to process {error_count} transfers, rescheduling task.");
-                                schedule_after(RETRY_DELAY, TaskType::ProcessRewardsTransfer);
-                            }
-                        }
-                        None => {
-                            if !are_rewards_distributed() {
-                                schedule_now(TaskType::ProcessRewardsTransfer);
-                            }
+                    if let Some(error_count) = process_icp_distribution(&runtime).await {
+                        if error_count > 0 {
+                            log!(INFO, "[ProcessRewardsTransfer] Failed to process {error_count} transfers, rescheduling task.");
+                            schedule_after(RETRY_DELAY, TaskType::ProcessRewardsTransfer);
                         }
                     }
                 });
