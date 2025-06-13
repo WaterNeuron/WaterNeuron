@@ -1,10 +1,11 @@
 use crate::numeric::ICP;
 use crate::storage::{stable_add_rewards, total_pending_rewards};
 use crate::{
-    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, self_canister_id,
-    stable_sub_rewards, timestamp_nanos, Account, CdkRuntime, DisplayAmount, EventType,
-    ICRC1Client, DEBUG, DEFAULT_LEDGER_FEE, E8S, ICP_LEDGER_ID, INFO, MINIMUM_ICP_DISTRIBUTION,
-    SEC_NANOS, SNS_DISTRIBUTION_MEMO, SNS_GOVERNANCE_SUBACCOUNT,
+    are_rewards_distributed, get_rewards_ready_to_be_distributed, mutate_state, process_event,
+    read_state, schedule_after, self_canister_id, stable_sub_rewards, timestamp_nanos, Account,
+    CdkRuntime, DisplayAmount, EventType, ICRC1Client, TaskType, DEBUG, DEFAULT_LEDGER_FEE, E8S,
+    ICP_LEDGER_ID, INFO, MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO,
+    SNS_GOVERNANCE_SUBACCOUNT,
 };
 use async_trait::async_trait;
 use candid::{Nat, Principal};
@@ -16,6 +17,7 @@ use icrc_ledger_types::icrc1::transfer::TransferError;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const WTN_MAX_DISSOLVE_DELAY_SECONDS: u64 = 94_672_800;
+const WTN_MIN_DISSOLVE_DELAY_SECONDS: u64 = 7_890_048;
 const WTN_MAX_NEURON_AGE_FOR_AGE_BONUS: u64 = 94_672_800;
 const WTN_MAX_DISSOLVE_DELAY_BONUS_PERCENTAGE: u64 = 100;
 const WTN_MAX_AGE_BONUS_PERCENTAGE: u64 = 100;
@@ -85,32 +87,58 @@ impl CanisterRuntime for IcCanisterRuntime {
     }
 }
 
+async fn do_transfer<R: CanisterRuntime>(
+    runtime: &R,
+    to: Principal,
+    reward: u64,
+) -> Result<(), ()> {
+    stable_sub_rewards(to, reward);
+    match runtime.transfer_icp(to, reward).await {
+        Ok(block_index) => {
+            log!(
+                INFO,
+                "[do_transfer] successfully transferred {} ICP to {to} at {block_index}",
+                DisplayAmount(reward),
+            );
+            Ok(())
+        }
+        Err(e) => {
+            log!(
+                DEBUG,
+                "[do_transfer] failed to transfer for {to} with error: {e}",
+            );
+            stable_add_rewards(to, reward);
+            Err(())
+        }
+    }
+}
+
 pub async fn process_icp_distribution<R: CanisterRuntime>(runtime: &R) -> Option<u64> {
     let mut error_count = 0;
-    let rewards = get_rewards_ready_to_be_distributed();
+    let rewards = get_rewards_ready_to_be_distributed(8);
     if rewards.is_empty() {
         return None;
     }
 
-    for (to, reward) in rewards {
-        stable_sub_rewards(to, reward);
-        match runtime.transfer_icp(to, reward).await {
-            Ok(block_index) => {
-                log!(
-                    INFO,
-                    "[process_icp_distribution] successfully transferred {} ICP to {to} at {block_index}",
-                    DisplayAmount(reward),
-                );
-            }
-            Err(e) => {
-                log!(
-                    DEBUG,
-                    "[process_icp_distribution] failed to transfer for {to} with error: {e}",
-                );
+    let awaiting: Vec<_> = rewards
+        .into_iter()
+        .map(|(principal, rewards)| do_transfer(runtime, principal, rewards))
+        .collect();
+
+    if !awaiting.is_empty() {
+        let results = futures::future::join_all(awaiting).await;
+        for result in results {
+            if result.is_err() {
                 error_count += 1;
-                stable_add_rewards(to, reward);
             }
         }
+    }
+
+    if !are_rewards_distributed() {
+        schedule_after(
+            std::time::Duration::from_secs(10),
+            TaskType::ProcessRewardsTransfer,
+        );
     }
 
     Some(error_count)
@@ -147,10 +175,10 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
             stakers_count += 1;
             log!(
                 INFO,
-                "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner}",
+                "[maybe_fetch_neurons_and_distribute] distribute {share_amount_icp} ICP to {owner} with voting power {voting_power} (share: {:.4}%)",
+                share * 100.0
             );
         }
-
         mutate_state(|s| {
             process_event(s, EventType::DistributeICPtoSNSv2);
         });
@@ -160,6 +188,10 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
 }
 
 fn get_rounded_voting_power(neuron: &Neuron, now_seconds: u64) -> u64 {
+    if neuron.dissolve_delay_seconds(now_seconds) < WTN_MIN_DISSOLVE_DELAY_SECONDS {
+        // Not eligible due to dissolve delay.
+        return 0;
+    }
     neuron.voting_power(
         now_seconds,
         WTN_MAX_DISSOLVE_DELAY_SECONDS,
@@ -215,8 +247,8 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
                     } else {
                         log!(
                             INFO,
-                            "[fetch_sns_neurons] failed to get neuron owner of neuron with id: {:?}",
-                            neuron.id
+                            "[fetch_sns_neurons] failed to get neuron owner of neuron with id: {}",
+                            neuron.id.unwrap()
                         );
                     }
                 }
@@ -493,5 +525,23 @@ mod test {
         let vp = get_rounded_voting_power(&neuron, 1_720_683_746);
 
         assert_eq!(vp, 2_858_913);
+
+        let neuron = Neuron {
+            id: Some(NeuronId { id: vec![] }),
+            permissions: vec![],
+            cached_neuron_stake_e8s: 1_400_000 * E8S,
+            maturity_e8s_equivalent: 0,
+            staked_maturity_e8s_equivalent: None,
+            neuron_fees_e8s: 0,
+            created_timestamp_seconds: 1_718_691_769,
+            aging_since_timestamp_seconds: 1_718_691_769,
+            voting_power_percentage_multiplier: 100,
+            dissolve_state: Some(DissolveState::DissolveDelaySeconds(0)),
+            ..Default::default()
+        };
+
+        let vp = get_rounded_voting_power(&neuron, 1_720_683_746);
+
+        assert_eq!(vp, 0);
     }
 }

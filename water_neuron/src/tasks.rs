@@ -23,6 +23,7 @@ pub enum TaskType {
     ProcessEarlyVoting,
     RefreshShortTerm,
     MaybeDistributeRewards,
+    ProcessRewardsTransfer,
 }
 
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
