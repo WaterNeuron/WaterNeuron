@@ -1,5 +1,5 @@
 use crate::guards::GuardPrincipal;
-use crate::logs::INFO;
+use crate::logs::{DEBUG, INFO};
 use crate::management::{merge_neuron_into_six_months, stop_dissolvement};
 use crate::nns_types::{time_left_seconds, NeuronId};
 use crate::numeric::{nICP, ICP};
@@ -9,7 +9,7 @@ use crate::state::{mutate_state, read_state};
 use crate::tasks::{schedule_now, TaskType};
 use crate::{
     get_full_neuron, timestamp_nanos, CancelWithdrawalError, ConversionArg, ConversionError,
-    DepositSuccess, WithdrawalSuccess, DEFAULT_LEDGER_FEE, ICP_LEDGER_ID, ONE_DAY_SECONDS,
+    DepositSuccess, WithdrawalSuccess, ICP_LEDGER_ID, ONE_DAY_SECONDS,
 };
 use candid::Nat;
 use ic_canister_log::log;
@@ -61,9 +61,24 @@ pub async fn cancel_withdrawal(
         None => return Err(CancelWithdrawalError::RequestNotFound),
     };
 
-    stop_dissolvement(neuron_id)
+    log!(
+        DEBUG,
+        "[cancel_withdrawal] Cancelling neuron with id {}, ICP due: {icp_due}",
+        neuron_id.id
+    );
+
+    let stop_dissolvement_result = stop_dissolvement(neuron_id)
         .await
-        .map_err(|error_msg| CancelWithdrawalError::StopDissolvementError { message: error_msg })?;
+        .map_err(|error_msg| CancelWithdrawalError::StopDissolvementError { message: error_msg });
+
+    if stop_dissolvement_result.is_err() {
+        log!(
+            INFO,
+            "[cancel_withdrawal] Unexpected stop_dissolvement result: {stop_dissolvement_result:?}"
+        );
+    }
+
+    stop_dissolvement_result?;
 
     match merge_neuron_into_six_months(neuron_id)
         .await
@@ -72,23 +87,21 @@ pub async fn cancel_withdrawal(
         .expect("Command should always be set.")
     {
         CommandResponse::Merge(response) => {
-            assert_eq!(
-                response
-                    .source_neuron
-                    .as_ref()
-                    .unwrap()
-                    .cached_neuron_stake_e8s,
-                0
-            );
-
-            assert!(
-                response
-                    .target_neuron
-                    .as_ref()
-                    .unwrap()
-                    .cached_neuron_stake_e8s
-                    >= read_state(|s| s.tracked_6m_stake.0) + icp_due.0 - 2 * DEFAULT_LEDGER_FEE
-            );
+            if response
+                .source_neuron
+                .as_ref()
+                .unwrap()
+                .cached_neuron_stake_e8s
+                != 0
+            {
+                log!(
+                    INFO,
+                    "[cancel_withdrawal] Expected cached_neuron_stake_e8s to be 0 got {response:?}"
+                );
+                return Err(CancelWithdrawalError::MergeNeuronError {
+                    message: format!("Expected cached_neuron_stake_e8s to be 0 got {response:?}"),
+                });
+            }
 
             mutate_state(|s| {
                 process_event(s, EventType::MergeNeuron { neuron_id });
