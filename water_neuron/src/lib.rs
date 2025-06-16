@@ -455,6 +455,10 @@ pub fn timer() {
                             schedule_after(RETRY_DELAY, TaskType::ProcessRewardsTransfer);
                         }
                     }
+
+                    if are_rewards_distributed() {
+                        schedule_now(TaskType::MaybeDistributeRewards);
+                    }
                 });
             }
         }
