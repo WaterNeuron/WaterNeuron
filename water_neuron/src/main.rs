@@ -85,6 +85,21 @@ pub fn post_upgrade(args: LiquidArg) {
             let event_count = total_event_count();
             let instructions_consumed = end - start;
 
+            if event_count > 40_000 {
+                // Manually processed following a race condition in cancel unstake.
+                // We check for even count > 40_000 to only process this even in prod.
+                // TODO: only deploy once.
+                mutate_state(|s| {
+                    process_event(
+                        s,
+                        EventType::DisbursedUserNeuron {
+                            withdrawal_id: 408,
+                            transfer_block_height: 24909578,
+                        },
+                    )
+                });
+            }
+
             log!(
                 INFO,
                 "[upgrade]: replaying {event_count} events consumed {instructions_consumed} instructions ({} instructions per event on average)",
