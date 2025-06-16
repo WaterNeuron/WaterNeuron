@@ -86,9 +86,10 @@ pub fn post_upgrade(args: LiquidArg) {
             let instructions_consumed = end - start;
 
             if event_count > 40_000 {
-                // Manually processed following a race condition in cancel unstake.
-                // We check for even count > 40_000 to only process this even in prod.
-                // TODO: only deploy once.
+                // A race condition in cancel unstake has lead to skipping this event.
+                // Manually processing this event.
+                // We check for even count > 40_000 to only process this event in prod.
+                // TODO: remove this code once processed.
                 mutate_state(|s| {
                     process_event(
                         s,
