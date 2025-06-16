@@ -20,8 +20,19 @@
           name = "ic-wasm";
           version = "0.9.1";
           src = pkgs.fetchurl {
-            url = "https://github.com/dfinity/ic-wasm/releases/download/0.9.1/ic-wasm-x86_64-unknown-linux-gnu.tar.gz";
-            sha256 = "sha256-nU2O8sCV82dKaeDH86pj9gOW/01ZnOyZ7P5vnZOPpLE=";
+            url = if pkgs.stdenv.isDarwin then
+              "https://github.com/dfinity/ic-wasm/releases/download/0.9.1/ic-wasm-x86_64-apple-darwin.tar.gz"
+            else if pkgs.stdenv.isLinux then
+              "https://github.com/dfinity/ic-wasm/releases/download/0.9.1/ic-wasm-x86_64-unknown-linux-gnu.tar.gz"
+            else
+              throw "Unsupported platform";
+
+            sha256 = if pkgs.stdenv.isDarwin then
+              "sha256-ixMlyqn8wQcsYRfMaPqnE9MJsOABJhZABJ6BO2YojVM="
+            else if pkgs.stdenv.isLinux then
+              "sha256-nU2O8sCV82dKaeDH86pj9gOW/01ZnOyZ7P5vnZOPpLE="
+            else
+              throw "Unsupported platform";
           };
           unpackPhase = ''
             tar xzf $src
