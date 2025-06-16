@@ -91,16 +91,31 @@ pub fn stable_sub_rewards(to: Principal, amount_e8s: u64) {
     });
 }
 
-pub fn get_rewards_ready_to_be_distributed() -> Vec<(Principal, u64)> {
+const MINIMUM_ICP_AMOUNT_DISTRIBUTION: u64 = 1_000_000;
+
+pub fn get_rewards_ready_to_be_distributed(length: usize) -> Vec<(Principal, u64)> {
     PRINCIPAL_TO_ICP_REWARDS.with(|p| {
-        const MINIMUM_ICP_AMOUNT_DISTRIBUTION: u64 = 1_000_000;
         let mut result: Vec<(Principal, u64)> = vec![];
         for (p, b) in p.borrow().iter() {
             if b > MINIMUM_ICP_AMOUNT_DISTRIBUTION {
                 result.push((p, b));
             }
+            if result.len() >= length {
+                break;
+            }
         }
         result
+    })
+}
+
+pub fn are_rewards_distributed() -> bool {
+    PRINCIPAL_TO_ICP_REWARDS.with(|p| {
+        for b in p.borrow().values() {
+            if b > MINIMUM_ICP_AMOUNT_DISTRIBUTION {
+                return false;
+            }
+        }
+        true
     })
 }
 
@@ -129,7 +144,7 @@ fn should_return_rewards_ready() {
     stable_add_rewards(caller, 10_000_000_000);
     stable_add_rewards(Principal::management_canister(), 1_000);
     assert_eq!(
-        get_rewards_ready_to_be_distributed(),
+        get_rewards_ready_to_be_distributed(10),
         vec![(caller, 10_000_000_000)]
     );
 }
