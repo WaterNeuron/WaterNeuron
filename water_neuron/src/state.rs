@@ -427,7 +427,8 @@ impl State {
             CUT_MAX_PERCENT
         } else {
             let delta = CUT_MAX_PERCENT.checked_sub(CUT_MIN_PERCENT).unwrap() as f64;
-            let ratio = (stake_6m.checked_sub(TVL_MIN).unwrap() as f64) / TVL_MAX.checked_sub(TVL_MIN).unwrap() as f64;
+            let ratio = (stake_6m.checked_sub(TVL_MIN).unwrap() as f64)
+                / TVL_MAX.checked_sub(TVL_MIN).unwrap() as f64;
             CUT_MIN_PERCENT
                 .checked_add((delta * ratio.powf(0.7)) as u64)
                 .unwrap()
@@ -1100,7 +1101,7 @@ pub mod test {
 
     #[test]
     fn should_compute_governance_share() {
-        let state = default_state();
+        let mut state = default_state();
 
         let res_1 = state.compute_governance_share_e8s(100 * E8S, NeuronOrigin::NICPSixMonths);
         assert_eq!(res_1, 10 * E8S);
@@ -1110,6 +1111,21 @@ pub mod test {
 
         let res_3 = state.compute_governance_share_e8s(880_123_000, NeuronOrigin::NICPSixMonths);
         assert_eq!(res_3, 88_012_300);
+
+        state.tracked_6m_stake = ICP::from_e8s(2_000_000 * E8S);
+        let res_4 =
+            state.compute_governance_share_e8s(100 * E8S, NeuronOrigin::SnsGovernanceEightYears);
+        assert_eq!(res_4, 10 * E8S);
+
+        state.tracked_6m_stake = ICP::from_e8s(3_000_000 * E8S);
+        let res_5 =
+            state.compute_governance_share_e8s(100 * E8S, NeuronOrigin::SnsGovernanceEightYears);
+        assert_eq!(res_5, 1_700_000_000);
+
+        state.tracked_6m_stake = ICP::from_e8s(40_000_000 * E8S);
+        let res_6 =
+            state.compute_governance_share_e8s(100 * E8S, NeuronOrigin::SnsGovernanceEightYears);
+        assert_eq!(res_6, 100 * E8S);
     }
 
     #[test]
