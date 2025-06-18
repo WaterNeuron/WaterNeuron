@@ -4,8 +4,9 @@ use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
     compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, FeeMetrics,
-    InitArg, PendingTransfer, Unit, UpgradeArg, DEFAULT_LEDGER_FEE, E8S, NEURON_6M_APY,
-    NEURON_8Y_APY, ONE_WEEK_SECONDS, SEC_NANOS,
+    InitArg, PendingTransfer, Unit, UpgradeArg, CUT_MAX_PERCENT, CUT_MIN_PERCENT,
+    DEFAULT_LEDGER_FEE, E8S, NEURON_6M_APY, NEURON_8Y_APY, ONE_WEEK_SECONDS, SEC_NANOS, TVL_MAX,
+    TVL_MIN,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -361,7 +362,7 @@ impl State {
 
     pub fn compute_governance_share_e8s(&self, balance: u64) -> u64 {
         balance
-            .checked_mul(self.governance_fee_share_percent)
+            .checked_mul(self.compute_governance_fee_share_percent())
             .unwrap()
             / 100
     }
@@ -414,6 +415,21 @@ impl State {
             * (NEURON_6M_APY * self.main_neuron_6m_staked.0 as f64
                 + NEURON_8Y_APY * self.main_neuron_8y_stake.0 as f64);
         rewards_icp / self.main_neuron_6m_staked.0 as f64
+    }
+
+    pub fn compute_governance_fee_share_percent(&self) -> u64 {
+        let stake_6m: u64 = self.tracked_6m_stake.0;
+
+        if stake_6m < TVL_MIN {
+            CUT_MIN_PERCENT
+        } else if stake_6m > TVL_MAX {
+            CUT_MAX_PERCENT
+        } else {
+            (CUT_MIN_PERCENT as f64
+                + (CUT_MAX_PERCENT - CUT_MIN_PERCENT) as f64
+                    * ((stake_6m - TVL_MIN) as f64 / (TVL_MAX - TVL_MIN) as f64).powf(0.7))
+                as u64
+        }
     }
 
     pub fn record_upgrade(&mut self, upgrade_arg: UpgradeArg) {
@@ -1140,5 +1156,31 @@ pub mod test {
         state.main_neuron_8y_stake = ICP::from_e8s(400 * E8S);
 
         assert_eq!(state.compute_nicp_apy(), 0.5751);
+    }
+
+    #[test]
+    fn should_compute_governance_fee_share() {
+        let mut state = default_state();
+
+        // Check continuity at TVL_MIN
+        state.tracked_6m_stake = ICP::from_e8s(1_999_999 * E8S);
+        assert_eq!(state.compute_governance_fee_share_percent(), 10);
+
+        state.tracked_6m_stake += ICP::from_e8s(E8S);
+        assert_eq!(state.compute_governance_fee_share_percent(), 10);
+
+        // Check rounding on dynamic compute
+        state.tracked_6m_stake = ICP::from_e8s(3_000_000 * E8S);
+        assert_eq!(state.compute_governance_fee_share_percent(), 17);
+
+        state.tracked_6m_stake = ICP::from_e8s(16_500_000 * E8S);
+        assert_eq!(state.compute_governance_fee_share_percent(), 55);
+
+        // Check continuity at TVL_MAX
+        state.tracked_6m_stake = ICP::from_e8s(40_000_000 * E8S);
+        assert_eq!(state.compute_governance_fee_share_percent(), 100);
+
+        state.tracked_6m_stake = ICP::from_e8s(40_000_001 * E8S);
+        assert_eq!(state.compute_governance_fee_share_percent(), 100);
     }
 }
