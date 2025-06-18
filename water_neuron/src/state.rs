@@ -360,11 +360,12 @@ impl State {
         exchange_rate.mantissa() as u64
     }
 
-    pub fn compute_governance_share_e8s(&self, balance: u64) -> u64 {
-        balance
-            .checked_mul(self.compute_governance_fee_share_percent())
-            .unwrap()
-            / 100
+    pub fn compute_governance_share_e8s(&self, balance: u64, neuron_type: NeuronOrigin) -> u64 {
+        let share_percent = match neuron_type {
+            NeuronOrigin::NICPSixMonths => self.governance_fee_share_percent,
+            NeuronOrigin::SnsGovernanceEightYears => self.compute_governance_8y_share_percent(),
+        };
+        balance.checked_mul(share_percent).unwrap() / 100
     }
 
     pub fn convert_icp_to_nicp(&self, amount: ICP) -> nICP {
@@ -417,7 +418,7 @@ impl State {
         rewards_icp / self.main_neuron_6m_staked.0 as f64
     }
 
-    pub fn compute_governance_fee_share_percent(&self) -> u64 {
+    pub fn compute_governance_8y_share_percent(&self) -> u64 {
         let stake_6m: u64 = self.tracked_6m_stake.0;
 
         if stake_6m < TVL_MIN {
@@ -425,10 +426,11 @@ impl State {
         } else if stake_6m > TVL_MAX {
             CUT_MAX_PERCENT
         } else {
-            (CUT_MIN_PERCENT as f64
-                + (CUT_MAX_PERCENT - CUT_MIN_PERCENT) as f64
-                    * ((stake_6m - TVL_MIN) as f64 / (TVL_MAX - TVL_MIN) as f64).powf(0.7))
-                as u64
+            let delta = CUT_MAX_PERCENT.checked_sub(CUT_MIN_PERCENT).unwrap() as f64;
+            let ratio = (stake_6m.checked_sub(TVL_MIN).unwrap() as f64) / TVL_MAX.checked_sub(TVL_MIN).unwrap() as f64;
+            CUT_MIN_PERCENT
+                .checked_add((delta * ratio.powf(0.7)) as u64)
+                .unwrap()
         }
     }
 
@@ -1100,13 +1102,13 @@ pub mod test {
     fn should_compute_governance_share() {
         let state = default_state();
 
-        let res_1 = state.compute_governance_share_e8s(100 * E8S);
+        let res_1 = state.compute_governance_share_e8s(100 * E8S, NeuronOrigin::NICPSixMonths);
         assert_eq!(res_1, 10 * E8S);
 
-        let res_2 = state.compute_governance_share_e8s(123 * E8S);
+        let res_2 = state.compute_governance_share_e8s(123 * E8S, NeuronOrigin::NICPSixMonths);
         assert_eq!(res_2, 1_230_000_000);
 
-        let res_3 = state.compute_governance_share_e8s(880_123_000);
+        let res_3 = state.compute_governance_share_e8s(880_123_000, NeuronOrigin::NICPSixMonths);
         assert_eq!(res_3, 88_012_300);
     }
 
@@ -1164,23 +1166,23 @@ pub mod test {
 
         // Check continuity at TVL_MIN
         state.tracked_6m_stake = ICP::from_e8s(1_999_999 * E8S);
-        assert_eq!(state.compute_governance_fee_share_percent(), 10);
+        assert_eq!(state.compute_governance_8y_share_percent(), 10);
 
         state.tracked_6m_stake += ICP::from_e8s(E8S);
-        assert_eq!(state.compute_governance_fee_share_percent(), 10);
+        assert_eq!(state.compute_governance_8y_share_percent(), 10);
 
         // Check rounding on dynamic compute
         state.tracked_6m_stake = ICP::from_e8s(3_000_000 * E8S);
-        assert_eq!(state.compute_governance_fee_share_percent(), 17);
+        assert_eq!(state.compute_governance_8y_share_percent(), 17);
 
         state.tracked_6m_stake = ICP::from_e8s(16_500_000 * E8S);
-        assert_eq!(state.compute_governance_fee_share_percent(), 55);
+        assert_eq!(state.compute_governance_8y_share_percent(), 55);
 
         // Check continuity at TVL_MAX
         state.tracked_6m_stake = ICP::from_e8s(40_000_000 * E8S);
-        assert_eq!(state.compute_governance_fee_share_percent(), 100);
+        assert_eq!(state.compute_governance_8y_share_percent(), 100);
 
         state.tracked_6m_stake = ICP::from_e8s(40_000_001 * E8S);
-        assert_eq!(state.compute_governance_fee_share_percent(), 100);
+        assert_eq!(state.compute_governance_8y_share_percent(), 100);
     }
 }

@@ -930,7 +930,7 @@ async fn dispatch_icp<R: CanisterRuntime>(runtime: &R) {
             Ok(balance) => {
                 if balance > MINIMUM_ICP_DISTRIBUTION {
                     let governance_share_e8s =
-                        read_state(|s| s.compute_governance_share_e8s(balance));
+                        read_state(|s| s.compute_governance_share_e8s(balance, neuron_type));
                     let nicp_share_e8s = balance.checked_sub(governance_share_e8s).expect(
                         "bug: the governance share should always be strictly less than the balance",
                     );
