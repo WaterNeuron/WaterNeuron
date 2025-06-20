@@ -432,6 +432,8 @@ impl State {
             CUT_MIN_PERCENT
                 .checked_add((delta * ratio.powf(0.7)) as u64)
                 .unwrap()
+                .max(CUT_MIN_PERCENT)
+                .min(CUT_MAX_PERCENT)
         }
     }
 
