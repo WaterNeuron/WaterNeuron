@@ -4,3 +4,4 @@ candid/
 proptest-regressions
 artifacts/
 *.bin
+pocket-ic

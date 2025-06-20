@@ -94,6 +94,11 @@ pub const SNS_DISTRIBUTION_MEMO: u64 = 83_78_83;
 pub const NEURON_6M_APY: f64 = 0.075;
 pub const NEURON_8Y_APY: f64 = 0.141;
 
+pub const TVL_MIN: u64 = 2_000_000 * E8S;
+pub const TVL_MAX: u64 = 40_000_000 * E8S;
+pub const CUT_MIN_PERCENT: u64 = 10;
+pub const CUT_MAX_PERCENT: u64 = 100;
+
 #[cfg(target_arch = "wasm32")]
 pub fn timestamp_nanos() -> u64 {
     ic_cdk::api::time()
@@ -925,7 +930,7 @@ async fn dispatch_icp<R: CanisterRuntime>(runtime: &R) {
             Ok(balance) => {
                 if balance > MINIMUM_ICP_DISTRIBUTION {
                     let governance_share_e8s =
-                        read_state(|s| s.compute_governance_share_e8s(balance));
+                        read_state(|s| s.compute_governance_share_e8s(balance, neuron_type));
                     let nicp_share_e8s = balance.checked_sub(governance_share_e8s).expect(
                         "bug: the governance share should always be strictly less than the balance",
                     );
