@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Sitemap: https://waterneuron.fi/sitemap.xml
+Host: https://waterneuron.fi
