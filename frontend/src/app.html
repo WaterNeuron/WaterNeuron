@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en" theme="light">
+	<head>
+		<meta charset="utf-8" />
+		<title>WaterNeuron | ICP Liquid Staking</title>
+		<meta
+			name="description"
+			content="Maximize your earning potential on the Internet Computer Protocol (ICP) by liquid staking your ICP with WaterNeuron. Get nICP tokens, valuable liquid staking assets that accrue value through staking rewards over time. Experience secure, transparent, and non-custodial liquid staking with additional rewards. Start staking and maximizing your earnings now!"
+		/>
+		<meta content="WaterNeuron | ICP Liquid Staking - Liquid Stake ICP" property="og:title" />
+		<meta property="og:type" content="website" />
+		<meta content="website" property="og:type" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta
+			name="keywords"
+			content="Staking, Stake, nICP, ICP, Internet Computer Protocol, WaterNeuron, Liquid Staking"
+		/>
+		<link rel="canonical" href="%sveltekit.assets%" />
+
+		<!-- Favicon -->
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="32x32"
+			href="%sveltekit.assets%/favicons/icon-32x32.png"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="16x16"
+			href="%sveltekit.assets%/favicons/icon-16x16.png"
+		/>
+		<link rel="icon" href="%sveltekit.assets%/favicons/favicon.ico" type="image/x-icon" />
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="192x192"
+			href="%sveltekit.assets%/favicons/icon-192x192.png"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="512x512"
+			href="%sveltekit.assets%/favicons/icon-512x512.png"
+		/>
+
+		<link href="/sitemap.xml" rel="sitemap" type="application/xml" />
+
+		<link rel="manifest" href="/manifest.json" crossorigin="anonymous" />
+
+		<script
+			defer
+			data-domain="waterneuron.fi"
+			src="https://plausible.io/js/script.js"
+			integrity="sha384-LdpD7B15u3Zn+6SZQCpbS3ASInY1gsdhLZr0h18g9iNJsGenDL8WIPNq9Vee7QLk"
+			crossorigin="anonymous"
+		></script>
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:title" content="WaterNeuron" />
+		<meta property="twitter:description" content="Liquid stake ICP" />
+		<meta property="twitter:image" content="https://waterneuron.fi/twitter-card-min.png" />
+
+		<script>
+			try {
+				const isDarkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+				const currentTheme =
+					localStorage.nnsTheme === null ||
+					localStorage.nnsTheme === undefined ||
+					localStorage.nnsTheme === ''
+						? undefined
+						: JSON.parse(localStorage.nnsTheme);
+
+				document.documentElement.setAttribute(
+					'theme',
+					currentTheme ?? (isDarkPreferred ? 'dark' : 'light')
+				);
+			} catch (error) {
+				console.error('Error initializing theme', error);
+			}
+		</script>
+
+		%sveltekit.head%
+
+		<style>
+			html {
+				overflow: hidden;
+				height: 100%;
+			}
+
+			body {
+				overflow: auto;
+				height: 100%;
+			}
+
+			body::-webkit-scrollbar {
+				display: none;
+			}
+
+			body::-webkit-scrollbar-track {
+				display: none;
+			}
+
+			body::-webkit-scrollbar-thumb {
+				display: none;
+			}
+
+			body::-webkit-scrollbar-corner {
+				display: none;
+			}
+
+			.content {
+				display: flex;
+				width: 100dvw;
+				height: 100dvh;
+			}
+		</style>
+	</head>
+	<body
+		data-sveltekit-preload-data="hover"
+		style="
+			margin: 0;
+			background-size: cover;
+			background-attachment: fixed;
+			overflow-x: hidden;
+			display: flex;
+		"
+	>
+		<div class="content">%sveltekit.body%</div>
+	</body>
+</html>

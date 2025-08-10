@@ -1,0 +1,40 @@
+{
+	"sections": [
+		{
+			"title": "什么是nICP?",
+			"content": "nICP是一种代表锁定在6个月神经元中的ICP的代币。您可以从神经元产生的收益中获益, 同时仍然拥有流动性代币。"
+		},
+		{
+			"title": "它是去中心化的吗?",
+			"content": "nICP在设计上是完全去中心化的, 神经元直接由容器控制和管理, 而容器则由WaterNeuron DAO控制。在整个过程中不需要任何人为干预。"
+		},
+		{
+			"title": "为什么nICP的APY比6个月神经元更高?",
+			"content": "尽管有六个月的解锁期, nICP可能提供比在神经元中质押更高的APY。这是如何实现的?nICP由通过SNS启动的DAO管理。所有SNS ICP都质押在一个八年期的神经元中, 90%的收益被重新分配给nICP持有者。剩下的10%分配给WaterNeuron DAO。"
+		},
+		{
+			"title": "如何将ICP转换为nICP?",
+			"content": "按照当前汇率将您的ICP兑换为nICP代币。您的ICP将被锁定在一个六个月的神经元中, 并开始产生收益。最低兑换金额为1 ICP。"
+		},
+		{
+			"title": "如何将nICP转换回ICP?",
+			"content": "您的nICP将被销毁, 并按照当前汇率创建一个处于解冻模式的六个月神经元, 对应相应数量的ICP。六个月后, 一旦您的神经元解冻, 您将收到您的ICP。最低转换金额为价值10 ICP的nICP。"
+		},
+		{
+			"title": "汇率是多少?",
+			"content": "简单来说, 汇率是铸造的nICP数量与锁定在六个月神经元中的ICP数量之比。"
+		},
+		{
+			"title": "什么是WaterNeuron DAO?",
+			"content": "WaterNeuron DAO代表nICP持有者管理提案的投票。治理代币的持有者有权获得神经元产生的10%的收益。"
+		},
+		{
+			"title": "费用是多少?",
+			"content": "将ICP转换为nICP或反之不收取任何费用。神经元产生的ICP收益的10%将分配给DAO。"
+		},
+		{
+			"title": "有哪些风险?",
+			"content": "与任何DeFi应用程序一样, 主要风险是智能合约漏洞。为了减轻这种风险, WaterNeuron DAO设立了漏洞赏金计划。"
+		}
+	]
+}
