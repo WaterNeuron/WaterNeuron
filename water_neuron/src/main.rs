@@ -554,7 +554,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
             nicp_supply: s.total_circulating_nicp,
             minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
             minimum_withdraw_amount: MINIMUM_WITHDRAWAL_AMOUNT,
-            governance_fee_share_percent: s.governance_fee_share_percent,
+            governance_fee_share_percent: s.compute_governance_8y_share_percent(),
         }))
         .unwrap_or_default()
         .into_bytes();
