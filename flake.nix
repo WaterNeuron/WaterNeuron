@@ -68,6 +68,11 @@
           ];
           TZ = "UTC";
           POCKET_IC_BIN = "${pocket-ic}/bin/pocket-ic";
+          
+          shellHook = ''
+            echo "Entering nix-shell"
+            export PS1='\[\033[1;32m\][nix]\[\033[0m\] \w\$ '
+          '';
         };
       });
 }
