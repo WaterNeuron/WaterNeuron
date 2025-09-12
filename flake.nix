@@ -20,12 +20,10 @@
           name = "ic-wasm";
           version = "0.9.3";
           src = pkgs.fetchurl {
-            url = if pkgs.stdenv.isDarwin
-              then "https://github.com/dfinity/ic-wasm/releases/download/${version}/ic-wasm-x86_64-apple-darwin.tar.gz"
-              else "https://github.com/dfinity/ic-wasm/releases/download/${version}/ic-wasm-x86_64-unknown-linux-gnu.tar.gz";
+            url = "https://github.com/dfinity/ic-wasm/releases/download/${version}/ic-wasm-x86_64-${if pkgs.stdenv.isDarwin then "apple-darwin" else "unknown-linux-gnu"}.tar.gz";
             sha256 = if pkgs.stdenv.isDarwin
               then "sha256-WmHu3peNyJMcbdPAVbwic5+42K3eHyFv49y/QCdPe/M="
-              else "sha256-WSj7x+uKUP6BcozE2HPLsKvcwlEdbsNE/LZX76vwdZfQ=";
+              else "sha256-WSj7x+uKUP6Bcoyk2HPLCr3MJRHW7DRPy2V++r8HWX0=";
           };
           unpackPhase = ''
             tar xzf $src
@@ -43,7 +41,7 @@
             url = "https://github.com/dfinity/pocketic/releases/download/${version}/pocket-ic-x86_64-${if pkgs.stdenv.isDarwin then "darwin" else "linux"}.gz";
             sha256 = if pkgs.stdenv.isDarwin 
               then "sha256-dOhAXZKwXrcP5zXhPVgCkANL3He1Lqo6nDKWAfgvdeQ="
-              else "sha256-y/QII7qocszsqkPj2ZkO0i0m4GlC5G0J9ZBX6OErUvg=";
+              else "sha256-CTXubs4xJxmq5Oq93sLfxq801e2930069TvM0bNjYEQ=";
           };
           nativeBuildInputs = [ pkgs.gzip ];
           unpackPhase = ''
