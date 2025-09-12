@@ -340,6 +340,23 @@ fn get_withdrawal_requests(maybe_account: Option<Account>) -> Vec<WithdrawalDeta
 }
 
 #[query]
+fn list_withdrawal_requests(start: u64, length: u64) -> Vec<WithdrawalDetails> {
+    const MAX_LENGTH: u64 = 100;
+    let length = length.min(MAX_LENGTH);
+    read_state(|s| {
+        s.withdrawal_id_to_request
+            .iter()
+            .skip(start as usize)
+            .take(length as usize)
+            .map(|(id, r)| WithdrawalDetails {
+                status: s.get_withdrawal_status(*id),
+                request: r.clone(),
+            })
+            .collect()
+    })
+}
+
+#[query]
 fn get_transfer_statuses(ids: Vec<u64>) -> Vec<TransferStatus> {
     read_state(|s| ids.iter().map(|id| s.get_transfer_status(*id)).collect())
 }
