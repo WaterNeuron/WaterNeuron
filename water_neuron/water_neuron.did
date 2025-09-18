@@ -287,6 +287,7 @@ service : (LiquidArg) -> {
   get_pending_rewards : (opt principal) -> (nat64) query;
   get_transfer_statuses : (vec nat64) -> (vec TransferStatus) query;
   get_withdrawal_requests : (opt Account_1) -> (vec WithdrawalDetails) query;
+  list_withdrawal_requests : (nat64, nat64) -> (vec WithdrawalDetails) query;
   get_wtn_proposal_id : (nat64) -> (Result_2) query;
 
   icrc10_supported_standards : () -> (vec StandardRecord) query;

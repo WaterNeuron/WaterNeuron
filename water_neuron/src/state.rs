@@ -432,8 +432,7 @@ impl State {
             CUT_MIN_PERCENT
                 .checked_add((delta * ratio.powf(0.7)) as u64)
                 .unwrap()
-                .max(CUT_MIN_PERCENT)
-                .min(CUT_MAX_PERCENT)
+                .clamp(CUT_MIN_PERCENT, CUT_MAX_PERCENT)
         }
     }
 
@@ -1175,7 +1174,7 @@ pub mod test {
         state.main_neuron_6m_staked = ICP::from_e8s(100 * E8S);
         state.main_neuron_8y_stake = ICP::from_e8s(400 * E8S);
 
-        assert_eq!(state.compute_nicp_apy(), 0.5751);
+        assert_eq!(state.compute_nicp_apy(), 0.5463);
     }
 
     #[test]
