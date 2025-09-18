@@ -504,6 +504,11 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                     s.withdrawal_finalized.len() as f64,
                     "Count of finalized withdrawals requests.",
                 )?;
+                w.encode_gauge(
+                    "8y_dao_share",
+                    s.compute_governance_8y_share_percent() as f64,
+                    "Share of the 8 year neuron that goes to the DAO",
+                )?;
                 if let Some(latest_distribution_icp_per_vp) = s.latest_distribution_icp_per_vp {
                     w.encode_gauge(
                         "latest_distribution_icp_per_vp",
