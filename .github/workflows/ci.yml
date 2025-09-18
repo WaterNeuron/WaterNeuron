@@ -16,10 +16,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/flake-checker-action@main
-      - name: Run `cargo clippy`
-        run: nix develop -i -k HOME -c bash -c "cargo clippy"
-      - name: Run `cargo fmt`
-        run: nix develop -i -k HOME -c bash -c "cargo fmt --check"
+      - name: Run `cargo clippy` and `cargo fmt`
+        run: |
+          nix develop -i -k HOME -c bash -c "cargo clippy && cargo fmt --check"
       - name: Compile canisters
         run: ./build.sh
       - name: Upload artifacts

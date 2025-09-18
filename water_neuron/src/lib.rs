@@ -91,8 +91,8 @@ pub const INITIAL_NEURON_STAKE: u64 = E8S + 42;
 
 pub const SNS_DISTRIBUTION_MEMO: u64 = 83_78_83;
 
-pub const NEURON_6M_APY: f64 = 0.075;
-pub const NEURON_8Y_APY: f64 = 0.141;
+pub const NEURON_6M_APY: f64 = 0.071;
+pub const NEURON_8Y_APY: f64 = 0.134;
 
 pub const TVL_MIN: u64 = 2_000_000 * E8S;
 pub const TVL_MAX: u64 = 40_000_000 * E8S;
