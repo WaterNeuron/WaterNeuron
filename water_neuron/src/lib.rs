@@ -142,9 +142,9 @@ pub struct InitArg {
 
 #[derive(Deserialize, CandidType, Encode, Decode, PartialEq, Eq, Clone, Debug)]
 pub struct UpgradeArg {
-    // This is a legacy upgrade argument when both the nICP fee and WTN gov fee where equal.
+    // This is a legacy upgrade argument when both the nICP fee and WTN gov fee were equal.
     // At this point the gov fee gets calculated, and is not defined by parameters (see `compute_governance_8y_share_percent`).
-    // The upgrade arg can only used to change the 6m fee.
+    // The upgrade arg can only be used to change the 6m fee.
     #[n(0)]
     pub governance_fee_share_percent: Option<u64>,
 }
