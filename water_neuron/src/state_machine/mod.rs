@@ -1376,7 +1376,8 @@ async fn e2e_basic() {
     );
     assert_eq!(info.exchange_rate, 270_525);
 
-    assert_eq!(info.governance_fee_share_percent, 10);
+    assert_eq!(info.nicp_share_percent, 10);
+    assert_eq!(info.governance_share_percent, 10);
 
     let info = water_neuron.get_info().await;
     dbg!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
@@ -1417,7 +1418,8 @@ async fn e2e_basic() {
     );
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);
     assert_eq!(info.exchange_rate, 180_635);
-    assert_eq!(info.governance_fee_share_percent, 20);
+    assert_eq!(info.nicp_share_percent, 20);
+    assert_eq!(info.governance_share_percent, 10);
 
     assert_eq!(
         water_neuron
