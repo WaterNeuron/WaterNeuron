@@ -2,7 +2,7 @@ import { AuthClient } from '@dfinity/auth-client';
 import { type Agent, HttpAgent, type Identity } from '@dfinity/agent';
 import { Signer } from '@slide-computer/signer';
 import { PostMessageTransport } from '@slide-computer/signer-web';
-import { user, canisters, availableAccounts, signer, ledgerDevice } from './stores';
+import { agent as globalAgent, user, canisters, availableAccounts, signer, ledgerDevice } from './stores';
 import { Canisters, User } from './actors';
 import { SignerAgent } from '@slide-computer/signer-agent';
 import { Principal } from '@dfinity/principal';
@@ -26,6 +26,7 @@ import {
 import { get } from 'svelte/store';
 
 export function registerActors(agent: Agent): Canisters {
+	globalAgent.set(agent);
 	let store = get(canisters);
 	store.waterNeuron.connectWith(agent);
 	store.icpLedger.connectWith(agent);
