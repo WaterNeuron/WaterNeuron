@@ -5,7 +5,6 @@
 		getMaybeAccount,
 		assetToIconPath,
 		assetToTransferFee,
-		assetToDashboardUrl,
 		Toast as ToastMessage,
 		bigintE8sToNumber
 	} from '$lib';
@@ -20,7 +19,7 @@
 		handleInputAmount
 	} from '$lib/stores';
 	import { onMount } from 'svelte';
-	import { AccountIdentifier, LedgerCanister } from '@dfinity/ledger-icp';
+	import { AccountIdentifier } from '@dfinity/ledger-icp';
 	import {
 		handleIcrcTransferResult,
 		handleTransferResult,
@@ -37,7 +36,6 @@
 	} from '$lib/../declarations/icrc_ledger/icrc_ledger.did';
 	import type { _SERVICE as icpLedgerInterface } from '$lib/../declarations/icp_ledger/icp_ledger.did';
 	import { fade } from 'svelte/transition';
-	import { IcrcLedgerCanister } from '@dfinity/ledger-icrc';
 	import Toast from '../Toast.svelte';
 	import ErrorIcon from '$lib/icons/ErrorIcon.svelte';
 
@@ -80,10 +78,10 @@
 								'ICP'
 							);
 						} else {
-							status = await icrcLedgerWalletTransfer(
+							status = await icrcTransfer(
 								maybeAccount,
 								amount_e8s,
-								$ledgerDevice?.icpLedger,
+								$ledgerDevice?.icpLedger.authActor,
 								'ICP'
 							);
 						}
@@ -105,11 +103,11 @@
 								'nICP'
 							);
 						} else {
-							status = await icrcLedgerWalletTransfer(
+							status = await icrcTransfer(
 								maybeAccount,
 								amount_e8s,
-								$ledgerDevice?.nicpLedger,
-								'ICP'
+								$ledgerDevice?.nicpLedger.authActor,
+								'nICP'
 							);
 						}
 					}
@@ -130,11 +128,11 @@
 								'WTN'
 							);
 						} else {
-							status = await icrcLedgerWalletTransfer(
+							status = await icrcTransfer(
 								maybeAccount,
 								amount_e8s,
-								$ledgerDevice?.wtnLedger,
-								'ICP'
+								$ledgerDevice?.wtnLedger.authActor,
+								'WTN'
 							);
 						}
 					}
@@ -160,73 +158,23 @@
 	): Promise<ToastResult> {
 		if (!$user) return { success: false, message: 'User is not authenticated.' };
 		try {
-			if ($user?.account === 'main') {
-				if (!$canisters?.icpLedger.authActor)
-					return { success: false, message: 'User is not authenticated.' };
-
-				const args = {
-					to: to_account.toUint8Array(),
-					fee: { e8s: assetToTransferFee('ICP') } as Tokens,
-					memo: 0n,
-					from_subaccount: [],
-					created_at_time: [],
-					amount: { e8s: amount_e8s } as Tokens
-				} as TransferArgs;
-				const result = await $canisters?.icpLedger.authActor.transfer(args);
-				return handleTransferResult(result);
-			} else {
-				if (!$ledgerDevice) return { success: false, message: 'Device is not connected.' };
-				const blockHeight = await $ledgerDevice.icpLedger.transfer({
-					to: to_account,
-					amount: amount_e8s
-				});
-				return {
-					success: true,
-					message: `Successful transfer at <a target='_blank' style="text-decoration: underline; color: var(--toast-text-color);" href=https://dashboard.internetcomputer.org/transaction/${blockHeight}>block index ${blockHeight}</a>.`
-				};
-			}
+			const icpLedger =
+				$user?.account === 'main'
+					? $canisters?.icpLedger.authActor
+					: $ledgerDevice?.icpLedger.authActor;
+			if (!icpLedger) return { success: false, message: 'User is not authenticated.' };
+			const args = {
+				to: to_account.toUint8Array(),
+				fee: { e8s: assetToTransferFee('ICP') } as Tokens,
+				memo: 0n,
+				from_subaccount: [],
+				created_at_time: [],
+				amount: { e8s: amount_e8s } as Tokens
+			} as TransferArgs;
+			const result = await icpLedger.transfer(args);
+			return handleTransferResult(result);
 		} catch (error) {
 			console.error('[icpTransfer] ', error);
-			return { success: false, message: 'Transfer failed. Please, try again.' };
-		}
-	}
-
-	async function icrcLedgerWalletTransfer(
-		to_account: Account,
-		amount_e8s: bigint,
-		ledger: IcrcLedgerCanister | LedgerCanister | undefined,
-		asset: 'nICP' | 'ICP' | 'WTN'
-	): Promise<ToastResult> {
-		try {
-			if (!ledger) return { success: false, message: 'Device is not connected.' };
-
-			if (ledger instanceof LedgerCanister) {
-				const blockHeight = await ledger.icrc1Transfer({
-					to: to_account,
-					amount: amount_e8s,
-					fee: assetToTransferFee(asset),
-					createdAt: BigInt(Date.now()) * BigInt(1e6)
-				});
-
-				return {
-					success: true,
-					message: `Successful transfer at <a target='_blank' style="text-decoration: underline; color: var(--toast-text-color);" href=${assetToDashboardUrl('ICP')}${blockHeight}>block index ${blockHeight}</a>.`
-				};
-			} else {
-				const blockHeight = await ledger.transfer({
-					to: to_account,
-					amount: amount_e8s,
-					fee: assetToTransferFee(asset),
-					created_at_time: BigInt(Date.now()) * BigInt(1e6)
-				});
-
-				return {
-					success: true,
-					message: `Successful transfer at <a target='_blank' style="text-decoration: underline; color: var(--toast-text-color);" href=${assetToDashboardUrl(asset)}${blockHeight}>block index ${blockHeight}</a>.`
-				};
-			}
-		} catch (error) {
-			console.error('[icrcLedgerWalletTransfer] ', error);
 			return { success: false, message: 'Transfer failed. Please, try again.' };
 		}
 	}
@@ -242,10 +190,10 @@
 
 			const icrcArgs = {
 				to: to_account,
-				fee: [],
+				fee: [assetToTransferFee(asset)],
 				memo: [],
 				from_subaccount: [],
-				created_at_time: [],
+				created_at_time: [BigInt(Date.now()) * BigInt(1e6)],
 				amount: amount_e8s
 			} as TransferArg;
 
