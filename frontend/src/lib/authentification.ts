@@ -2,7 +2,7 @@ import { AuthClient } from '@dfinity/auth-client';
 import { type Agent, HttpAgent, type Identity } from '@dfinity/agent';
 import { Signer } from '@slide-computer/signer';
 import { PostMessageTransport } from '@slide-computer/signer-web';
-import { user, canisters, availableAccounts, signer, ledgerDevice } from './stores';
+import { agent as globalAgent, user, canisters, availableAccounts, signer, ledgerDevice } from './stores';
 import { CanisterActor, Canisters, User } from './actors';
 import { SignerAgent } from '@slide-computer/signer-agent';
 import { Principal } from '@dfinity/principal';
@@ -28,6 +28,7 @@ import { idlFactory as idlFactoryIcrc } from '../declarations/icrc_ledger';
 import { idlFactory as idlFactoryIcp } from '../declarations/icp_ledger';
 
 export function registerActors(agent: Agent): Canisters {
+	globalAgent.set(agent);
 	let store = get(canisters);
 	store.waterNeuron.connectWith(agent);
 	store.icpLedger.connectWith(agent);

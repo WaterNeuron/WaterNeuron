@@ -22,6 +22,7 @@
 			>
 				Spreadsheet
 			</a>
+			<a href="/recovery"> Recovery </a>
 		</div>
 	{/if}
 	<div class="right-container">
