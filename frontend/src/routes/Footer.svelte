@@ -6,6 +6,7 @@
 	import GitBookIcon from '$lib/icons/GitBookIcon.svelte';
 	import { isMobile } from '$lib';
 	import GithubIcon from '$lib/icons/GithubIcon.svelte';
+	import DiscordIcon from '$lib/icons/DiscordIcon.svelte';
 </script>
 
 <footer class:filter={$isLogging}>
@@ -47,8 +48,8 @@
 		<a href="https://github.com/WaterNeuron" target="_blank" rel="noreferrer">
 			<GithubIcon />
 		</a>
-		<a href="https://t.me/waterneuron" rel="noreferrer" target="_blank">
-			<TelegramIcon />
+		<a href="https://discord.com/invite/UMvQq7yukd" target="_blank" rel="noreferrer">
+			<DiscordIcon />
 		</a>
 	</div>
 </footer>
