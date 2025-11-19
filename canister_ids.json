@@ -8,11 +8,17 @@
   "icp_ledger": {
     "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
   },
+  "icrc_validator": {
+    "ic": "uqeyr-oaaaa-aaaar-qbyyq-cai"
+  },
   "nicp_index": {
     "ic": "btxkl-saaaa-aaaar-qagvq-cai"
   },
   "nicp_ledger": {
     "ic": "buwm7-7yaaa-aaaar-qagva-cai"
+  },
+  "sns_module": {
+    "ic": "zftzm-qqaaa-aaaam-adxfa-cai"
   },
   "water_neuron": {
     "ic": "tsbvt-pyaaa-aaaar-qafva-cai"
@@ -22,8 +28,5 @@
   },
   "wtn_ledger": {
     "ic": "jcmow-hyaaa-aaaaq-aadlq-cai"
-  },
-  "sns_module": {
-    "ic": "zftzm-qqaaa-aaaam-adxfa-cai"
   }
 }

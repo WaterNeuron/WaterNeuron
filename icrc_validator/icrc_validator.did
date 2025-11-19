@@ -1,0 +1,11 @@
+type Account = record { owner : principal; subaccount : opt blob };
+type Result = variant { Ok : text; Err : text };
+type TransferArg = record {
+  to : Account;
+  fee : opt nat;
+  memo : opt blob;
+  from_subaccount : opt blob;
+  created_at_time : opt nat64;
+  amount : nat;
+};
+service : { validate_nicp_icrc1_transfer : (TransferArg) -> (Result) }

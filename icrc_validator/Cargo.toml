@@ -1,0 +1,18 @@
+[package]
+name = "icrc_validator"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+candid.workspace = true
+ic-base-types.workspace = true
+ic-cdk.workspace = true
+icrc-ledger-types.workspace = true
+icrc-ledger-client-cdk.workspace = true
+serde.workspace = true
+serde_bytes.workspace = true
+serde_cbor.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+candid_parser.workspace = true
