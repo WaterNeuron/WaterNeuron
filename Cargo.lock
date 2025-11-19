@@ -3727,6 +3727,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "icrc_validator"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_parser",
+ "ic-base-types",
+ "ic-cdk",
+ "icrc-ledger-client-cdk",
+ "icrc-ledger-types",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "serde_json",
+]
+
+[[package]]
 name = "icu_collections"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

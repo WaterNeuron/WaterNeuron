@@ -1,5 +1,5 @@
 [workspace]
-members = ["ic_wasm_utils", "water_neuron", "boomerang"]
+members = ["ic_wasm_utils", "water_neuron", "boomerang", "icrc_validator"]
 resolver = "2"
 
 [workspace.package]

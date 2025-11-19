@@ -1,5 +1,5 @@
 {
-  "dfx": "0.16.1",
+  "dfx": "0.26.1",
   "canisters": {
     "water_neuron": {
       "candid": "water_neuron/water_neuron.did",
@@ -10,6 +10,11 @@
       "candid": "boomerang/boomerang.did",
       "type": "custom",
       "wasm": "bazel-bin/boomerang/canister.wasm"
+    },
+    "icrc_validator": {
+      "candid": "icrc_validator/icrc_validator.did",
+      "type": "custom",
+      "wasm": "artifactsicrc_validator/canister.wasm"
     },
     "sns_module": {
       "candid": "sns_module/sns_module.did",

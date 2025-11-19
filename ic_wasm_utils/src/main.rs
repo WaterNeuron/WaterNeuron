@@ -14,6 +14,13 @@ lazy_static! {
             }
         ),
         (
+            "icrc_validator".into(),
+            match get_wasm_path_sync(CanisterName::Local("icrc_validator".to_string()), false) {
+                Ok(path) => path,
+                Err(e) => panic!("Error: {:?}", e),
+            }
+        ),
+        (
             "water_neuron".into(),
             match get_wasm_path_sync(CanisterName::Local("water_neuron".to_string()), false) {
                 Ok(path) => path,
