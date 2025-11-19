@@ -6,13 +6,16 @@
 	import GitBookIcon from '$lib/icons/GitBookIcon.svelte';
 	import { isMobile } from '$lib';
 	import GithubIcon from '$lib/icons/GithubIcon.svelte';
+	import DiscordIcon from '$lib/icons/DiscordIcon.svelte';
 </script>
 
 <footer class:filter={$isLogging}>
 	{#if !isMobile}
 		<div class="left-container">
 			<a href="https://docs.waterneuron.fi/" target="_blank" rel="noreferrer"> Documentation </a>
-			<a href="https://dashboard.waterneuron.fi/" target="_blank" rel="noreferrer"> WTN Calculator </a>
+			<a href="https://dashboard.waterneuron.fi/" target="_blank" rel="noreferrer">
+				WTN Calculator
+			</a>
 			<a
 				href="https://docs.google.com/spreadsheets/d/1Y8JXo8xOB786usk8BaWPPcBJB7oFR0HWvA5y8kcfRqU/edit?gid=746571094#gid=746571094"
 				target="_blank"
@@ -20,6 +23,7 @@
 			>
 				Spreadsheet
 			</a>
+			<a href="/recovery"> Recovery </a>
 		</div>
 	{/if}
 	<div class="right-container">
@@ -44,8 +48,8 @@
 		<a href="https://github.com/WaterNeuron" target="_blank" rel="noreferrer">
 			<GithubIcon />
 		</a>
-		<a href="https://t.me/waterneuron" rel="noreferrer" target="_blank">
-			<TelegramIcon />
+		<a href="https://discord.com/invite/UMvQq7yukd" target="_blank" rel="noreferrer">
+			<DiscordIcon />
 		</a>
 	</div>
 </footer>

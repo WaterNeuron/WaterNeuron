@@ -7,6 +7,7 @@ import type { WithdrawalDetails } from '../declarations/water_neuron/water_neuro
 import { Signer } from '@slide-computer/signer';
 import { LedgerDevice } from './ledger-identity';
 import { Canisters, fetchBalance, User, WaterNeuronInfo } from './actors';
+import { type Agent } from '@dfinity/agent';
 
 /* === Flags === */
 export const isLogging = writable<boolean>(false);
@@ -28,6 +29,7 @@ export const selectedAsset = writable<'ICP' | 'nICP' | 'WTN'>('ICP');
 export const selectedWithdrawal = writable<WithdrawalDetails | undefined>(undefined);
 export const user = writable<User | undefined>(undefined);
 export const ledgerDevice = writable<LedgerDevice | undefined>(undefined);
+export const agent = writable<Agent | undefined>(undefined);
 export const canisters = writable<Canisters>(new Canisters());
 export const waterNeuronInfo = writable<WaterNeuronInfo | undefined>(undefined);
 export const chartData = writable<{ timestamps: number[]; exchangeRates: number[] } | undefined>(

@@ -2,13 +2,11 @@ import { AuthClient } from '@dfinity/auth-client';
 import { type Agent, HttpAgent, type Identity } from '@dfinity/agent';
 import { Signer } from '@slide-computer/signer';
 import { PostMessageTransport } from '@slide-computer/signer-web';
-import { user, canisters, availableAccounts, signer, ledgerDevice } from './stores';
-import { Canisters, User } from './actors';
+import { agent as globalAgent, user, canisters, availableAccounts, signer, ledgerDevice } from './stores';
+import { CanisterActor, Canisters, User } from './actors';
 import { SignerAgent } from '@slide-computer/signer-agent';
 import { Principal } from '@dfinity/principal';
 import { LedgerDevice, LedgerIdentity } from './ledger-identity';
-import { IcrcLedgerCanister } from '@dfinity/ledger-icrc';
-import { LedgerCanister } from '@dfinity/ledger-icp';
 import { Secp256k1PublicKey } from '@dfinity/identity-secp256k1';
 import { BrowserExtensionTransport } from '@slide-computer/signer-extension';
 import {
@@ -24,8 +22,13 @@ import {
 	OISY_RPC
 } from './env';
 import { get } from 'svelte/store';
+import type { _SERVICE as icrcLedgerInterface } from '../declarations/icrc_ledger/icrc_ledger.did';
+import type { _SERVICE as icpLedgerInterface } from '../declarations/icp_ledger/icp_ledger.did';
+import { idlFactory as idlFactoryIcrc } from '../declarations/icrc_ledger';
+import { idlFactory as idlFactoryIcp } from '../declarations/icp_ledger';
 
 export function registerActors(agent: Agent): Canisters {
+	globalAgent.set(agent);
 	let store = get(canisters);
 	store.waterNeuron.connectWith(agent);
 	store.icpLedger.connectWith(agent);
@@ -174,35 +177,36 @@ export async function connectWithTransport(rpc: typeof NFID_RPC | typeof OISY_RP
 
 export async function connectWithHardwareWallet() {
 	const ledgerIdentity = await LedgerIdentity.create();
-	const agent = HttpAgent.createSync({
-		host: HOST
-	});
 
 	const authenticatedAgent = HttpAgent.createSync({
 		identity: ledgerIdentity,
 		host: HOST
 	});
 
-	const icpLedger = LedgerCanister.create({
-		agent: authenticatedAgent,
-		canisterId: Principal.fromText(CANISTER_ID_ICP_LEDGER)
+	const icpLedger = new CanisterActor<icpLedgerInterface>({
+		idl: idlFactoryIcp,
+		canisterId: CANISTER_ID_ICP_LEDGER
 	});
 
-	const nicpLedger = IcrcLedgerCanister.create({
-		agent: authenticatedAgent,
-		canisterId: Principal.fromText(CANISTER_ID_NICP_LEDGER)
+	const nicpLedger = new CanisterActor<icrcLedgerInterface>({
+		idl: idlFactoryIcrc,
+		canisterId: CANISTER_ID_NICP_LEDGER
 	});
 
-	const wtnLedger = IcrcLedgerCanister.create({
-		agent: authenticatedAgent,
-		canisterId: Principal.fromText(CANISTER_ID_WTN_LEDGER)
+	const wtnLedger = new CanisterActor<icrcLedgerInterface>({
+		idl: idlFactoryIcrc,
+		canisterId: CANISTER_ID_WTN_LEDGER
 	});
+
+	icpLedger.connectWith(authenticatedAgent);
+	nicpLedger.connectWith(authenticatedAgent);
+	wtnLedger.connectWith(authenticatedAgent);
 
 	ledgerDevice.set(
 		new LedgerDevice({
-			principal: await authenticatedAgent.getPrincipal(),
+			principal: ledgerIdentity.getPrincipal(),
 			identity: ledgerIdentity,
-			agent,
+			agent: authenticatedAgent,
 			icpLedger,
 			nicpLedger,
 			wtnLedger
@@ -278,20 +282,24 @@ export async function testSignIn() {
 					console.error(err);
 				});
 
-				const icpLedger = LedgerCanister.create({
-					agent: ledgerAgent,
-					canisterId: Principal.fromText(CANISTER_ID_ICP_LEDGER)
+				const icpLedger = new CanisterActor<icpLedgerInterface>({
+					idl: idlFactoryIcp,
+					canisterId: CANISTER_ID_ICP_LEDGER
 				});
 
-				const nicpLedger = IcrcLedgerCanister.create({
-					agent: ledgerAgent,
-					canisterId: Principal.fromText(CANISTER_ID_NICP_LEDGER)
+				const nicpLedger = new CanisterActor<icrcLedgerInterface>({
+					idl: idlFactoryIcrc,
+					canisterId: CANISTER_ID_NICP_LEDGER
 				});
 
-				const wtnLedger = IcrcLedgerCanister.create({
-					agent: ledgerAgent,
-					canisterId: Principal.fromText(CANISTER_ID_WTN_LEDGER)
+				const wtnLedger = new CanisterActor<icrcLedgerInterface>({
+					idl: idlFactoryIcrc,
+					canisterId: CANISTER_ID_WTN_LEDGER
 				});
+
+				icpLedger.connectWith(ledgerAgent);
+				nicpLedger.connectWith(ledgerAgent);
+				wtnLedger.connectWith(ledgerAgent);
 
 				ledgerDevice.set(
 					new LedgerDevice({

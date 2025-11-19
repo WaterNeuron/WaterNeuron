@@ -18,10 +18,12 @@ import { smallerVersion } from '@dfinity/utils';
 import type Transport from '@ledgerhq/hw-transport';
 import LedgerApp from '@zondax/ledger-icp';
 import type { ResponseAddress, ResponseSign, ResponseSignUpdateCall } from '@zondax/ledger-icp';
-import { AccountIdentifier, LedgerCanister } from '@dfinity/ledger-icp';
+import { AccountIdentifier } from '@dfinity/ledger-icp';
 import { bigintE8sToNumber } from '$lib';
-import { IcrcLedgerCanister } from '@dfinity/ledger-icrc';
+import type { _SERVICE as icrcLedgerInterface } from '../declarations/icrc_ledger/icrc_ledger.did';
+import type { _SERVICE as icpLedgerInterface } from '../declarations/icp_ledger/icp_ledger.did';
 import { LedgerError, type ResponseVersion } from '@zondax/ledger-js';
+import { CanisterActor } from './actors';
 
 export const LEDGER_DEFAULT_DERIVE_PATH = `m/44'/223'/0'/0/0`;
 const LEDGER_SIGNATURE_LENGTH = 64;
@@ -43,9 +45,9 @@ export class LedgerDevice {
 	public identity: LedgerIdentity;
 	public principal: Principal;
 	public accountId: string;
-	public icpLedger: LedgerCanister;
-	public nicpLedger: IcrcLedgerCanister;
-	public wtnLedger: IcrcLedgerCanister;
+	public icpLedger: CanisterActor<icpLedgerInterface>;
+	public nicpLedger: CanisterActor<icrcLedgerInterface>;
+	public wtnLedger: CanisterActor<icrcLedgerInterface>;
 	public icpBalanceE8s: bigint;
 	public nicpBalanceE8s: bigint;
 	public wtnBalanceE8s: bigint;
@@ -60,9 +62,9 @@ export class LedgerDevice {
 		principal: Principal;
 		identity: LedgerIdentity;
 		agent: HttpAgent;
-		icpLedger: LedgerCanister;
-		nicpLedger: IcrcLedgerCanister;
-		wtnLedger: IcrcLedgerCanister;
+		icpLedger: CanisterActor<icpLedgerInterface>;
+		nicpLedger: CanisterActor<icrcLedgerInterface>;
+		wtnLedger: CanisterActor<icrcLedgerInterface>;
 	}) {
 		this.identity = identity;
 		this.principal = principal;

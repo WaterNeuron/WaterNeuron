@@ -142,6 +142,9 @@ pub struct InitArg {
 
 #[derive(Deserialize, CandidType, Encode, Decode, PartialEq, Eq, Clone, Debug)]
 pub struct UpgradeArg {
+    // This is a legacy upgrade argument when both the nICP fee and WTN gov fee were equal.
+    // At this point the gov fee gets calculated, and is not defined by parameters (see `compute_governance_8y_share_percent`).
+    // The upgrade arg can only be used to change the 6m fee.
     #[n(0)]
     pub governance_fee_share_percent: Option<u64>,
 }
@@ -162,7 +165,8 @@ pub struct CanisterInfo {
     pub nicp_supply: nICP,
     pub minimum_deposit_amount: ICP,
     pub minimum_withdraw_amount: ICP,
-    pub governance_fee_share_percent: u64,
+    pub nicp_share_percent: u64,
+    pub governance_share_percent: u64,
 }
 
 #[derive(CandidType, Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Encode, Decode)]

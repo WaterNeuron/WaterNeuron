@@ -318,7 +318,8 @@ fn get_info() -> CanisterInfo {
         nicp_supply: s.total_circulating_nicp,
         minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
         minimum_withdraw_amount: MINIMUM_WITHDRAWAL_AMOUNT,
-        governance_fee_share_percent: s.governance_fee_share_percent,
+        nicp_share_percent: s.governance_fee_share_percent,
+        governance_share_percent: s.compute_governance_8y_share_percent(),
     })
 }
 
@@ -504,6 +505,11 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                     s.withdrawal_finalized.len() as f64,
                     "Count of finalized withdrawals requests.",
                 )?;
+                w.encode_gauge(
+                    "8y_dao_share",
+                    s.compute_governance_8y_share_percent() as f64,
+                    "Share of the 8 year neuron that goes to the DAO",
+                )?;
                 if let Some(latest_distribution_icp_per_vp) = s.latest_distribution_icp_per_vp {
                     w.encode_gauge(
                         "latest_distribution_icp_per_vp",
@@ -534,25 +540,9 @@ fn http_request(req: HttpRequest) -> HttpResponse {
     } else if req.path() == "/api/metadata" {
         use serde_json;
 
-        let bytes: Vec<u8> = serde_json::to_string(&read_state(|s| CanisterInfo {
-            latest_distribution_icp_per_vp: s.latest_distribution_icp_per_vp,
-            neuron_id_6m: s.neuron_id_6m,
-            neuron_6m_stake_e8s: s.main_neuron_6m_staked,
-            tracked_6m_stake: s.tracked_6m_stake,
-            neuron_6m_account: s.get_6m_neuron_account(),
-            neuron_id_8y: s.neuron_id_8y,
-            neuron_8y_stake_e8s: s.main_neuron_8y_stake,
-            neuron_8y_account: s.get_8y_neuron_account(),
-            exchange_rate: s.get_icp_to_ncip_exchange_rate_e8s(),
-            stakers_count: s.account_to_deposits.keys().len(),
-            total_icp_deposited: s.total_icp_deposited,
-            nicp_supply: s.total_circulating_nicp,
-            minimum_deposit_amount: MINIMUM_DEPOSIT_AMOUNT,
-            minimum_withdraw_amount: MINIMUM_WITHDRAWAL_AMOUNT,
-            governance_fee_share_percent: s.governance_fee_share_percent,
-        }))
-        .unwrap_or_default()
-        .into_bytes();
+        let bytes: Vec<u8> = serde_json::to_string(&get_info())
+            .unwrap_or_default()
+            .into_bytes();
         return HttpResponseBuilder::ok()
             .header("Content-Type", "application/json; charset=utf-8")
             .with_body_and_content_length(bytes)
