@@ -14,7 +14,7 @@
     "icrc_validator": {
       "candid": "icrc_validator/icrc_validator.did",
       "type": "custom",
-      "wasm": "artifactsicrc_validator/canister.wasm"
+      "wasm": "artifacts/icrc_validator.wasm.gz"
     },
     "sns_module": {
       "candid": "sns_module/sns_module.did",
