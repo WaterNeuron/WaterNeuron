@@ -21,8 +21,9 @@ type CanisterInfo = record {
   neuron_id_8y : opt NeuronId;
   tracked_6m_stake : nat64;
   minimum_withdraw_amount : nat64;
+  governance_share_percent : nat64;
+  nicp_share_percent : nat64;
   neuron_8y_stake_e8s : nat64;
-  governance_fee_share_percent : nat64;
   neuron_8y_account : Account_1;
   minimum_deposit_amount : nat64;
   neuron_6m_stake_e8s : nat64;
