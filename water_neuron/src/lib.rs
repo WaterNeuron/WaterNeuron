@@ -325,7 +325,10 @@ pub fn timer() {
 
                     scopeguard::ScopeGuard::into_inner(_enqueue_followup_guard);
 
-                    schedule_after(Duration::from_secs(100 * 24 * 60 * 60), TaskType::MaybeInitializeMainNeurons);
+                    schedule_after(
+                        Duration::from_secs(100 * 24 * 60 * 60),
+                        TaskType::MaybeInitializeMainNeurons,
+                    );
                 });
             }
             TaskType::MaybeDistributeICP => {

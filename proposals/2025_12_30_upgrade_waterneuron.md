@@ -1,7 +1,7 @@
 ```
-quill sns make-upgrade-canister-proposal 6ef86c9b566150ac7ab4cecea6a1e78bfde679f5973dc50c456878238c1c283c \
+quill sns make-upgrade-canister-proposal 85ff8b442cca2eb2943fe74127085745f16d95b0d539993cd093f682f774dca8 \
     --target-canister-id tsbvt-pyaaa-aaaar-qafva-cai \
-    --wasm-path "./waterneuron.wasm.gz" \
+    --wasm-path "./water_neuron.wasm.gz" \
     --canister-upgrade-arg-path "./water_neuron_arg.bin" \
     --mode upgrade \
     --summary "
@@ -11,32 +11,32 @@ This is a proposal to upgrade the WaterNeuron protocol to refresh the 8 years ne
 
 ## Upgrade args
 
-The args module hash is \`c22e4b18f746af362906f7ee56264fcd3a7c38f5797618a4748f4e7b0c74215b\`.
+The args module hash is \`9b723b5ed323ebb32f08d9ea96f10523987b95e4fe72bfb3e23f41578bbf7972\`.
 
 \`\`\`
 git fetch
-git checkout d81ded9adbee1475f8f63b125d23eec861c9d163
+git checkout 8d801801f9ebb217988445dbb85f619c6ccbac79
 cd water_neuron
-didc encode -d water_neuron.did -t '(LiquidArg)' '(variant{Upgrade})' | xxd -r -p > water_neuron_arg.bin
+didc encode -d water_neuron/water_neuron.did -t '(LiquidArg)' '(variant{Upgrade})' | xxd -r -p > water_neuron_arg.bin
 sha256sum water_neuron_arg.bin
 \`\`\`
 
 ## Wasm Verification
 
-The compressed canister WebAssembly module is built from commit \`d81ded9adbee1475f8f63b125d23eec861c9d163\`.
-The compressed module hash is \`18f89aafc01d87a5cb62be8f189e80f9810126e4603a820226436fe537039510\`.
+The compressed canister WebAssembly module is built from commit \`8d801801f9ebb217988445dbb85f619c6ccbac79\`.
+The compressed module hash is \`69841634fe1510f437a41f7dfbefd0b9a53d3fc58e8815fb428a0e9994ea7ce9\`.
 Target canister: \`tsbvt-pyaaa-aaaar-qafva-cai\`.
 
 To build the wasm module yourself and verify its hash, run the following commands from the root of the water_neuron repo:
 \`\`\`
 git fetch
-git checkout d81ded9adbee1475f8f63b125d23eec861c9d163
+git checkout 8d801801f9ebb217988445dbb85f619c6ccbac79
 ./build.sh
 \`\`\`
     " \
     --title "Upgrade WaterNeuron Protocol" \
     --url "https://github.com/WaterNeuron/WaterNeuron" \
-    --hsm-slot 0 \
+    --pem-file ~/.config/dfx/identity/default/identity.pem \
     --canister-ids-file ./sns_canister_ids.json > msg.json
 ```
 didc encode -d water_neuron/water_neuron.did -t '(LiquidArg)' '(variant{Init = record {wtn_ledger_id=principal "jcmow-hyaaa-aaaaq-aadlq-cai"; wtn_governance_id=principal "jfnic-kaaaa-aaaaq-aadla-cai"; nicp_ledger_id=principal "buwm7-7yaaa-aaaar-qagva-cai"}})'
