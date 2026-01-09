@@ -7,7 +7,7 @@ quill sns make-upgrade-canister-proposal 85ff8b442cca2eb2943fe74127085745f16d95b
     --summary "
 # Upgrade WaterNeuron Protocol
 
-This is a proposal to upgrade the WaterNeuron protocol to refresh the 8 years neuron every 100 days.
+This is a proposal to upgrade the WaterNeuron protocol that updates the did file to match latest changes.
 
 ## Upgrade args
 
@@ -15,7 +15,7 @@ The args module hash is \`9b723b5ed323ebb32f08d9ea96f10523987b95e4fe72bfb3e23f41
 
 \`\`\`
 git fetch
-git checkout 8d801801f9ebb217988445dbb85f619c6ccbac79
+git checkout cd865e97772ff93f7d10b939d86f0b2fd0e52eff
 cd water_neuron
 didc encode -d water_neuron/water_neuron.did -t '(LiquidArg)' '(variant{Upgrade})' | xxd -r -p > water_neuron_arg.bin
 sha256sum water_neuron_arg.bin
@@ -23,14 +23,14 @@ sha256sum water_neuron_arg.bin
 
 ## Wasm Verification
 
-The compressed canister WebAssembly module is built from commit \`8d801801f9ebb217988445dbb85f619c6ccbac79\`.
-The compressed module hash is \`69841634fe1510f437a41f7dfbefd0b9a53d3fc58e8815fb428a0e9994ea7ce9\`.
+The compressed canister WebAssembly module is built from commit \`cd865e97772ff93f7d10b939d86f0b2fd0e52eff\`.
+The compressed module hash is \`6dc0b6aaa3f51a8dc1f6378eacfced768f0ce39684a14d88fb230ddaf03c6910\`.
 Target canister: \`tsbvt-pyaaa-aaaar-qafva-cai\`.
 
 To build the wasm module yourself and verify its hash, run the following commands from the root of the water_neuron repo:
 \`\`\`
 git fetch
-git checkout 8d801801f9ebb217988445dbb85f619c6ccbac79
+git checkout cd865e97772ff93f7d10b939d86f0b2fd0e52eff
 ./build.sh
 \`\`\`
     " \

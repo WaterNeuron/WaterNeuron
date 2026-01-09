@@ -2,7 +2,14 @@ import { AuthClient } from '@dfinity/auth-client';
 import { type Agent, HttpAgent, type Identity } from '@dfinity/agent';
 import { Signer } from '@slide-computer/signer';
 import { PostMessageTransport } from '@slide-computer/signer-web';
-import { agent as globalAgent, user, canisters, availableAccounts, signer, ledgerDevice } from './stores';
+import {
+	agent as globalAgent,
+	user,
+	canisters,
+	availableAccounts,
+	signer,
+	ledgerDevice
+} from './stores';
 import { CanisterActor, Canisters, User } from './actors';
 import { SignerAgent } from '@slide-computer/signer-agent';
 import { Principal } from '@dfinity/principal';
