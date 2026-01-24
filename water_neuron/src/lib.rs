@@ -303,7 +303,7 @@ pub fn timer() {
         let task_type = task.task_type;
         match task.task_type {
             TaskType::MaybeInitializeMainNeurons => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -332,7 +332,7 @@ pub fn timer() {
                 });
             }
             TaskType::MaybeDistributeICP => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -345,7 +345,7 @@ pub fn timer() {
                 });
             }
             TaskType::ProcessVoting => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -364,7 +364,7 @@ pub fn timer() {
                 });
             }
             TaskType::ProcessEarlyVoting => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -379,7 +379,7 @@ pub fn timer() {
                 });
             }
             TaskType::ProcessPendingTransfers => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -393,7 +393,7 @@ pub fn timer() {
                 });
             }
             TaskType::ProcessLogic => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -408,7 +408,7 @@ pub fn timer() {
                 });
             }
             TaskType::SpawnNeurons => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -419,7 +419,7 @@ pub fn timer() {
                 });
             }
             TaskType::RefreshShortTerm => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -434,7 +434,7 @@ pub fn timer() {
                 });
             }
             TaskType::MaybeDistributeRewards => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _transfer_guard = match TaskGuard::new(TaskType::ProcessRewardsTransfer) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -456,7 +456,7 @@ pub fn timer() {
                 });
             }
             TaskType::ProcessRewardsTransfer => {
-                ic_cdk::spawn(async move {
+                ic_cdk::futures::spawn(async move {
                     let _guard = match TaskGuard::new(task_type) {
                         Ok(guard) => guard,
                         Err(_) => return,
@@ -644,7 +644,7 @@ async fn initialize_main_neuron(
     let target = Account {
         owner: NNS_GOVERNANCE_ID,
         subaccount: Some(compute_neuron_staking_subaccount_bytes(
-            ic_cdk::id(),
+            ic_cdk::api::canister_self(),
             neuron_nonce,
         )),
     };

@@ -31,6 +31,7 @@ ic-icrc1-ledger.workspace = true
 ic-management-canister-types-private.workspace = true
 ic-nns-constants.workspace = true
 ic-nns-governance.workspace = true
+ic-nns-governance-api.workspace = true
 ic-sns-governance.workspace = true
 ic-sns-init.workspace = true
 ic-sns-root.workspace = true

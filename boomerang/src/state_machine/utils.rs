@@ -6,18 +6,19 @@ use ic_icrc1_ledger::{
 };
 use ic_nns_constants::{GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
 use ic_sns_governance::init::GovernanceCanisterInitPayloadBuilder;
-use ic_sns_governance::pb::v1::governance::Version;
 use ic_sns_governance::pb::v1::Neuron;
-use ic_sns_governance::pb::v1::Neuron as SnsNeuron;
+use ic_sns_governance::pb::v1::governance::Version;
 use ic_sns_init::SnsCanisterInitPayloads;
 use ic_sns_root::pb::v1::SnsRootCanister;
 use ic_sns_swap::pb::v1::{Init as SwapInit, NeuronBasketConstructionParameters};
 use ic_wasm_utils::{ledger_wasm, sns_governance_wasm, sns_root_wasm, sns_swap_wasm};
 use icp_ledger::Tokens;
 use icrc_ledger_types::icrc1::account::Account;
-use pocket_ic::{management_canister::CanisterId, nonblocking::PocketIc, WasmResult};
+use pocket_ic::nonblocking::PocketIc;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+
+type CanisterId = Principal;
 
 const NEURON_LEDGER_FEE: u64 = 1_000_000;
 
@@ -55,7 +56,9 @@ impl SnsTestsInitPayloadBuilder {
             .build();
 
         let swap = SwapInit {
-            fallback_controller_principal_ids: vec![PrincipalId::new_user_test_id(6360).to_string()],
+            fallback_controller_principal_ids: vec![
+                PrincipalId::new_user_test_id(6360).to_string(),
+            ],
             should_auto_finalize: Some(true),
             ..Default::default()
         };
@@ -146,7 +149,9 @@ impl SnsTestsInitPayloadBuilder {
         let ledger = LedgerArgument::Init(self.ledger.clone());
 
         let swap = SwapInit {
-            fallback_controller_principal_ids: vec![PrincipalId::new_user_test_id(6360).to_string()],
+            fallback_controller_principal_ids: vec![
+                PrincipalId::new_user_test_id(6360).to_string(),
+            ],
             should_auto_finalize: Some(true),
             transaction_fee_e8s: Some(self.ledger.transfer_fee.0.to_u64().unwrap()),
             neuron_minimum_stake_e8s: Some(
@@ -253,7 +258,7 @@ pub struct SNSCanisterIds {
     pub ledger: CanisterId,
 }
 
-pub async fn setup_sns_canisters(pic: &PocketIc, neurons: Vec<SnsNeuron>) -> SNSCanisterIds {
+pub async fn setup_sns_canisters(pic: &PocketIc, neurons: Vec<Neuron>) -> SNSCanisterIds {
     let root_canister_id = pic.create_canister().await;
     let governance_canister_id = pic.create_canister().await;
     let ledger_canister_id = pic.create_canister().await;
@@ -340,15 +345,6 @@ pub fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64
     hasher.update(controller.as_slice());
     hasher.update(nonce.to_be_bytes());
     hasher.finalize().into()
-}
-
-pub fn assert_reply(result: WasmResult) -> Vec<u8> {
-    match result {
-        WasmResult::Reply(bytes) => bytes,
-        WasmResult::Reject(reject) => {
-            panic!("Expected a successful reply, got a reject: {}", reject)
-        }
-    }
 }
 
 pub fn sha256_hash(data: Vec<u8>) -> Vec<u8> {

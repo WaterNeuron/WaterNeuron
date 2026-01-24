@@ -6,7 +6,7 @@ use crate::{
     INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
 };
 use ic_canister_log::log;
-use ic_nns_governance_api::ListProposalInfo;
+use ic_nns_governance_api::ListProposalInfoRequest;
 use ic_sns_governance_api::pb::v1::{
     manage_neuron::Command as CommandSns, manage_neuron_response::Command as CommandSnsResponse,
 };
@@ -18,7 +18,7 @@ const REWARD_STATUS_READY_TO_SETTLE: i32 = 2;
 pub async fn mirror_proposals() -> Result<(), String> {
     let subaccount = compute_neuron_staking_subaccount_bytes(self_canister_id(), 0).to_vec();
 
-    let list_proposals_args = ListProposalInfo {
+    let list_proposals_args = ListProposalInfoRequest {
         limit: BATCH_SIZE_LIMIT,
         before_proposal: None,
         exclude_topic: vec![],
@@ -121,7 +121,7 @@ pub async fn mirror_proposals() -> Result<(), String> {
 pub async fn vote_on_nns_proposals() {
     let wtn_governance_id = read_state(|s| s.wtn_governance_id);
 
-    let list_proposals_args = ListProposalInfo {
+    let list_proposals_args = ListProposalInfoRequest {
         limit: BATCH_SIZE_LIMIT,
         before_proposal: None,
         exclude_topic: vec![],

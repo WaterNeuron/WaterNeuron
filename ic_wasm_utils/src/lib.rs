@@ -42,69 +42,72 @@ struct WasmBinary {
 }
 
 lazy_static! {
+    // REF: https://github.com/dfinity/ic/releases/tag/release-2026-01-08_03-31-base
     static ref DFINITY_CANISTERS: BTreeMap<CanisterName, WasmBinary> = {
+        let ic_version = "035a2c7a2b19bc7ce7c4d977169583eb64b0e3cb";
+
         let mut map = BTreeMap::new();
         map.insert(
             CanisterName::Ledger,
             WasmBinary {
-                hash: "f22fad42381adead11adf14e45353e5d71513ab1bea480543e62c354debc8dcd",
-                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
+                hash: "67762b42631ac8c18069a6124e6c825096a50bb887e67dc3562aac12860ee564",
+                ic_version,
                 name: "ledger-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::NnsGovernance,
             WasmBinary {
-                hash: "ae8a264f2f8d3397dd16d2e4db8336a7fc9e5bd5ea931a9d047272796601eca5",
-                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
+                hash: "37fdeb4fe9c32135e6b7b405ee2171734d936abb1a7f923eef1794bf9140ef1c",
+                ic_version,
                 name: "governance-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::Cmc,
             WasmBinary {
-                hash: "d33b381e3de4cb3a35493ba0398b3c7f7b7165306400b25fe9129b9f28d08774",
-                ic_version: "0abc8efa13a533576dbd9b652e37e4a817e6051c",
+                hash: "33e398859dd3c988414f57596310a7ac6d12a809aa6907c7ad686e852d04f86e",
+                ic_version,
                 name: "cycles-minting-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::SnsGovernance,
             WasmBinary {
-                hash: "9891697f10e2e17d61da662ce4b9543bbf6b99f13d31a8cf3fe9210c4ea7bd61",
-                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
+                hash: "4f8787135324597ed3c83b5e2083d108652589b448d0ac2dec70eaedb78d60d6",
+                ic_version,
                 name: "sns-governance-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::SnsSwap,
             WasmBinary {
-                hash: "2c45a7215f907ffc4aaf2fb88a332d841b421012fe656e593e74e47fa74262cf",
-                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
+                hash: "c6567eab9ac13859c844d8f82e76121f8ca13c3ceb0fd703f60535eb55351f66",
+                ic_version,
                 name: "sns-swap-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::Sns,
             WasmBinary {
-                hash: "a6ffc60e50d7c59ce5b3bfbfa1a234287891e9396c85be312c8e725a2510fb35",
-                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
+                hash: "ffe5262ff812c955cb63369f0bf4ed08d86ad0c18f2aa58c43076fcb460e8976",
+                ic_version,
                 name: "sns-wasm-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::SnsRoot,
             WasmBinary {
-                hash: "5aa759f84eebb3a653307af8c0935f2138ed0b0b6bfdc8e8e3f9703fbe1e7f51",
-                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
+                hash: "dbef4e7af438505feca53f8c130dcd8c645e8f0894c3bd50634c1c6f070c8ffa",
+                ic_version,
                 name: "sns-root-canister.wasm.gz",
             },
         );
         map.insert(
             CanisterName::Icrc1Ledger,
             WasmBinary {
-                hash: "f5784af7c5a4caa5b73eff0511569898d60d2d7b8e5fca1980ba9a9590f12968",
-                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
+                hash: "860a14eadb4ce06f1ba9096522798db57f0c1fa3f8886cf803621a7e3e36385f",
+                ic_version,
                 name: "ic-icrc1-ledger.wasm.gz",
             },
         );
@@ -112,7 +115,7 @@ lazy_static! {
             CanisterName::Icrc1IndexNg,
             WasmBinary {
                 hash: "cac207cf438df8c9fba46d4445c097f05fd8228a1eeacfe0536b7e9ddefc5f1c",
-                ic_version: "250daf4dd0cf7ea74c496b45457dd47ced16368c",
+                ic_version,
                 name: "ic-icrc1-index-ng.wasm.gz",
             },
         );
@@ -172,12 +175,25 @@ fn build_local_wasm(name: &str, self_check: bool) -> Result<PathBuf> {
             "{0} cargo canister -p {1} --release --bin {1} --locked {2}",
             rustflags,
             name,
-            if self_check { "--features=self_check"} else {""}
+            if self_check {
+                "--features=self_check"
+            } else {
+                ""
+            }
         ),
-        format!("ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}.wasm metadata candid:service -f {0}/{0}.did -v public", name),
-        format!("ic-wasm artifacts/{0}.wasm -o artifacts/{1}.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public", name, file_name),
+        format!(
+            "ic-wasm target/wasm32-unknown-unknown/release/{0}.wasm -o artifacts/{0}.wasm metadata candid:service -f {0}/{0}.did -v public",
+            name
+        ),
+        format!(
+            "ic-wasm artifacts/{0}.wasm -o artifacts/{1}.wasm metadata git_commit_id -d $(git rev-parse HEAD) -v public",
+            name, file_name
+        ),
         format!("ic-wasm artifacts/{0}.wasm shrink", file_name),
-        format!("gzip -cnf9 artifacts/{0}.wasm > artifacts/{0}.wasm.gz", file_name),
+        format!(
+            "gzip -cnf9 artifacts/{0}.wasm > artifacts/{0}.wasm.gz",
+            file_name
+        ),
         format!("rm artifacts/{0}.wasm", file_name),
     ];
 
@@ -220,7 +236,9 @@ async fn fetch_remote_wasm(canister: CanisterName) -> Result<PathBuf> {
 
     let mut hasher = Sha256::new();
     hasher.update(&data);
-    if format!("{:x}", hasher.clone().finalize()) != wasm.hash {
+    let hash = format!("{:x}", hasher.clone().finalize());
+    println!("{:?} {:?}", canister, hash);
+    if hash != wasm.hash {
         return Err(Error::HashMismatch);
     }
 

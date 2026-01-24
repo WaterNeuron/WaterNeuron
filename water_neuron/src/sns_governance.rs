@@ -1,11 +1,11 @@
 use crate::numeric::ICP;
 use crate::storage::{stable_add_rewards, total_pending_rewards};
 use crate::{
-    are_rewards_distributed, get_rewards_ready_to_be_distributed, mutate_state, process_event,
-    read_state, schedule_after, self_canister_id, stable_sub_rewards, timestamp_nanos, Account,
-    CdkRuntime, DisplayAmount, EventType, ICRC1Client, TaskType, DEBUG, DEFAULT_LEDGER_FEE, E8S,
-    ICP_LEDGER_ID, INFO, MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO,
-    SNS_GOVERNANCE_SUBACCOUNT,
+    Account, CdkRuntime, DEBUG, DEFAULT_LEDGER_FEE, DisplayAmount, E8S, EventType, ICP_LEDGER_ID,
+    ICRC1Client, INFO, MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO,
+    SNS_GOVERNANCE_SUBACCOUNT, TaskType, are_rewards_distributed,
+    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, schedule_after,
+    self_canister_id, stable_sub_rewards, timestamp_nanos,
 };
 use async_trait::async_trait;
 use candid::{Nat, Principal};
@@ -35,24 +35,27 @@ pub trait CanisterRuntime {
     async fn transfer_icp(&self, to: Principal, amount: u64) -> Result<u64, TransferError>;
 }
 
+trait WrapErr<T> {
+    fn wrap_err(self) -> Result<T, String>;
+}
+
+impl<T, E: std::fmt::Display> WrapErr<T> for Result<T, E> {
+    fn wrap_err(self) -> Result<T, String> {
+        self.map_err(|e| format!("Error while calling SNS Governance canister: {}", e))
+    }
+}
+
 pub struct IcCanisterRuntime {}
 
 #[async_trait]
 impl CanisterRuntime for IcCanisterRuntime {
     async fn list_neurons(&self, args: ListNeurons) -> Result<ListNeuronsResponse, String> {
         let wtn_governance_id = read_state(|s| s.wtn_governance_id);
-
-        let res_gov: Result<(ListNeuronsResponse,), (i32, String)> =
-            ic_cdk::api::call::call(wtn_governance_id, "list_neurons", (args,))
-                .await
-                .map_err(|(code, msg)| (code as i32, msg));
-        match res_gov {
-            Ok((res,)) => Ok(res),
-            Err((code, msg)) => Err(format!(
-                "Error while calling Governance canister ({}): {:?}",
-                code, msg
-            )),
-        }
+        ic_cdk::call::Call::unbounded_wait(wtn_governance_id, "list_neurons")
+            .with_arg(args)
+            .await
+            .wrap_err()
+            .and_then(|r| r.candid().wrap_err())
     }
 
     async fn balance_of(
@@ -156,7 +159,11 @@ pub async fn maybe_fetch_neurons_and_distribute<R: CanisterRuntime>(
         let sns_neurons = fetch_sns_neurons(runtime).await?;
         let total_voting_power: u64 = sns_neurons.values().sum();
 
-        log!(INFO, "[maybe_fetch_neurons_and_distribute] fetched {} neurons for a total voting power of {total_voting_power}", sns_neurons.len());
+        log!(
+            INFO,
+            "[maybe_fetch_neurons_and_distribute] fetched {} neurons for a total voting power of {total_voting_power}",
+            sns_neurons.len()
+        );
 
         if total_voting_power == 0 {
             return Err("total_voting_power cannot be 0".to_string());
@@ -287,13 +294,13 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
 #[cfg(test)]
 mod test {
     use crate::sns_governance::{
-        fetch_sns_neurons, maybe_fetch_neurons_and_distribute, process_icp_distribution,
-        CanisterRuntime, ListNeurons, ListNeuronsResponse, Neuron,
+        CanisterRuntime, ListNeurons, ListNeuronsResponse, Neuron, fetch_sns_neurons,
+        maybe_fetch_neurons_and_distribute, process_icp_distribution,
     };
     use crate::state::replace_state;
     use crate::state::test::default_state;
     use crate::storage::get_pending_rewards;
-    use crate::{compute_neuron_staking_subaccount_bytes, Account, E8S};
+    use crate::{Account, E8S, compute_neuron_staking_subaccount_bytes};
     use async_trait::async_trait;
     use candid::{Nat, Principal};
     use ic_sns_governance::pb::v1::{NeuronId, NeuronPermission, NeuronPermissionType};

@@ -6,12 +6,12 @@ use ic_nns_governance_api::{
     manage_neuron::{
         claim_or_refresh::{By, MemoAndController},
         configure::Operation,
-        ClaimOrRefresh, Command, Configure, Disburse, Follow, IncreaseDissolveDelay, Merge,
+        ClaimOrRefresh, ManageNeuronProposalCommand, Configure, Disburse, Follow, IncreaseDissolveDelay, Merge,
         NeuronIdOrSubaccount, RegisterVote, Spawn, Split, StartDissolving, StopDissolving,
     },
     manage_neuron_response::{Command as CommandResponse, ConfigureResponse, DisburseResponse},
-    GovernanceError, ListNeurons, ListNeuronsResponse, ListProposalInfo, ListProposalInfoResponse,
-    ManageNeuron, ManageNeuronResponse, Neuron, Topic,
+    GovernanceError, ListNeurons, ListNeuronsResponse, ListProposalInfoRequest, ListProposalInfoResponse,
+    ManageNeuronProposal, ManageNeuronResponse, Neuron, Topic,
 };
 use ic_sns_governance_api::pb::v1::{
     manage_neuron::Command as SnsCommand, GetProposal, GetProposalResponse,
@@ -86,7 +86,7 @@ pub async fn list_neurons(args: ListNeurons) -> Result<ListNeuronsResponse, Stri
     }
 }
 
-pub async fn list_proposals(args: ListProposalInfo) -> Result<ListProposalInfoResponse, String> {
+pub async fn list_proposals(args: ListProposalInfoRequest) -> Result<ListProposalInfoResponse, String> {
     let res_gov: Result<(ListProposalInfoResponse,), (i32, String)> =
         ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "list_proposals", (args,))
             .await
@@ -128,10 +128,10 @@ pub async fn register_vote(
 ) -> Result<ManageNeuronResponse, String> {
     let vote = if vote_bool { 1 } else { 2 };
 
-    let arg = ManageNeuron {
+    let arg = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::NeuronId(neuron_id.to_pb())),
-        command: Some(Command::RegisterVote(RegisterVote {
+        command: Some(ManageNeuronProposalCommand::RegisterVote(RegisterVote {
             proposal: Some(proposal_id.to_pb()),
             vote,
         })),
@@ -177,10 +177,10 @@ pub async fn follow_neuron(
     topic: Topic,
     neuron_to_follow: NeuronId,
 ) -> Result<ManageNeuronResponse, String> {
-    let arg = ManageNeuron {
+    let arg = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::NeuronId(neuron_id.to_pb())),
-        command: Some(Command::Follow(Follow {
+        command: Some(ManageNeuronProposalCommand::Follow(Follow {
             topic: topic as i32,
             followees: vec![ic_nns_common::pb::v1::NeuronId {
                 id: neuron_to_follow.id,
@@ -217,7 +217,7 @@ pub async fn get_full_neuron(neuron_id: u64) -> Result<Result<Neuron, Governance
 pub async fn get_full_neuron_by_nonce(
     neuron_nonce: u64,
 ) -> Result<Result<Neuron, GovernanceError>, String> {
-    let subaccount = compute_neuron_staking_subaccount_bytes(ic_cdk::id(), neuron_nonce);
+    let subaccount = compute_neuron_staking_subaccount_bytes(ic_cdk::api::canister_self(), neuron_nonce);
     let args = NeuronIdOrSubaccount::Subaccount(subaccount.to_vec());
 
     let res_gov: Result<(Result<Neuron, GovernanceError>,), (i32, String)> =
@@ -257,7 +257,7 @@ enum NeuronNonceOrId {
 }
 
 async fn manage_neuron(
-    command: Command,
+    command: ManageNeuronProposalCommand,
     neuron_nonce_or_id: NeuronNonceOrId,
 ) -> Result<ManageNeuronResponse, String> {
     let neuron_id_or_subaccount = match neuron_nonce_or_id {
@@ -268,7 +268,7 @@ async fn manage_neuron(
         }
     };
 
-    let arg = ManageNeuron {
+    let arg = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: Some(neuron_id_or_subaccount),
         command: Some(command),
@@ -292,7 +292,7 @@ pub async fn increase_dissolve_delay(
     additional_dissolve_delay_seconds: u32,
 ) -> Result<ManageNeuronResponse, String> {
     manage_neuron(
-        Command::Configure(Configure {
+        ManageNeuronProposalCommand::Configure(Configure {
             operation: Some(Operation::IncreaseDissolveDelay(IncreaseDissolveDelay {
                 additional_dissolve_delay_seconds,
             })),
@@ -307,7 +307,7 @@ pub async fn split_neuron(
     amount_e8s: u64,
 ) -> Result<ManageNeuronResponse, String> {
     manage_neuron(
-        Command::Split(Split { amount_e8s }),
+        ManageNeuronProposalCommand::Split(Split { amount_e8s, memo: None }),
         NeuronNonceOrId::Nonce(neuron_nonce),
     )
     .await
@@ -316,7 +316,7 @@ pub async fn split_neuron(
 pub async fn stop_dissolvement(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
     assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
     manage_neuron(
-        Command::Configure(Configure {
+        ManageNeuronProposalCommand::Configure(Configure {
             operation: Some(Operation::StopDissolving(StopDissolving {})),
         }),
         NeuronNonceOrId::Id(neuron_id),
@@ -329,7 +329,7 @@ pub async fn merge_neuron_into_six_months(
 ) -> Result<ManageNeuronResponse, String> {
     assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
     manage_neuron(
-        Command::Merge(Merge {
+        ManageNeuronProposalCommand::Merge(Merge {
             source_neuron_id: Some(neuron_id.to_pb()),
         }),
         NeuronNonceOrId::Nonce(SIX_MONTHS_NEURON_NONCE),
@@ -351,7 +351,7 @@ impl From<String> for SpawnMaturityError {
 
 pub async fn spawn_all_maturity(neuron_id: NeuronId) -> Result<NeuronId, SpawnMaturityError> {
     let manage_neuron_response = manage_neuron(
-        Command::Spawn(Spawn {
+        ManageNeuronProposalCommand::Spawn(Spawn {
             new_controller: None,
             nonce: None,
             percentage_to_spawn: Some(100_u32),
@@ -391,7 +391,7 @@ pub async fn start_dissolving(neuron_id: NeuronId) -> Result<(), StartDissolving
         )));
     }
     let manage_neuron_response = manage_neuron(
-        Command::Configure(Configure {
+        ManageNeuronProposalCommand::Configure(Configure {
             operation: Some(Operation::StartDissolving(StartDissolving {})),
         }),
         NeuronNonceOrId::Id(neuron_id),
@@ -423,7 +423,7 @@ pub async fn disburse(
 ) -> Result<DisburseResponse, DisburseError> {
     let account_id: icp_ledger::AccountIdentifier = to_account.into();
     let manage_neuron_response = manage_neuron(
-        Command::Disburse(Disburse {
+        ManageNeuronProposalCommand::Disburse(Disburse {
             amount: None,
             to_account: Some(AccountIdentifier {
                 hash: account_id.to_vec(),
@@ -441,12 +441,12 @@ pub async fn disburse(
 }
 
 pub async fn refresh_neuron(neuron_nonce: u64) -> Result<ManageNeuronResponse, String> {
-    let arg = ManageNeuron {
+    let arg = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: None,
-        command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
+        command: Some(ManageNeuronProposalCommand::ClaimOrRefresh(ClaimOrRefresh {
             by: Some(By::MemoAndController(MemoAndController {
-                controller: Some(ic_base_types::PrincipalId::from(ic_cdk::id())),
+                controller: Some(ic_base_types::PrincipalId::from(ic_cdk::api::canister_self())),
                 memo: neuron_nonce,
             })),
         })),

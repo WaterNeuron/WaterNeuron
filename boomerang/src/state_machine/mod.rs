@@ -1,11 +1,12 @@
-use crate::{BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess, E8S, TRANSFER_FEE};
-use candid::{decode_one, encode_one, CandidType, Deserialize, Encode, Nat, Principal};
+use crate::{BoomerangError, CanisterIds, DepositSuccess, E8S, TRANSFER_FEE, WithdrawalSuccess};
+use candid::{CandidType, Deserialize, Encode, Nat, Principal};
 use ic_base_types::PrincipalId;
 use ic_icrc1_ledger::{InitArgsBuilder as LedgerInitArgsBuilder, LedgerArgument};
 use ic_nns_constants::GOVERNANCE_CANISTER_ID;
-use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
-use ic_sns_governance::pb::v1::neuron::DissolveState;
-use ic_sns_governance::pb::v1::{Neuron, NeuronId, NeuronPermission, NeuronPermissionType};
+use ic_nns_governance_api::{Governance, NetworkEconomics};
+use ic_sns_governance::pb::v1::{
+    Neuron, NeuronId, NeuronPermission, NeuronPermissionType, neuron::DissolveState,
+};
 use ic_wasm_utils::{
     boomerang_wasm, governance_wasm, icp_ledger_wasm, ledger_wasm, water_neuron_wasm,
 };
@@ -16,7 +17,8 @@ use icp_ledger::{
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError as IcrcTransferError};
 use pocket_ic::{
-    management_canister::CanisterId, nonblocking::PocketIc, PocketIcBuilder, WasmResult,
+    PocketIcBuilder, RejectResponse,
+    nonblocking::{PocketIc, query_candid_as, update_candid_as},
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -30,7 +32,7 @@ pub mod utils;
 
 pub async fn update<T>(
     pic: &PocketIc,
-    canister: CanisterId,
+    canister: Principal,
     caller: Principal,
     method: &str,
     arg: impl CandidType,
@@ -38,19 +40,19 @@ pub async fn update<T>(
 where
     T: for<'a> Deserialize<'a> + CandidType,
 {
-    let result = pic
-        .update_call(canister, caller, method, encode_one(arg).unwrap())
-        .await
-        .map_err(|e| format!("Failed to call {method} of {canister} with error: {e}"))?;
-    match result {
-        WasmResult::Reply(reply) => Ok(decode_one(&reply).unwrap()),
-        WasmResult::Reject(error) => Err(error),
+    let r: Result<(T,), RejectResponse> =
+        update_candid_as(pic, canister, caller, method, (arg,)).await;
+    match r {
+        Ok((r,)) => Ok(r),
+        Err(e) => Err(format!(
+            "Failed to call {method} of {canister} with error: {e}"
+        )),
     }
 }
 
 pub async fn query<T>(
     pic: &PocketIc,
-    canister: CanisterId,
+    canister: Principal,
     caller: Principal,
     method: &str,
     arg: impl CandidType,
@@ -58,13 +60,13 @@ pub async fn query<T>(
 where
     T: for<'a> Deserialize<'a> + CandidType,
 {
-    let result = pic
-        .query_call(canister.into(), caller, method, encode_one(arg).unwrap())
-        .await
-        .unwrap();
-    match result {
-        WasmResult::Reply(reply) => Ok(decode_one(&reply).unwrap()),
-        WasmResult::Reject(error) => Err(error),
+    let r: Result<(T,), RejectResponse> =
+        query_candid_as(pic, canister, caller, method, (arg,)).await;
+    match r {
+        Ok((r,)) => Ok(r),
+        Err(e) => Err(format!(
+            "Failed to call {method} of {canister} with error: {e}"
+        )),
     }
 }
 
@@ -134,14 +136,16 @@ impl BoomerangSetup {
         env.install_canister(
             icp_ledger_id,
             icp_ledger_wasm().await,
-            Encode!(&LedgerCanisterInitPayload::builder()
-                .initial_values(initial_balances)
-                .transfer_fee(Tokens::from_e8s(TRANSFER_FEE))
-                .minting_account(GOVERNANCE_CANISTER_ID.get().into())
-                .token_symbol_and_name("ICP", "Internet Computer")
-                .feature_flags(icp_ledger::FeatureFlags { icrc2: true })
-                .build()
-                .unwrap())
+            Encode!(
+                &LedgerCanisterInitPayload::builder()
+                    .initial_values(initial_balances)
+                    .transfer_fee(Tokens::from_e8s(TRANSFER_FEE))
+                    .minting_account(GOVERNANCE_CANISTER_ID.get().into())
+                    .token_symbol_and_name("ICP", "Internet Computer")
+                    .feature_flags(icp_ledger::FeatureFlags { icrc2: true })
+                    .build()
+                    .unwrap()
+            )
             .unwrap(),
             None,
         )

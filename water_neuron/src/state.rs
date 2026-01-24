@@ -748,7 +748,7 @@ impl State {
                 neuron_id,
                 DisburseRequest {
                     receiver: Account {
-                        owner: ic_cdk::id(),
+                        owner: ic_cdk::api::canister_self(),
                         subaccount: Some(neuron_kind.to_subaccount()),
                     },
                     neuron_id,

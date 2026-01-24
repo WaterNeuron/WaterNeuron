@@ -1,18 +1,18 @@
+use crate::EventType::{DisbursedMaturityNeuron, DisbursedUserNeuron};
 use crate::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
 use crate::sns_distribution::EXPECTED_INITIAL_BALANCE;
 use crate::state::event::{GetEventsArg, GetEventsResult};
 use crate::state::{
-    TransferStatus, WithdrawalDetails, WithdrawalStatus, SNS_GOVERNANCE_SUBACCOUNT,
+    SNS_GOVERNANCE_SUBACCOUNT, TransferStatus, WithdrawalDetails, WithdrawalStatus,
 };
-use crate::EventType::{DisbursedMaturityNeuron, DisbursedUserNeuron};
 use crate::{
-    compute_neuron_staking_subaccount_bytes, nICP, CancelWithdrawalError, CanisterInfo,
-    ConversionArg, ConversionError, DepositSuccess, InitArg, LiquidArg, NeuronId, PendingTransfer,
-    Unit, UpgradeArg, WithdrawalSuccess, DEFAULT_LEDGER_FEE, E8S, ICP,
-    MIN_DISSOLVE_DELAY_FOR_REWARDS, NEURON_LEDGER_FEE, ONE_DAY_SECONDS, ONE_MONTH_SECONDS,
+    CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DEFAULT_LEDGER_FEE,
+    DepositSuccess, E8S, ICP, InitArg, LiquidArg, MIN_DISSOLVE_DELAY_FOR_REWARDS,
+    NEURON_LEDGER_FEE, NeuronId, ONE_DAY_SECONDS, ONE_MONTH_SECONDS, PendingTransfer, Unit,
+    UpgradeArg, WithdrawalSuccess, compute_neuron_staking_subaccount_bytes, nICP,
 };
 use assert_matches::assert_matches;
-use candid::{decode_one, encode_one, CandidType, Deserialize, Encode, Nat, Principal};
+use candid::{CandidType, Deserialize, Encode, Nat, Principal};
 use cycles_minting_canister::CyclesCanisterInitPayload;
 use ic_base_types::PrincipalId;
 use ic_http_types::{HttpRequest, HttpResponse};
@@ -21,29 +21,27 @@ use ic_icrc1_ledger::{
     LedgerArgument,
 };
 use ic_nns_constants::{CYCLES_LEDGER_CANISTER_ID, GOVERNANCE_CANISTER_ID, LEDGER_CANISTER_ID};
-use ic_nns_governance::pb::v1::{Governance, NetworkEconomics};
 use ic_nns_governance_api::{
-    manage_neuron,
-    manage_neuron::claim_or_refresh,
-    manage_neuron::claim_or_refresh::MemoAndController,
+    Governance, GovernanceError, MakeProposalRequest, ManageNeuronCommandRequest,
+    ManageNeuronRequest, ManageNeuronResponse, Motion, NetworkEconomics, Neuron,
+    ProposalActionRequest, ProposalInfo,
+    manage_neuron::{self, claim_or_refresh::{self, MemoAndController}},
     manage_neuron_response::{ClaimOrRefreshResponse, Command as CommandResponse, MergeResponse},
     neuron,
-    proposal::Action,
-    GovernanceError, ManageNeuron, ManageNeuronResponse, Motion, Neuron, Proposal, ProposalInfo,
 };
 use ic_sns_governance::init::GovernanceCanisterInitPayloadBuilder;
 use ic_sns_governance::pb::v1::{
-    governance::Version, neuron::DissolveState, Neuron as SnsNeuron, NeuronId as SnsNeuronId,
-    NeuronPermission, NeuronPermissionType,
+    Neuron as SnsNeuron, NeuronId as SnsNeuronId, NeuronPermission, NeuronPermissionType,
+    governance::Version, neuron::DissolveState,
 };
 use ic_sns_governance_api::pb::v1::{
+    ListProposals, ListProposalsResponse, ManageNeuron as SnsManageNeuron,
+    ManageNeuronResponse as SnsManageNeuronResponse, NervousSystemFunction,
+    Proposal as SnsProposal,
     manage_neuron::Command as SnsCommand,
     nervous_system_function::{FunctionType, GenericNervousSystemFunction},
     proposal::Action as SnsAction,
     topics::Topic,
-    ListProposals, ListProposalsResponse, ManageNeuron as SnsManageNeuron,
-    ManageNeuronResponse as SnsManageNeuronResponse, NervousSystemFunction,
-    Proposal as SnsProposal,
 };
 use ic_sns_init::SnsCanisterInitPayloads;
 use ic_sns_root::pb::v1::SnsRootCanister;
@@ -57,13 +55,16 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use icrc_ledger_types::icrc2::approve::{ApproveArgs, ApproveError};
 use pocket_ic::{
-    management_canister::CanisterId, nonblocking::PocketIc, PocketIcBuilder, WasmResult,
+    PocketIcBuilder, RejectResponse,
+    nonblocking::{PocketIc, query_candid_as, update_candid_as},
 };
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
+
+type CanisterId = Principal;
 
 const DEFAULT_PRINCIPAL_ID: u64 = 10352385;
 
@@ -94,7 +95,7 @@ pub async fn upgrade_canister(
 
 pub async fn update<T>(
     pic: &PocketIc,
-    canister: CanisterId,
+    canister: Principal,
     caller: Principal,
     method: &str,
     arg: impl CandidType,
@@ -102,19 +103,19 @@ pub async fn update<T>(
 where
     T: for<'a> Deserialize<'a> + CandidType,
 {
-    let result = pic
-        .update_call(canister, caller, method, encode_one(arg).unwrap())
-        .await
-        .map_err(|e| format!("Failed to call {method} of {canister} with error: {e}"))?;
-    match result {
-        WasmResult::Reply(reply) => Ok(decode_one(&reply).unwrap()),
-        WasmResult::Reject(error) => Err(error),
+    let r: Result<(T,), RejectResponse> =
+        update_candid_as(pic, canister, caller, method, (arg,)).await;
+    match r {
+        Ok((r,)) => Ok(r),
+        Err(e) => Err(format!(
+            "Failed to call {method} of {canister} with error: {e}"
+        )),
     }
 }
 
 pub async fn query<T>(
     pic: &PocketIc,
-    canister: CanisterId,
+    canister: Principal,
     caller: Principal,
     method: &str,
     arg: impl CandidType,
@@ -122,13 +123,13 @@ pub async fn query<T>(
 where
     T: for<'a> Deserialize<'a> + CandidType,
 {
-    let result = pic
-        .query_call(canister.into(), caller, method, encode_one(arg).unwrap())
-        .await
-        .unwrap();
-    match result {
-        WasmResult::Reply(reply) => Ok(decode_one(&reply).unwrap()),
-        WasmResult::Reject(error) => Err(error),
+    let r: Result<(T,), RejectResponse> =
+        query_candid_as(pic, canister, caller, method, (arg,)).await;
+    match r {
+        Ok((r,)) => Ok(r),
+        Err(e) => Err(format!(
+            "Failed to call {method} of {canister} with error: {e}"
+        )),
     }
 }
 
@@ -136,9 +137,9 @@ async fn nns_governance_make_proposal(
     state_machine: &mut WaterNeuron,
     sender: PrincipalId,
     neuron_id: NeuronId,
-    proposal: &Proposal,
+    proposal: &MakeProposalRequest,
 ) -> ManageNeuronResponse {
-    let command = manage_neuron::Command::MakeProposal(Box::new(proposal.clone()));
+    let command = ManageNeuronCommandRequest::MakeProposal(Box::new(proposal.clone()));
 
     manage_neuron(state_machine, sender, neuron_id, command).await
 }
@@ -147,13 +148,13 @@ async fn manage_neuron(
     env: &mut WaterNeuron,
     sender: PrincipalId,
     neuron_id: NeuronId,
-    command: manage_neuron::Command,
+    command: ManageNeuronCommandRequest,
 ) -> ManageNeuronResponse {
     env.update::<ManageNeuronResponse>(
         sender,
         GOVERNANCE_CANISTER_ID.into(),
         "manage_neuron",
-        ManageNeuron {
+        ManageNeuronRequest {
             id: Some(neuron_id.to_pb()),
             command: Some(command),
             neuron_id_or_subaccount: None,
@@ -169,7 +170,7 @@ async fn nns_claim_or_refresh_neuron(
     memo: u64,
 ) -> NeuronId {
     // Construct request.
-    let command = Some(manage_neuron::Command::ClaimOrRefresh(
+    let command = Some(ManageNeuronCommandRequest::ClaimOrRefresh(
         manage_neuron::ClaimOrRefresh {
             by: Some(claim_or_refresh::By::MemoAndController(MemoAndController {
                 memo,
@@ -177,7 +178,7 @@ async fn nns_claim_or_refresh_neuron(
             })),
         },
     ));
-    let manage_neuron = ManageNeuron {
+    let manage_neuron = ManageNeuronRequest {
         id: None,
         command,
         neuron_id_or_subaccount: None,
@@ -234,7 +235,7 @@ async fn nns_configure_neuron(
         state_machine,
         sender,
         neuron_id,
-        manage_neuron::Command::Configure(manage_neuron::Configure {
+        ManageNeuronCommandRequest::Configure(manage_neuron::Configure {
             operation: Some(operation),
         }),
     )
@@ -270,7 +271,9 @@ impl SnsTestsInitPayloadBuilder {
             .build();
 
         let swap = SwapInit {
-            fallback_controller_principal_ids: vec![PrincipalId::new_user_test_id(6360).to_string()],
+            fallback_controller_principal_ids: vec![
+                PrincipalId::new_user_test_id(6360).to_string(),
+            ],
             should_auto_finalize: Some(true),
             ..Default::default()
         };
@@ -364,7 +367,9 @@ impl SnsTestsInitPayloadBuilder {
         let ledger = LedgerArgument::Init(self.ledger.clone());
 
         let swap = SwapInit {
-            fallback_controller_principal_ids: vec![PrincipalId::new_user_test_id(6360).to_string()],
+            fallback_controller_principal_ids: vec![
+                PrincipalId::new_user_test_id(6360).to_string(),
+            ],
             should_auto_finalize: Some(true),
             transaction_fee_e8s: Some(self.ledger.transfer_fee.0.to_u64().unwrap()),
             neuron_minimum_stake_e8s: Some(
@@ -611,14 +616,16 @@ impl WaterNeuron {
             .install_canister(
                 LEDGER_CANISTER_ID.into(),
                 icp_ledger_wasm().await,
-                Encode!(&LedgerCanisterInitPayload::builder()
-                    .initial_values(initial_balances)
-                    .transfer_fee(Tokens::from_e8s(10_000))
-                    .minting_account(GOVERNANCE_CANISTER_ID.get().into())
-                    .token_symbol_and_name("ICP", "Internet Computer")
-                    .feature_flags(icp_ledger::FeatureFlags { icrc2: true })
-                    .build()
-                    .unwrap())
+                Encode!(
+                    &LedgerCanisterInitPayload::builder()
+                        .initial_values(initial_balances)
+                        .transfer_fee(Tokens::from_e8s(10_000))
+                        .minting_account(GOVERNANCE_CANISTER_ID.get().into())
+                        .token_symbol_and_name("ICP", "Internet Computer")
+                        .feature_flags(icp_ledger::FeatureFlags { icrc2: true })
+                        .build()
+                        .unwrap()
+                )
                 .unwrap(),
                 None,
             )
@@ -664,35 +671,12 @@ impl WaterNeuron {
             });
         }
 
-        env.create_canister_with_id(
-            None,
-            None,
-            CanisterId::from(Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap()),
-        )
-        .await
-        .unwrap();
-
-        // env.create_canister_with_id(
-        //     None,
-        //     None,
-        //     CanisterId::from(Principal::from_text("7uieb-cx777-77776-qaaaq-cai").unwrap()),
-        // )
-        // .await
-        // .unwrap();
-
-        env.add_cycles(
-            CanisterId::from(Principal::from_text("7uieb-cx777-77776-qaaaq-cai").unwrap()),
-            u64::MAX.into(),
-        )
-        .await;
-        env.add_cycles(
-            CanisterId::from(Principal::from_text("7tjcv-pp777-77776-qaaaa-cai").unwrap()),
-            u64::MAX.into(),
-        )
-        .await;
-
         let cycles_minting_canister_id =
             CanisterId::from(Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap());
+
+        env.create_canister_with_id(None, None, cycles_minting_canister_id)
+            .await
+            .unwrap();
 
         let _cmc_id = env
             .install_canister(
@@ -1304,12 +1288,12 @@ async fn e2e_basic() {
     );
     let neuron_6m_stake_e8s_before_proposal = water_neuron.get_info().await.neuron_6m_stake_e8s;
 
-    let proposal = Proposal {
+    let proposal = MakeProposalRequest {
         title: Some("Yellah".to_string()),
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::Motion(Motion {
+        action: Some(ProposalActionRequest::Motion(Motion {
             motion_text: "".to_string(),
         })),
     };
@@ -1344,17 +1328,19 @@ async fn e2e_basic() {
 
     assert_eq!(events.total_event_count, 32);
 
-    assert!(water_neuron
-        .get_events()
-        .await
-        .events
-        .iter()
-        .map(|e| &e.payload)
-        .any(|payload| payload
-            == &DisbursedUserNeuron {
-                withdrawal_id: 0,
-                transfer_block_height: 10,
-            }),);
+    assert!(
+        water_neuron
+            .get_events()
+            .await
+            .events
+            .iter()
+            .map(|e| &e.payload)
+            .any(|payload| payload
+                == &DisbursedUserNeuron {
+                    withdrawal_id: 0,
+                    transfer_block_height: 10,
+                }),
+    );
 
     let count = water_neuron
         .get_events()
@@ -1760,12 +1746,12 @@ async fn should_cancel_withdrawal_while_voting() {
         WithdrawalStatus::WaitingDissolvement { .. }
     );
 
-    let proposal = Proposal {
+    let proposal = MakeProposalRequest {
         title: Some("Yellah".to_string()),
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::Motion(Motion {
+        action: Some(ProposalActionRequest::Motion(Motion {
             motion_text: "".to_string(),
         })),
     };
@@ -2042,12 +2028,12 @@ async fn should_mirror_proposal() {
 
     water_neuron.advance_time_and_tick(70).await;
 
-    let proposal = Proposal {
+    let proposal = MakeProposalRequest {
         title: Some("Yellah".to_string()),
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::Motion(Motion {
+        action: Some(ProposalActionRequest::Motion(Motion {
             motion_text: "".to_string(),
         })),
     };
@@ -2088,15 +2074,17 @@ async fn should_mirror_proposal() {
         .await;
     assert_eq!(proposals.proposals.len(), 2);
 
-    assert!(water_neuron
-        .update::<Result<ManageNeuronResponse, String>>(
-            PrincipalId::from(Principal::anonymous()),
-            water_neuron.water_neuron_id,
-            "approve_proposal",
-            proposal_id.id
-        )
-        .await
-        .is_err());
+    assert!(
+        water_neuron
+            .update::<Result<ManageNeuronResponse, String>>(
+                PrincipalId::from(Principal::anonymous()),
+                water_neuron.water_neuron_id,
+                "approve_proposal",
+                proposal_id.id
+            )
+            .await
+            .is_err()
+    );
 
     assert_eq!(
         water_neuron.approve_proposal(proposal_id.id).await,
@@ -2122,7 +2110,10 @@ async fn should_mirror_proposal() {
         .unwrap()
         .yes;
 
-    assert!(yes_after_water_neuron > yes_before_water_neuron, "Yes after proposal {yes_after_water_neuron} not greater than before {yes_before_water_neuron}");
+    assert!(
+        yes_after_water_neuron > yes_before_water_neuron,
+        "Yes after proposal {yes_after_water_neuron} not greater than before {yes_before_water_neuron}"
+    );
 
     assert_matches!(
         water_neuron
@@ -2306,10 +2297,12 @@ async fn should_distribute_icp_to_sns_neurons() {
         )
         .await;
 
-    assert!(water_neuron
-        .icp_to_nicp(water_neuron.minter.into(), 21_000_000 * E8S)
-        .await
-        .is_ok());
+    assert!(
+        water_neuron
+            .icp_to_nicp(water_neuron.minter.into(), 21_000_000 * E8S)
+            .await
+            .is_ok()
+    );
 
     assert_eq!(water_neuron.claim_airdrop(caller.0).await, Ok(1));
 
@@ -2634,22 +2627,22 @@ async fn should_mirror_all_proposals() {
 
     let mut proposals = vec![];
 
-    proposals.push(Proposal {
+    proposals.push(MakeProposalRequest {
         title: Some("Dummy Motion".to_string()),
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::Motion(Motion {
+        action: Some(ProposalActionRequest::Motion(Motion {
             motion_text: "Some text".to_string(),
         })),
     });
 
-    proposals.push(Proposal {
+    proposals.push(MakeProposalRequest {
         title: Some("Dummy ManageNetworkEconomics".to_string()),
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::ManageNetworkEconomics(
+        action: Some(ProposalActionRequest::ManageNetworkEconomics(
             ic_nns_governance_api::NetworkEconomics {
                 reject_cost_e8s: 0,
                 neuron_minimum_stake_e8s: 0,
@@ -2665,12 +2658,12 @@ async fn should_mirror_all_proposals() {
         )),
     });
 
-    proposals.push(Proposal {
+    proposals.push(MakeProposalRequest {
         title: Some("Dummy ManageNetworkEconomics".to_string()),
         summary: "Dummy Proposal".to_string(),
         url: "https://forum.dfinity.org/t/reevaluating-neuron-control-restrictions/28597/215"
             .to_string(),
-        action: Some(Action::ManageNetworkEconomics(
+        action: Some(ProposalActionRequest::ManageNetworkEconomics(
             ic_nns_governance_api::NetworkEconomics {
                 reject_cost_e8s: 0,
                 neuron_minimum_stake_e8s: 0,
