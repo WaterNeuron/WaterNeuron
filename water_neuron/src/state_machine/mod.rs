@@ -15,6 +15,7 @@ use assert_matches::assert_matches;
 use candid::{decode_one, encode_one, CandidType, Deserialize, Encode, Nat, Principal};
 use cycles_minting_canister::CyclesCanisterInitPayload;
 use ic_base_types::PrincipalId;
+use ic_http_types::{HttpRequest, HttpResponse};
 use ic_icrc1_ledger::{
     ArchiveOptions, InitArgs as LedgerInitArgs, InitArgsBuilder as LedgerInitArgsBuilder,
     LedgerArgument,
@@ -2716,4 +2717,24 @@ async fn should_mirror_all_proposals() {
         )
         .await;
     assert_eq!(proposals.proposals.len(), 4);
+}
+
+#[tokio::test]
+async fn metrics_dashboard() {
+    let water_neuron = WaterNeuron::new().await;
+
+    let resp: Result<HttpResponse, String> = water_neuron
+        .query(
+            water_neuron.water_neuron_id,
+            "http_request",
+            HttpRequest {
+                method: "GET".into(),
+                url: "/metrics".into(),
+                headers: vec![],
+                body: vec![].into(),
+            },
+        )
+        .await;
+
+    assert!(resp.is_ok());
 }

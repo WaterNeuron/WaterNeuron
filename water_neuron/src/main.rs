@@ -506,7 +506,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                     "Count of finalized withdrawals requests.",
                 )?;
                 w.encode_gauge(
-                    "8y_dao_share",
+                    "dao_share_8y",
                     s.compute_governance_8y_share_percent() as f64,
                     "Share of the 8 year neuron that goes to the DAO",
                 )?;
