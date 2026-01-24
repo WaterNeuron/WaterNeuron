@@ -1,5 +1,5 @@
-use crate::numeric::{ICP, WTN};
 use crate::E8S;
+use crate::numeric::{ICP, WTN};
 
 pub const EXPECTED_INITIAL_BALANCE: u64 = 4_480_000 * E8S;
 
@@ -106,9 +106,9 @@ fn should_distribute_wtn_with_decimal() {
 
 #[cfg(test)]
 pub mod test {
+    use crate::E8S;
     use crate::numeric::{ICP, WTN};
     use crate::sns_distribution::compute_rewards;
-    use crate::E8S;
     use proptest::collection::vec;
     use proptest::prelude::*;
 

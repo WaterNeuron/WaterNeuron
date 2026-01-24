@@ -1,10 +1,10 @@
 use candid::{CandidType, Encode};
 use ic_nns_governance_api::{
-    neuron::DissolveState, Neuron as PbNeuron, NeuronState as PbNeuronState,
-    ProposalInfo as ProposalInfoPb,
+    Neuron as PbNeuron, NeuronState as PbNeuronState, ProposalInfo as ProposalInfoPb,
+    neuron::DissolveState,
 };
 use ic_sns_governance_api::pb::v1::{
-    proposal::Action as ActionSns, ExecuteGenericNervousSystemFunction, Proposal as SnsProposal,
+    ExecuteGenericNervousSystemFunction, Proposal as SnsProposal, proposal::Action as ActionSns,
 };
 use minicbor::{Decode, Encode as CborEncode};
 use serde::{Deserialize, Serialize};

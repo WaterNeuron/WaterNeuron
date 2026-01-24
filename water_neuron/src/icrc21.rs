@@ -1,6 +1,6 @@
+use crate::ConversionArg;
 use crate::dashboard::DisplayAmount;
 use crate::nns_types::NeuronId;
-use crate::ConversionArg;
 use candid::{CandidType, Decode, Deserialize};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};

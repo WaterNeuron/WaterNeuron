@@ -1,21 +1,22 @@
 use crate::compute_neuron_staking_subaccount_bytes;
 use crate::nns_types::{NeuronId, ProposalId};
-use crate::state::{read_state, NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE};
+use crate::state::{NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE, read_state};
 use candid::{Nat, Principal};
 use ic_nns_governance_api::{
+    GovernanceError, ListNeurons, ListNeuronsResponse, ListProposalInfoRequest,
+    ListProposalInfoResponse, ManageNeuronProposal, ManageNeuronResponse, Neuron, Topic,
     manage_neuron::{
+        ClaimOrRefresh, Configure, Disburse, Follow, IncreaseDissolveDelay,
+        ManageNeuronProposalCommand, Merge, NeuronIdOrSubaccount, RegisterVote, Spawn, Split,
+        StartDissolving, StopDissolving,
         claim_or_refresh::{By, MemoAndController},
         configure::Operation,
-        ClaimOrRefresh, ManageNeuronProposalCommand, Configure, Disburse, Follow, IncreaseDissolveDelay, Merge,
-        NeuronIdOrSubaccount, RegisterVote, Spawn, Split, StartDissolving, StopDissolving,
     },
     manage_neuron_response::{Command as CommandResponse, ConfigureResponse, DisburseResponse},
-    GovernanceError, ListNeurons, ListNeuronsResponse, ListProposalInfoRequest, ListProposalInfoResponse,
-    ManageNeuronProposal, ManageNeuronResponse, Neuron, Topic,
 };
 use ic_sns_governance_api::pb::v1::{
-    manage_neuron::Command as SnsCommand, GetProposal, GetProposalResponse,
-    ManageNeuron as ManageSnsNeuron, ManageNeuronResponse as ManageSnsNeuronResponse,
+    GetProposal, GetProposalResponse, ManageNeuron as ManageSnsNeuron,
+    ManageNeuronResponse as ManageSnsNeuronResponse, manage_neuron::Command as SnsCommand,
 };
 use icp_ledger::protobuf::AccountIdentifier;
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
@@ -86,7 +87,9 @@ pub async fn list_neurons(args: ListNeurons) -> Result<ListNeuronsResponse, Stri
     }
 }
 
-pub async fn list_proposals(args: ListProposalInfoRequest) -> Result<ListProposalInfoResponse, String> {
+pub async fn list_proposals(
+    args: ListProposalInfoRequest,
+) -> Result<ListProposalInfoResponse, String> {
     let res_gov: Result<(ListProposalInfoResponse,), (i32, String)> =
         ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "list_proposals", (args,))
             .await
@@ -217,7 +220,8 @@ pub async fn get_full_neuron(neuron_id: u64) -> Result<Result<Neuron, Governance
 pub async fn get_full_neuron_by_nonce(
     neuron_nonce: u64,
 ) -> Result<Result<Neuron, GovernanceError>, String> {
-    let subaccount = compute_neuron_staking_subaccount_bytes(ic_cdk::api::canister_self(), neuron_nonce);
+    let subaccount =
+        compute_neuron_staking_subaccount_bytes(ic_cdk::api::canister_self(), neuron_nonce);
     let args = NeuronIdOrSubaccount::Subaccount(subaccount.to_vec());
 
     let res_gov: Result<(Result<Neuron, GovernanceError>,), (i32, String)> =
@@ -307,7 +311,10 @@ pub async fn split_neuron(
     amount_e8s: u64,
 ) -> Result<ManageNeuronResponse, String> {
     manage_neuron(
-        ManageNeuronProposalCommand::Split(Split { amount_e8s, memo: None }),
+        ManageNeuronProposalCommand::Split(Split {
+            amount_e8s,
+            memo: None,
+        }),
         NeuronNonceOrId::Nonce(neuron_nonce),
     )
     .await
@@ -359,10 +366,10 @@ pub async fn spawn_all_maturity(neuron_id: NeuronId) -> Result<NeuronId, SpawnMa
         NeuronNonceOrId::Id(neuron_id),
     )
     .await?;
-    if let Some(CommandResponse::Spawn(spawn_response)) = manage_neuron_response.command.clone() {
-        if let Some(neuron_id) = spawn_response.created_neuron_id {
-            return Ok(NeuronId { id: neuron_id.id });
-        }
+    if let Some(CommandResponse::Spawn(spawn_response)) = manage_neuron_response.command.clone()
+        && let Some(neuron_id) = spawn_response.created_neuron_id
+    {
+        return Ok(NeuronId { id: neuron_id.id });
     }
 
     Err(SpawnMaturityError::UnexpectedAnswer(Box::new(
@@ -444,12 +451,16 @@ pub async fn refresh_neuron(neuron_nonce: u64) -> Result<ManageNeuronResponse, S
     let arg = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: None,
-        command: Some(ManageNeuronProposalCommand::ClaimOrRefresh(ClaimOrRefresh {
-            by: Some(By::MemoAndController(MemoAndController {
-                controller: Some(ic_base_types::PrincipalId::from(ic_cdk::api::canister_self())),
-                memo: neuron_nonce,
-            })),
-        })),
+        command: Some(ManageNeuronProposalCommand::ClaimOrRefresh(
+            ClaimOrRefresh {
+                by: Some(By::MemoAndController(MemoAndController {
+                    controller: Some(ic_base_types::PrincipalId::from(
+                        ic_cdk::api::canister_self(),
+                    )),
+                    memo: neuron_nonce,
+                })),
+            },
+        )),
     };
     let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
         ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "manage_neuron", (arg,))

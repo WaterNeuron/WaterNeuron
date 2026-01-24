@@ -1,7 +1,7 @@
 use crate::log::INFO;
 use crate::{
-    get_canister_ids, self_canister_id, BoomerangError, ConversionArg, ConversionError,
-    DepositSuccess, E8S, TRANSFER_FEE,
+    BoomerangError, ConversionArg, ConversionError, DepositSuccess, E8S, TRANSFER_FEE,
+    get_canister_ids, self_canister_id,
 };
 use candid::{Nat, Principal};
 use ic_canister_log::log;

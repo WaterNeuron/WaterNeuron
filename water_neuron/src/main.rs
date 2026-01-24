@@ -55,12 +55,12 @@ pub fn post_upgrade(args: LiquidArg) {
             let start = ic_cdk::api::instruction_counter();
 
             fn validate_upgrade_args(args: UpgradeArg) -> Result<(), String> {
-                if let Some(governance_fee_share_percent) = args.governance_fee_share_percent {
-                    if governance_fee_share_percent > 100 {
-                        return Err(
-                            "governance_fee_share_percent has to be between 0 and 100".to_string()
-                        );
-                    }
+                if let Some(governance_fee_share_percent) = args.governance_fee_share_percent
+                    && governance_fee_share_percent > 100
+                {
+                    return Err(
+                        "governance_fee_share_percent has to be between 0 and 100".to_string()
+                    );
                 }
                 Ok(())
             }
@@ -208,7 +208,10 @@ async fn schedule_task(task: TaskType) {
 
 #[update(hidden = true)]
 async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
-    assert_eq!(ic_cdk::api::msg_caller(), read_state(|s| s.wtn_governance_id));
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
 
     let neuron_6m = match read_state(|s| s.neuron_id_6m) {
         Some(neuron_6m_id) => neuron_6m_id,
@@ -236,7 +239,10 @@ async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
 
 #[update(hidden = true)]
 async fn approve_proposal_validate(id: u64) -> Result<String, String> {
-    assert_eq!(ic_cdk::api::msg_caller(), read_state(|s| s.wtn_governance_id));
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
 
     Ok(format!("{id}"))
 }

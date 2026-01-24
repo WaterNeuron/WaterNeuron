@@ -1,5 +1,5 @@
 use crate::state::event::Event;
-use crate::{nICP, Account, EventType, InitArg, NeuronOrigin, UpgradeArg, ICP};
+use crate::{Account, EventType, ICP, InitArg, NeuronOrigin, UpgradeArg, nICP};
 use candid::Principal;
 use proptest::array::uniform32;
 use proptest::collection::vec as pvec;

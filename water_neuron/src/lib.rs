@@ -6,27 +6,27 @@ use crate::management::{
     increase_dissolve_delay, list_neurons, manage_neuron_sns, refresh_neuron, register_vote,
     spawn_all_maturity, split_neuron, start_dissolving, transfer,
 };
-use crate::nns_types::{is_dissolved, NeuronId, ProposalId};
-use crate::numeric::{nICP, ICP};
+use crate::nns_types::{NeuronId, ProposalId, is_dissolved};
+use crate::numeric::{ICP, nICP};
 use crate::proposal::{early_voting_on_nns_proposals, mirror_proposals, vote_on_nns_proposals};
 use crate::sns_governance::{
-    process_icp_distribution, CanisterRuntime, IcCanisterRuntime, WTN_MAX_DISSOLVE_DELAY_SECONDS,
+    CanisterRuntime, IcCanisterRuntime, WTN_MAX_DISSOLVE_DELAY_SECONDS, process_icp_distribution,
 };
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
 use crate::state::{
-    mutate_state, read_state, NeuronOrigin, TransferId, EIGHT_YEARS_NEURON_NONCE, ICP_LEDGER_ID,
-    NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE, SNS_GOVERNANCE_SUBACCOUNT,
+    EIGHT_YEARS_NEURON_NONCE, ICP_LEDGER_ID, NNS_GOVERNANCE_ID, NeuronOrigin,
+    SIX_MONTHS_NEURON_NONCE, SNS_GOVERNANCE_SUBACCOUNT, TransferId, mutate_state, read_state,
 };
 use crate::storage::{
     are_rewards_distributed, get_rewards_ready_to_be_distributed, stable_sub_rewards,
 };
-use crate::tasks::{schedule_after, schedule_now, TaskType};
+use crate::tasks::{TaskType, schedule_after, schedule_now};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_canister_log::log;
 use ic_nns_governance_api::{
-    manage_neuron_response::Command as CommandResponse, neuron::DissolveState, GovernanceError,
-    ListNeurons, Topic,
+    GovernanceError, ListNeurons, Topic, manage_neuron_response::Command as CommandResponse,
+    neuron::DissolveState,
 };
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
@@ -387,7 +387,10 @@ pub fn timer() {
 
                     let error_count = process_pending_transfer().await;
                     if error_count > 0 {
-                        log!(INFO, "[ProcessPendingTransfers] Failed to process {error_count} transfers, rescheduling task.");
+                        log!(
+                            INFO,
+                            "[ProcessPendingTransfers] Failed to process {error_count} transfers, rescheduling task."
+                        );
                         schedule_after(RETRY_DELAY, TaskType::ProcessPendingTransfers);
                     }
                 });
@@ -463,11 +466,14 @@ pub fn timer() {
                     };
 
                     let runtime = IcCanisterRuntime {};
-                    if let Some(error_count) = process_icp_distribution(&runtime).await {
-                        if error_count > 0 {
-                            log!(INFO, "[ProcessRewardsTransfer] Failed to process {error_count} transfers, rescheduling task.");
-                            schedule_after(RETRY_DELAY, TaskType::ProcessRewardsTransfer);
-                        }
+                    if let Some(error_count) = process_icp_distribution(&runtime).await
+                        && error_count > 0
+                    {
+                        log!(
+                            INFO,
+                            "[ProcessRewardsTransfer] Failed to process {error_count} transfers, rescheduling task."
+                        );
+                        schedule_after(RETRY_DELAY, TaskType::ProcessRewardsTransfer);
                     }
 
                     if are_rewards_distributed() {
@@ -746,7 +752,9 @@ async fn process_start_dissolving() {
                 if let Some(withdrawal_id) = s.neuron_id_to_withdrawal_id(*neuron_id) {
                     process_event(s, EventType::StartedToDissolve { withdrawal_id });
                 } else {
-                    panic!("bug: neuron_id_to_withdrawal_id doesn't contain withdrawal id associated with neuron {neuron_id:?}");
+                    panic!(
+                        "bug: neuron_id_to_withdrawal_id doesn't contain withdrawal id associated with neuron {neuron_id:?}"
+                    );
                 }
             });
             log!(
@@ -902,10 +910,17 @@ async fn distribute_icp_to_sns_neurons() {
                             stakers_count
                         );
                     }
-                        Err(error) => log!(INFO, "[distribute_icp_to_sns_neurons] Failed to distribute ICP to SNS neurons {error}"),
+                    Err(error) => log!(
+                        INFO,
+                        "[distribute_icp_to_sns_neurons] Failed to distribute ICP to SNS neurons {error}"
+                    ),
                 }
             } else {
-                log!(DEBUG, "[distribute_icp_to_sns_neurons] Not enough ICP to distribute, balance {balance} ICP min {} ICP", MINIMUM_ICP_DISTRIBUTION / E8S);
+                log!(
+                    DEBUG,
+                    "[distribute_icp_to_sns_neurons] Not enough ICP to distribute, balance {balance} ICP min {} ICP",
+                    MINIMUM_ICP_DISTRIBUTION / E8S
+                );
             }
         }
         Err(error) => {
@@ -943,7 +958,12 @@ async fn dispatch_icp<R: CanisterRuntime>(runtime: &R) {
                     let nicp_share_e8s = balance.checked_sub(governance_share_e8s).expect(
                         "bug: the governance share should always be strictly less than the balance",
                     );
-                    log!(INFO, "[dispatch_icp] {neuron_type} generated {} ICP for nICP and {} for SNS governance.", DisplayAmount(nicp_share_e8s), DisplayAmount(governance_share_e8s));
+                    log!(
+                        INFO,
+                        "[dispatch_icp] {neuron_type} generated {} ICP for nICP and {} for SNS governance.",
+                        DisplayAmount(nicp_share_e8s),
+                        DisplayAmount(governance_share_e8s)
+                    );
                     mutate_state(|s| {
                         process_event(
                             s,
@@ -1072,10 +1092,10 @@ pub async fn process_witdhrawals_splitting() {
 mod test {
     use crate::sns_governance::CanisterRuntime;
     use crate::state::test::default_state;
-    use crate::state::{replace_state, ICP_LEDGER_ID, SNS_GOVERNANCE_SUBACCOUNT};
+    use crate::state::{ICP_LEDGER_ID, SNS_GOVERNANCE_SUBACCOUNT, replace_state};
     use crate::{
-        dispatch_icp, read_state, self_canister_id, Account, NeuronOrigin, PendingTransfer, Unit,
-        E8S,
+        Account, E8S, NeuronOrigin, PendingTransfer, Unit, dispatch_icp, read_state,
+        self_canister_id,
     };
     use async_trait::async_trait;
     use candid::Principal;

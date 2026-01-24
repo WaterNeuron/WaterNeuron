@@ -1,10 +1,10 @@
 use crate::state::event::{Event, EventType};
 use candid::Principal;
 use ic_stable_structures::{
+    DefaultMemoryImpl, StableBTreeMap,
     log::Log as StableLog,
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     storable::{Bound, Storable},
-    DefaultMemoryImpl, StableBTreeMap,
 };
 use std::borrow::Cow;
 use std::cell::RefCell;

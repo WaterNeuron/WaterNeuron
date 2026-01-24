@@ -1,6 +1,6 @@
 use boomerang::{
-    self_canister_id, set_canister_ids, BoomerangError, CanisterIds, DepositSuccess,
-    WithdrawalSuccess,
+    BoomerangError, CanisterIds, DepositSuccess, WithdrawalSuccess, self_canister_id,
+    set_canister_ids,
 };
 use candid::{Nat, Principal};
 use ic_cdk::{init, update};

@@ -1,4 +1,4 @@
-use crate::numeric::{nICP, ICP};
+use crate::numeric::{ICP, nICP};
 use crate::state::{NeuronOrigin, WithdrawalId};
 use crate::{InitArg, NeuronId, Principal, ProposalId, TransferId, UpgradeArg};
 use candid::CandidType;

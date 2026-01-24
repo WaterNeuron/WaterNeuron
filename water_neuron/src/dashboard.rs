@@ -306,7 +306,9 @@ fn construct_metadata_table() -> String {
 }
 
 fn link_to_dashboard(principal: Principal) -> String {
-    format!("<a href=\"https://dashboard.internetcomputer.org/canister/{principal}\" target=\"_blank\">{principal}</a>")
+    format!(
+        "<a href=\"https://dashboard.internetcomputer.org/canister/{principal}\" target=\"_blank\">{principal}</a>"
+    )
 }
 
 fn construct_withdrawal_table() -> String {
@@ -479,7 +481,7 @@ impl fmt::Display for DisplayAmount {
             let frac_prefix: u64 = {
                 // The fraction part without trailing zeros.
                 let mut f = frac;
-                while f % 10 == 0 {
+                while f.is_multiple_of(10) {
                     f /= 10
                 }
                 f

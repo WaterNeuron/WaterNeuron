@@ -1,9 +1,9 @@
 use crate::management::{get_sns_proposal, list_proposals, manage_neuron_sns};
-use crate::nns_types::{convert_nns_proposal_to_sns_proposal, ProposalId};
+use crate::nns_types::{ProposalId, convert_nns_proposal_to_sns_proposal};
 use crate::{
+    DEBUG, EventType, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS, TaskType,
     compute_neuron_staking_subaccount_bytes, mutate_state, process_event, read_state,
-    register_vote, schedule_after, self_canister_id, timestamp_nanos, EventType, TaskType, DEBUG,
-    INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS,
+    register_vote, schedule_after, self_canister_id, timestamp_nanos,
 };
 use ic_canister_log::log;
 use ic_nns_governance_api::ListProposalInfoRequest;
@@ -77,21 +77,20 @@ pub async fn mirror_proposals() -> Result<(), String> {
                     Ok(manage_neuron_response) => {
                         if let Some(CommandSnsResponse::MakeProposal(make_proposal_response)) =
                             manage_neuron_response.command.clone()
+                            && let Some(sns_proposal_id) = make_proposal_response.proposal_id
                         {
-                            if let Some(sns_proposal_id) = make_proposal_response.proposal_id {
-                                mutate_state(|s| {
-                                    process_event(
-                                        s,
-                                        EventType::MirroredProposal {
-                                            nns_proposal_id: ProposalId { id: proposal_id.id },
-                                            sns_proposal_id: crate::ProposalId {
-                                                id: sns_proposal_id.id,
-                                            },
+                            mutate_state(|s| {
+                                process_event(
+                                    s,
+                                    EventType::MirroredProposal {
+                                        nns_proposal_id: ProposalId { id: proposal_id.id },
+                                        sns_proposal_id: crate::ProposalId {
+                                            id: sns_proposal_id.id,
                                         },
-                                    );
-                                });
-                                continue;
-                            }
+                                    },
+                                );
+                            });
+                            continue;
                         }
                         log!(
                             INFO,
@@ -160,13 +159,11 @@ pub async fn vote_on_nns_proposals() {
                             Ok(proposal_response) => {
                                 if let Some(ic_sns_governance_api::pb::v1::get_proposal_response::Result::Proposal(proposal_data)) =
                                     proposal_response.result.clone()
-                                {
-                                    if let Some(tally) = proposal_data.latest_tally {
+                                    && let Some(tally) = proposal_data.latest_tally {
                                         let vote_outcome = tally.yes > tally.no;
                                         vote_on_proposal(proposal_id, vote_outcome).await;
                                         continue;
                                     }
-                                }
                                 log!(
                                     INFO,
                                     "[vote_on_nns_proposals] Failed to fetch SNS proposal, got: {proposal_response:?}"
@@ -215,10 +212,10 @@ async fn vote_on_proposal(proposal_id: ProposalId, vote: bool) {
     match register_vote(neuron_6m, proposal_id.clone(), vote).await {
         Ok(response) => {
             log!(
-            INFO,
-            "[VoteOnProposal] Successfully voted {vote} on proposal {} with response {response:?}",
-            proposal_id.id
-        );
+                INFO,
+                "[VoteOnProposal] Successfully voted {vote} on proposal {} with response {response:?}",
+                proposal_id.id
+            );
             mutate_state(|s| s.voted_proposals.insert(proposal_id));
         }
         Err(error) => {
@@ -246,19 +243,16 @@ pub async fn early_voting_on_nns_proposals() {
     for proposal_id in not_voted {
         match get_sns_proposal(wtn_governance_id, proposal_id.id).await {
             Ok(proposal_response) => {
-                if let Some(
-                    ic_sns_governance_api::pb::v1::get_proposal_response::Result::Proposal(
-                        proposal_data,
-                    ),
-                ) = proposal_response.result.clone()
+                if let Some(ic_sns_governance_api::pb::v1::get_proposal_response::Result::Proposal(
+                    proposal_data,
+                )) = proposal_response.result.clone()
+                    && let Some(tally) = proposal_data.latest_tally
                 {
-                    if let Some(tally) = proposal_data.latest_tally {
-                        if tally.no > tally.total / 2 {
-                            vote_on_proposal(proposal_id.clone(), false).await;
-                        }
-                        if tally.yes > tally.total / 2 {
-                            vote_on_proposal(proposal_id.clone(), true).await;
-                        }
+                    if tally.no > tally.total / 2 {
+                        vote_on_proposal(proposal_id.clone(), false).await;
+                    }
+                    if tally.yes > tally.total / 2 {
+                        vote_on_proposal(proposal_id.clone(), true).await;
                     }
                 }
             }

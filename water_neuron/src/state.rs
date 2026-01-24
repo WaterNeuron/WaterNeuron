@@ -1,12 +1,11 @@
 use crate::nns_types::{NeuronId, ProposalId};
-use crate::numeric::{nICP, ICP, WTN};
+use crate::numeric::{ICP, WTN, nICP};
 use crate::sns_distribution::compute_rewards;
 use crate::tasks::TaskType;
 use crate::{
-    compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos, FeeMetrics,
-    InitArg, PendingTransfer, Unit, UpgradeArg, CUT_MAX_PERCENT, CUT_MIN_PERCENT,
-    DEFAULT_LEDGER_FEE, E8S, NEURON_6M_APY, NEURON_8Y_APY, ONE_WEEK_SECONDS, SEC_NANOS, TVL_MAX,
-    TVL_MIN,
+    CUT_MAX_PERCENT, CUT_MIN_PERCENT, DEFAULT_LEDGER_FEE, E8S, FeeMetrics, InitArg, NEURON_6M_APY,
+    NEURON_8Y_APY, ONE_WEEK_SECONDS, PendingTransfer, SEC_NANOS, TVL_MAX, TVL_MIN, Unit,
+    UpgradeArg, compute_neuron_staking_subaccount_bytes, self_canister_id, timestamp_nanos,
 };
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -459,7 +458,7 @@ impl State {
                     },
                 );
             }
-            None => ic_cdk::trap(&format!("transfer with id {transfer_id} not found")),
+            None => ic_cdk::trap(format!("transfer with id {transfer_id} not found")),
         }
     }
 
@@ -635,10 +634,11 @@ impl State {
             .entry(withdrawal_id)
             .and_modify(|n| n.neuron_id = Some(neuron_id));
         assert!(self.withdrawal_to_start_dissolving.insert(withdrawal_id));
-        assert!(self
-            .neuron_id_to_withdrawal_id
-            .insert(neuron_id, withdrawal_id)
-            .is_none());
+        assert!(
+            self.neuron_id_to_withdrawal_id
+                .insert(neuron_id, withdrawal_id)
+                .is_none()
+        );
     }
 
     pub fn record_neuron_merge(&mut self, neuron_id: NeuronId) {
@@ -728,10 +728,11 @@ impl State {
         let neuron_id = request
             .neuron_id
             .expect("bug: neuron id should be set at this point");
-        assert!(self
-            .withdrawal_finalized
-            .insert(withdrawal_id, block_index)
-            .is_none());
+        assert!(
+            self.withdrawal_finalized
+                .insert(withdrawal_id, block_index)
+                .is_none()
+        );
         assert!(self.to_disburse.remove(&neuron_id).is_some());
         assert!(self.neuron_id_to_withdrawal_id.remove(&neuron_id).is_some());
     }
@@ -935,8 +936,8 @@ pub fn replace_state(state: State) {
 
 #[cfg(test)]
 pub mod test {
-    use crate::state::{State, WithdrawalStatus, ICP_LEDGER_ID, NNS_GOVERNANCE_ID, WTN};
-    use crate::{nICP, InitArg, NeuronId, NeuronOrigin, PendingTransfer, Unit, E8S, ICP};
+    use crate::state::{ICP_LEDGER_ID, NNS_GOVERNANCE_ID, State, WTN, WithdrawalStatus};
+    use crate::{E8S, ICP, InitArg, NeuronId, NeuronOrigin, PendingTransfer, Unit, nICP};
     use candid::Principal;
     use std::str::FromStr;
 
@@ -1131,7 +1132,7 @@ pub mod test {
 
     #[test]
     fn should_compute_fee_metrics() {
-        use crate::{timestamp_nanos, SEC_NANOS};
+        use crate::{SEC_NANOS, timestamp_nanos};
 
         let mut state = default_state();
         let now = timestamp_nanos();
