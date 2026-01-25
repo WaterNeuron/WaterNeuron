@@ -15,7 +15,6 @@ path = "src/main.rs"
 [dependencies]
 candid.workspace = true
 ic-canister-log.workspace = true
-ic-base-types.workspace = true
 ic-cdk.workspace = true
 icrc-ledger-types.workspace = true
 icrc-ledger-client-cdk.workspace = true
@@ -27,20 +26,17 @@ sha2.workspace = true
 
 [dev-dependencies]
 candid_parser.workspace = true
+ic-base-types.workspace = true
 ic-icrc1-ledger.workspace = true
-ic-management-canister-types-private.workspace = true
 ic-nns-constants.workspace = true
-ic-nns-governance.workspace = true
 ic-nns-governance-api.workspace = true
 ic-sns-governance.workspace = true
 ic-sns-init.workspace = true
 ic-sns-root.workspace = true
 ic-sns-swap.workspace = true
 icp-ledger.workspace = true
-lazy_static.workspace = true
 num-traits.workspace = true
 pocket-ic.workspace = true
-prost.workspace = true
 tokio.workspace = true
 
 water_neuron = { path = "../water_neuron" }

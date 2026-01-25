@@ -98,7 +98,7 @@ pub async fn upgrade_canister(
 
 pub async fn update<T>(
     pic: &PocketIc,
-    canister: Principal,
+    canister: CanisterId,
     caller: Principal,
     method: &str,
     arg: impl CandidType,
@@ -118,7 +118,7 @@ where
 
 pub async fn query<T>(
     pic: &PocketIc,
-    canister: Principal,
+    canister: CanisterId,
     caller: Principal,
     method: &str,
     arg: impl CandidType,
@@ -563,38 +563,16 @@ struct WaterNeuron {
 
 impl WaterNeuron {
     async fn new() -> Self {
-        let minter = PrincipalId::new_user_test_id(DEFAULT_PRINCIPAL_ID);
-
         let env = PocketIcBuilder::new()
             .with_nns_subnet()
             .with_sns_subnet()
             .with_ii_subnet()
             .build_async()
             .await;
-        let nicp_ledger_id = env.create_canister().await;
 
-        let governance_canister_init = Governance {
-            economics: Some(NetworkEconomics::with_default_values()),
-            wait_for_quiet_threshold_seconds: 60 * 60 * 24 * 4, // 4 days
-            short_voting_period_seconds: 60 * 60 * 12,          // 12 hours
-            neuron_management_voting_period_seconds: Some(60 * 60 * 48), // 48 hours
-            ..Default::default()
-        };
+        let water_neuron_canister_id = env.create_canister().await;
 
-        let encoded = Encode!(&governance_canister_init).unwrap();
-
-        env.create_canister_with_id(None, None, GOVERNANCE_CANISTER_ID.into())
-            .await
-            .unwrap();
-
-        let _governance_id = env
-            .install_canister(
-                GOVERNANCE_CANISTER_ID.into(),
-                governance_wasm().await,
-                encoded,
-                None,
-            )
-            .await;
+        let minter = PrincipalId::new_user_test_id(DEFAULT_PRINCIPAL_ID);
 
         let mut initial_balances = HashMap::new();
         initial_balances.insert(
@@ -602,12 +580,7 @@ impl WaterNeuron {
             Tokens::from_e8s(22_000_000 * E8S),
         );
         initial_balances.insert(
-            AccountIdentifier::new(
-                Principal::from_text("7uieb-cx777-77776-qaaaq-cai")
-                    .unwrap()
-                    .into(),
-                None,
-            ),
+            AccountIdentifier::new(PrincipalId(water_neuron_canister_id), None),
             Tokens::from_e8s(5 * E8S),
         );
 
@@ -615,35 +588,50 @@ impl WaterNeuron {
             .await
             .unwrap();
 
-        let _icp_ledger_id = env
-            .install_canister(
-                LEDGER_CANISTER_ID.into(),
-                icp_ledger_wasm().await,
-                Encode!(
-                    &LedgerCanisterInitPayload::builder()
-                        .initial_values(initial_balances)
-                        .transfer_fee(Tokens::from_e8s(10_000))
-                        .minting_account(GOVERNANCE_CANISTER_ID.get().into())
-                        .token_symbol_and_name("ICP", "Internet Computer")
-                        .feature_flags(icp_ledger::FeatureFlags { icrc2: true })
-                        .build()
-                        .unwrap()
-                )
-                .unwrap(),
-                None,
+        env.install_canister(
+            LEDGER_CANISTER_ID.into(),
+            icp_ledger_wasm().await,
+            Encode!(
+                &LedgerCanisterInitPayload::builder()
+                    .initial_values(initial_balances)
+                    .transfer_fee(Tokens::from_e8s(10_000))
+                    .minting_account(GOVERNANCE_CANISTER_ID.get().into())
+                    .token_symbol_and_name("ICP", "Internet Computer")
+                    .feature_flags(icp_ledger::FeatureFlags { icrc2: true })
+                    .build()
+                    .unwrap()
             )
-            .await;
+            .unwrap(),
+            None,
+        )
+        .await;
 
-        let water_neuron_id = env.create_canister().await;
-        let water_neuron_principal = water_neuron_id;
+        env.create_canister_with_id(None, None, GOVERNANCE_CANISTER_ID.into())
+            .await
+            .unwrap();
+
+        env.install_canister(
+            GOVERNANCE_CANISTER_ID.into(),
+            governance_wasm().await,
+            Encode!(&Governance {
+                economics: Some(NetworkEconomics::with_default_values()),
+                wait_for_quiet_threshold_seconds: 60 * 60 * 24 * 4, // 4 days
+                short_voting_period_seconds: 60 * 60 * 12,          // 12 hours
+                neuron_management_voting_period_seconds: Some(60 * 60 * 48), // 48 hours
+                ..Default::default()
+            })
+            .unwrap(),
+            None,
+        )
+        .await;
 
         let mut neurons = vec![];
         neurons.push(SnsNeuron {
             id: Some(SnsNeuronId {
-                id: compute_neuron_staking_subaccount_bytes(water_neuron_principal, 0).to_vec(),
+                id: compute_neuron_staking_subaccount_bytes(water_neuron_canister_id, 0).to_vec(),
             }),
             permissions: vec![NeuronPermission {
-                principal: Some(PrincipalId(water_neuron_principal)),
+                principal: Some(PrincipalId(water_neuron_canister_id)),
                 permission_type: NeuronPermissionType::all(),
             }],
             cached_neuron_stake_e8s: 1_000_000_000_000,
@@ -700,13 +688,14 @@ impl WaterNeuron {
 
         let sns = setup_sns_canisters(&env, neurons).await;
 
+        let nicp_ledger_id = env.create_canister().await;
         env.install_canister(
-            water_neuron_id,
+            water_neuron_canister_id,
             water_neuron_wasm(),
             Encode!(&LiquidArg::Init(InitArg {
                 wtn_governance_id: sns.governance,
                 wtn_ledger_id: sns.ledger,
-                nicp_ledger_id: nicp_ledger_id,
+                nicp_ledger_id,
             }))
             .unwrap(),
             None,
@@ -718,7 +707,7 @@ impl WaterNeuron {
             ledger_wasm().await,
             Encode!(&LedgerArgument::Init(
                 LedgerInitArgsBuilder::with_symbol_and_name("nICP", "nICP")
-                    .with_minting_account(water_neuron_id)
+                    .with_minting_account(water_neuron_canister_id)
                     .with_transfer_fee(DEFAULT_LEDGER_FEE)
                     .with_decimals(8)
                     .with_feature_flags(ic_icrc1_ledger::FeatureFlags { icrc2: true })
@@ -736,13 +725,13 @@ impl WaterNeuron {
         env.add_cycles(nicp_ledger_id, u64::MAX.into()).await;
         env.add_cycles(sns.ledger, u64::MAX.into()).await;
         env.add_cycles(sns.governance, u64::MAX.into()).await;
-        env.add_cycles(CanisterId::from(water_neuron_id), u64::MAX.into())
+        env.add_cycles(CanisterId::from(water_neuron_canister_id), u64::MAX.into())
             .await;
 
         WaterNeuron {
             env: Arc::new(Mutex::new(env)),
             minter,
-            water_neuron_id: CanisterId::from(water_neuron_id),
+            water_neuron_id: CanisterId::from(water_neuron_canister_id),
             wtn_ledger_id: sns.ledger,
             wtn_governance_id: sns.governance,
             icp_ledger_id: LEDGER_CANISTER_ID.into(),
@@ -2281,15 +2270,17 @@ async fn should_distribute_icp_to_sns_neurons() {
 
     {
         let pic = water_neuron.env.lock().await;
+        let water_neuron_id = water_neuron.water_neuron_id;
         assert_eq!(update::<Result<u64, ConversionError>>(
             &pic,
-            water_neuron.water_neuron_id,
+            water_neuron_id,
             caller.into(),
             "claim_airdrop",
             caller
         ).await , Err(
-           "Failed to call claim_airdrop of 7uieb-cx777-77776-qaaaq-cai with error: IC0503: Error from Canister 7uieb-cx777-77776-qaaaq-cai: Canister called `ic0.trap` with message: all rewards must be allocated before being claimable.\nConsider gracefully handling failures from this canister or altering the canister to handle exceptions. See documentation: http://internetcomputer.org/docs/current/references/execution-errors#trapped-explicitly"
-           .to_string()));
+            format!("Failed to call claim_airdrop of {water_neuron_id} with error: IC0503: Error from Canister {water_neuron_id}: Canister called `ic0.trap` with message: all rewards must be allocated before being claimable.\nConsider gracefully handling failures from this canister or altering the canister to handle exceptions. See documentation: http://internetcomputer.org/docs/current/references/execution-errors#trapped-explicitly")
+            .to_string()
+        ));
     }
 
     water_neuron
@@ -2340,13 +2331,11 @@ async fn transfer_ids_are_as_expected() {
     let water_neuron = WaterNeuron::new().await;
     let caller = PrincipalId::new_user_test_id(212);
 
-    let water_neuron_principal: Principal = water_neuron.water_neuron_id.into();
-
     assert_eq!(
         water_neuron
             .transfer(
                 water_neuron.minter,
-                water_neuron_principal,
+                water_neuron.water_neuron_id,
                 10 * E8S,
                 water_neuron.icp_ledger_id
             )

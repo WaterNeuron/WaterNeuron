@@ -116,7 +116,7 @@ pub fn timestamp_nanos() -> u64 {
 
 #[cfg(target_arch = "wasm32")]
 pub fn self_canister_id() -> Principal {
-    ic_cdk::id()
+    ic_cdk::api::canister_self()
 }
 
 #[cfg(not(target_arch = "wasm32"))]

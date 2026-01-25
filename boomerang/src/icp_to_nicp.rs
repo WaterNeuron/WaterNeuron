@@ -137,15 +137,15 @@ pub async fn notify_icp_deposit(target: Principal) -> Result<DepositSuccess, Boo
         maybe_subaccount: boomerang_account.subaccount,
     };
 
-    let conversion_result: (Result<DepositSuccess, ConversionError>,) = ic_cdk::call(
-        canister_ids.water_neuron_id,
-        "icp_to_nicp",
-        (conversion_arg,),
-    )
-    .await
-    .unwrap();
+    let conversion_result: Result<DepositSuccess, ConversionError> =
+        ic_cdk::call::Call::unbounded_wait(canister_ids.water_neuron_id, "icp_to_nicp")
+            .with_arg(conversion_arg)
+            .await
+            .unwrap()
+            .candid()
+            .unwrap();
 
-    match conversion_result.0 {
+    match conversion_result {
         Ok(success) => {
             log!(
                 INFO,
