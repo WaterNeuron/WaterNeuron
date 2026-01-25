@@ -2132,18 +2132,20 @@ async fn should_distribute_icp_to_sns_neurons() {
 
     let caller = PrincipalId::new_user_test_id(212);
 
-    let water_neuron_principal: Principal = water_neuron.water_neuron_id.into();
+    // Events: Init, NeuronSixMonths and NeuronEightYears.
+    let total_event_count = water_neuron.get_events().await.total_event_count;
+    assert_eq!(total_event_count, 3);
 
     assert_eq!(
         water_neuron
             .transfer(
                 water_neuron.minter,
-                water_neuron_principal,
+                water_neuron.water_neuron_id,
                 10 * E8S,
                 water_neuron.icp_ledger_id
             )
             .await,
-        Nat::from(3_u8)
+        Nat::from(total_event_count + 1)
     );
     assert_eq!(
         water_neuron
@@ -2154,7 +2156,7 @@ async fn should_distribute_icp_to_sns_neurons() {
                 water_neuron.icp_ledger_id
             )
             .await,
-        Nat::from(4_u8)
+        Nat::from(total_event_count + 2)
     );
 
     water_neuron.advance_time_and_tick(60).await;
@@ -2266,21 +2268,31 @@ async fn should_distribute_icp_to_sns_neurons() {
         Nat::from(100 * E8S) - DEFAULT_LEDGER_FEE
     );
 
-    assert_eq!(water_neuron.get_events().await.total_event_count, 8);
+    // Events: Init, NeuronSixMonths and NeuronEightYears.
+    // + IcpDeposit, TransferExecuted
+    // + IcpDeposit, TransferExecuted
+    // + DistributeICPtoSNSv2
+    assert_eq!(
+        water_neuron.get_events().await.total_event_count,
+        total_event_count + 5
+    );
 
     {
         let pic = water_neuron.env.lock().await;
         let water_neuron_id = water_neuron.water_neuron_id;
-        assert_eq!(update::<Result<u64, ConversionError>>(
-            &pic,
-            water_neuron_id,
-            caller.into(),
-            "claim_airdrop",
-            caller
-        ).await , Err(
-            format!("Failed to call claim_airdrop of {water_neuron_id} with error: IC0503: Error from Canister {water_neuron_id}: Canister called `ic0.trap` with message: all rewards must be allocated before being claimable.\nConsider gracefully handling failures from this canister or altering the canister to handle exceptions. See documentation: http://internetcomputer.org/docs/current/references/execution-errors#trapped-explicitly")
-            .to_string()
-        ));
+        assert_eq!(
+            update::<Result<u64, ConversionError>>(
+                &pic,
+                water_neuron_id,
+                caller.into(),
+                "claim_airdrop",
+                caller
+            ).await,
+            Err(
+                format!("Failed to call claim_airdrop of {water_neuron_id} with error: PocketIC returned a rejection error: reject code CanisterError, reject message Error from Canister {water_neuron_id}: Canister called `ic0.trap` with message: 'all rewards must be allocated before being claimable'.\nConsider gracefully handling failures from this canister or altering the canister to handle exceptions. See documentation: https://internetcomputer.org/docs/current/references/execution-errors#trapped-explicitly, error code CanisterCalledTrap")
+                .to_string()
+            )
+        );
     }
 
     water_neuron
@@ -2331,6 +2343,10 @@ async fn transfer_ids_are_as_expected() {
     let water_neuron = WaterNeuron::new().await;
     let caller = PrincipalId::new_user_test_id(212);
 
+    // Events: Init, NeuronSixMonths and NeuronEightYears.
+    let total_event_count = water_neuron.get_events().await.total_event_count;
+    assert_eq!(total_event_count, 3);
+
     assert_eq!(
         water_neuron
             .transfer(
@@ -2340,7 +2356,7 @@ async fn transfer_ids_are_as_expected() {
                 water_neuron.icp_ledger_id
             )
             .await,
-        Nat::from(3_u8)
+        Nat::from(total_event_count + 1)
     );
     assert_eq!(
         water_neuron
@@ -2351,7 +2367,7 @@ async fn transfer_ids_are_as_expected() {
                 water_neuron.icp_ledger_id
             )
             .await,
-        Nat::from(4_u8)
+        Nat::from(total_event_count + 2)
     );
 
     water_neuron
@@ -2413,6 +2429,10 @@ async fn should_compute_exchange_rate() {
     let water_neuron = WaterNeuron::new().await;
     let caller = PrincipalId::new_user_test_id(212);
 
+    // Events: Init, NeuronSixMonths and NeuronEightYears.
+    let total_event_count = water_neuron.get_events().await.total_event_count;
+    assert_eq!(total_event_count, 3);
+
     let water_neuron_principal: Principal = water_neuron.water_neuron_id.into();
 
     assert_eq!(
@@ -2424,7 +2444,7 @@ async fn should_compute_exchange_rate() {
                 water_neuron.icp_ledger_id
             )
             .await,
-        Nat::from(3_u8)
+        Nat::from(total_event_count + 1)
     );
     assert_eq!(
         water_neuron
@@ -2435,7 +2455,7 @@ async fn should_compute_exchange_rate() {
                 water_neuron.icp_ledger_id
             )
             .await,
-        Nat::from(4_u8)
+        Nat::from(total_event_count + 2)
     );
 
     water_neuron.advance_time_and_tick(60).await;

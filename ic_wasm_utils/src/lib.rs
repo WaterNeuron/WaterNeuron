@@ -236,9 +236,7 @@ async fn fetch_remote_wasm(canister: CanisterName) -> Result<PathBuf> {
 
     let mut hasher = Sha256::new();
     hasher.update(&data);
-    let hash = format!("{:x}", hasher.clone().finalize());
-    println!("{:?} {:?}", canister, hash);
-    if hash != wasm.hash {
+    if format!("{:x}", hasher.clone().finalize()) != wasm.hash {
         return Err(Error::HashMismatch);
     }
 
