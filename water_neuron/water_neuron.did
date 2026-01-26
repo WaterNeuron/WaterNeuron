@@ -1,4 +1,5 @@
 type Account = record { owner : opt principal; subaccount : opt blob };
+type AccountIdentifier = record { hash : blob };
 type Account_1 = record { owner : principal; subaccount : opt blob };
 type BallotInfo = record { vote : int32; proposal_id : opt NeuronId };
 type CancelWithdrawalError = variant {
@@ -141,13 +142,19 @@ type InitArg = record {
   wtn_governance_id : principal;
   nicp_ledger_id : principal;
 };
-type KnownNeuronData = record { name : text; description : opt text };
+type KnownNeuronData = record {
+  name : text;
+  committed_topics : opt vec opt TopicToFollow;
+  description : opt text;
+  links : opt vec text;
+};
 type LineDisplayPage = record { lines : vec text };
 type LiquidArg = variant { Upgrade : opt UpgradeArg; Init : InitArg };
 type MaturityDisbursement = record {
   timestamp_of_disbursement_seconds : opt nat64;
   amount_e8s : opt nat64;
   account_to_disburse_to : opt Account;
+  account_identifier_to_disburse_to : opt AccountIdentifier;
   finalize_disbursement_timestamp_seconds : opt nat64;
 };
 type MergeResponse = record {
@@ -186,6 +193,7 @@ type Neuron = record {
 };
 type NeuronId = record { id : nat64 };
 type NeuronInfo = record {
+  id : opt NeuronId;
   dissolve_delay_seconds : nat64;
   recent_ballots : vec BallotInfo;
   voting_power_refreshed_timestamp_seconds : opt nat64;
@@ -227,6 +235,26 @@ type Result_3 = variant { Ok : DepositSuccess; Err : ConversionError };
 type Result_4 = variant { Ok : ConsentInfo; Err : Icrc21Error };
 type Result_5 = variant { Ok : WithdrawalSuccess; Err : ConversionError };
 type StandardRecord = record { url : text; name : text };
+type TopicToFollow = variant {
+  Kyc;
+  ServiceNervousSystemManagement;
+  ApiBoundaryNodeManagement;
+  ApplicationCanisterManagement;
+  SubnetRental;
+  NeuronManagement;
+  NodeProviderRewards;
+  SubnetManagement;
+  ExchangeRate;
+  CatchAll;
+  NodeAdmin;
+  IcOsVersionElection;
+  ProtocolCanisterManagement;
+  NetworkEconomics;
+  IcOsVersionDeployment;
+  ParticipantManagement;
+  Governance;
+  SnsAndCommunityFund;
+};
 type TransferError = variant {
   GenericError : record { message : text; error_code : nat };
   TemporarilyUnavailable;

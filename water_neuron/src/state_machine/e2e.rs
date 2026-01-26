@@ -6,8 +6,7 @@ use crate::state_machine::{
     nns_governance_make_proposal,
 };
 use crate::{
-    E8S, ICP, INITIAL_NEURON_STAKE, LiquidArg, MIN_DISSOLVE_DELAY_FOR_REWARDS, UpgradeArg,
-    WithdrawalSuccess, nICP,
+    E8S, ICP, INITIAL_NEURON_STAKE, LiquidArg, MIN_DISSOLVE_DELAY_FOR_REWARDS, ONE_DAY_SECONDS, ONE_HOUR_SECONDS, UpgradeArg, WithdrawalSuccess, nICP
 };
 use assert_matches::assert_matches;
 use candid::{Encode, Nat};
@@ -33,7 +32,7 @@ async fn e2e_basic() {
 
     let caller_icp_balance_before_withdrawal = env.balance_of(env.icp_ledger_id, caller.0).await;
 
-    env.advance_time_and_tick(24 * 60 * 60 + 10).await;
+    env.advance_time_and_tick(ONE_DAY_SECONDS + 10).await;
 
     // ... + TransferExecuted
     assert_eq!(env.get_events().await.total_event_count, 5);
@@ -86,7 +85,7 @@ async fn e2e_basic() {
         Nat::from(9_99_980_000_u64) // 10 ICP - tx fee (approve + transfer)
     );
 
-    env.advance_time_and_tick(60 * 60 * 24 + 1).await;
+    env.advance_time_and_tick(ONE_DAY_SECONDS + 1).await;
 
     assert_eq!(
         env.balance_of(
@@ -100,7 +99,7 @@ async fn e2e_basic() {
         Nat::from(0_u8)
     );
 
-    env.advance_time_and_tick(60 * 60).await;
+    env.advance_time_and_tick(ONE_HOUR_SECONDS).await;
 
     let info = env.get_info().await;
     assert_eq!(info.exchange_rate, E8S);
@@ -132,6 +131,7 @@ async fn e2e_basic() {
         .await,
         Nat::from(0_u8)
     );
+
     let neuron_6m_stake_e8s_before_proposal = env.get_info().await.neuron_6m_stake_e8s;
 
     let proposal = MakeProposalRequest {
@@ -154,9 +154,10 @@ async fn e2e_basic() {
                 CommandResponse::MakeProposal(response) => response.proposal_id.unwrap(),
                 _ => panic!("unexpected response"),
             };
-        env.advance_time_and_tick(15 * 60).await;
-        env.advance_time_and_tick(15 * 60).await;
-        env.advance_time_and_tick(4 * 60 * 60 * 24 - 60 * 60).await;
+        env.advance_time_and_tick(ONE_HOUR_SECONDS / 4).await;
+        env.advance_time_and_tick(ONE_HOUR_SECONDS / 4).await;
+        env.advance_time_and_tick(4 * ONE_DAY_SECONDS - ONE_HOUR_SECONDS).await;
+        dbg!(neuron_6m_stake_e8s_before_proposal, env.get_info().await.neuron_6m_stake_e8s);
     }
 
     let neuron_6m_stake_e8s_after_proposal = env.get_info().await.neuron_6m_stake_e8s;
