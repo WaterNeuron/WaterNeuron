@@ -285,7 +285,7 @@ pub struct FeeMetrics {
 /// Computes the bytes of the subaccount to which neuron staking transfers are made. This
 /// function must be kept in sync with the Nervous System UI equivalent.
 /// This code comes from the IC repo:
-/// https://github.com/dfinity/ic/blob/master/rs/nervous_system/common/src/ledger.rs#L211
+/// https://github.com/dfinity/ic/blob/035a2c7a2b19bc7ce7c4d977169583eb64b0e3cb/rs/nervous_system/common/src/ledger.rs
 pub fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64) -> [u8; 32] {
     const DOMAIN: &[u8] = b"neuron-stake";
     const DOMAIN_LENGTH: [u8; 1] = [0x0c];
