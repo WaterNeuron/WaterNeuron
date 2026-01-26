@@ -6,7 +6,8 @@ use crate::state_machine::{
     nns_governance_make_proposal,
 };
 use crate::{
-    E8S, ICP, INITIAL_NEURON_STAKE, LiquidArg, MIN_DISSOLVE_DELAY_FOR_REWARDS, ONE_DAY_SECONDS, ONE_HOUR_SECONDS, UpgradeArg, WithdrawalSuccess, nICP
+    E8S, ICP, INITIAL_NEURON_STAKE, LiquidArg, MIN_DISSOLVE_DELAY_FOR_REWARDS, ONE_DAY_SECONDS,
+    ONE_HOUR_SECONDS, UpgradeArg, WithdrawalSuccess, nICP,
 };
 use assert_matches::assert_matches;
 use candid::{Encode, Nat};
@@ -156,8 +157,12 @@ async fn e2e_basic() {
             };
         env.advance_time_and_tick(ONE_HOUR_SECONDS / 4).await;
         env.advance_time_and_tick(ONE_HOUR_SECONDS / 4).await;
-        env.advance_time_and_tick(4 * ONE_DAY_SECONDS - ONE_HOUR_SECONDS).await;
-        dbg!(neuron_6m_stake_e8s_before_proposal, env.get_info().await.neuron_6m_stake_e8s);
+        env.advance_time_and_tick(4 * ONE_DAY_SECONDS - ONE_HOUR_SECONDS)
+            .await;
+        dbg!(
+            neuron_6m_stake_e8s_before_proposal,
+            env.get_info().await.neuron_6m_stake_e8s
+        );
     }
 
     let neuron_6m_stake_e8s_after_proposal = env.get_info().await.neuron_6m_stake_e8s;
@@ -249,18 +254,12 @@ async fn e2e_basic() {
     assert_eq!(info.governance_share_percent, 10);
 
     assert_eq!(
-        env.icp_to_nicp(caller, E8S)
-            .await
-            .unwrap()
-            .nicp_amount,
+        env.icp_to_nicp(caller, E8S).await.unwrap().nicp_amount,
         Some(nICP::from_e8s(0_00_106_010))
     );
 
     assert_eq!(
-        env.nicp_to_icp(caller, E8S)
-            .await
-            .unwrap()
-            .icp_amount,
+        env.nicp_to_icp(caller, E8S).await.unwrap().icp_amount,
         Some(ICP::from_e8s(943_30_534_079))
     );
 

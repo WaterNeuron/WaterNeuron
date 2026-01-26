@@ -1,7 +1,9 @@
 use crate::state::event::{GetEventsArg, GetEventsResult};
 use crate::state::{TransferStatus, WithdrawalDetails};
 use crate::{
-    CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DEFAULT_LEDGER_FEE, DepositSuccess, E8S, INITIAL_NEURON_STAKE, InitArg, LiquidArg, NEURON_LEDGER_FEE, NeuronId, WithdrawalSuccess, compute_neuron_staking_subaccount_bytes, nICP
+    CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DEFAULT_LEDGER_FEE,
+    DepositSuccess, E8S, INITIAL_NEURON_STAKE, InitArg, LiquidArg, NEURON_LEDGER_FEE, NeuronId,
+    WithdrawalSuccess, compute_neuron_staking_subaccount_bytes, nICP,
 };
 use assert_matches::assert_matches;
 use candid::{CandidType, Deserialize, Encode, Nat, Principal};
