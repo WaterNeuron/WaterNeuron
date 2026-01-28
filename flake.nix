@@ -36,12 +36,12 @@
         };
         pocket-ic = pkgs.stdenv.mkDerivation rec {
           name = "pocket-ic";
-          version = "7.0.0";
+          version = "12.0.0";
           src = pkgs.fetchurl {
             url = "https://github.com/dfinity/pocketic/releases/download/${version}/pocket-ic-x86_64-${if pkgs.stdenv.isDarwin then "darwin" else "linux"}.gz";
             sha256 = if pkgs.stdenv.isDarwin 
-              then "sha256-dOhAXZKwXrcP5zXhPVgCkANL3He1Lqo6nDKWAfgvdeQ="
-              else "sha256-CTXubs4xJxmq5Oq93sLfxq801e2930069TvM0bNjYEQ=";
+              then "sha256-Z7qlb8SvuqiTXhTviNnWD3fQEZR/BUitxNQkw8iBnjU="
+              else "sha256-kUBboS/oqEAs1ZA/tD9ZJ3caVJOpcM/POuDfvYvbRaw=";
           };
           nativeBuildInputs = [ pkgs.gzip ];
           unpackPhase = ''

@@ -1,15 +1,15 @@
 use crate::guards::GuardPrincipal;
 use crate::logs::{DEBUG, INFO};
 use crate::management::{merge_neuron_into_six_months, stop_dissolvement};
-use crate::nns_types::{time_left_seconds, NeuronId};
-use crate::numeric::{nICP, ICP};
+use crate::nns_types::{NeuronId, time_left_seconds};
+use crate::numeric::{ICP, nICP};
 use crate::state::audit::process_event;
 use crate::state::event::EventType;
 use crate::state::{mutate_state, read_state};
-use crate::tasks::{schedule_now, TaskType};
+use crate::tasks::{TaskType, schedule_now};
 use crate::{
-    get_full_neuron, timestamp_nanos, CancelWithdrawalError, ConversionArg, ConversionError,
-    DepositSuccess, WithdrawalSuccess, ICP_LEDGER_ID, ONE_DAY_SECONDS,
+    CancelWithdrawalError, ConversionArg, ConversionError, DepositSuccess, ICP_LEDGER_ID,
+    ONE_DAY_SECONDS, WithdrawalSuccess, get_full_neuron, timestamp_nanos,
 };
 use candid::Nat;
 use ic_canister_log::log;
@@ -26,7 +26,7 @@ pub const MINIMUM_WITHDRAWAL_AMOUNT: ICP = ICP::from_unscaled(10);
 pub async fn cancel_withdrawal(
     neuron_id: NeuronId,
 ) -> Result<MergeResponse, CancelWithdrawalError> {
-    let caller = ic_cdk::caller();
+    let caller = ic_cdk::api::msg_caller();
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| CancelWithdrawalError::GuardError { guard_error })?;
 
@@ -118,7 +118,7 @@ pub async fn cancel_withdrawal(
 }
 
 pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, ConversionError> {
-    let caller = ic_cdk::caller();
+    let caller = ic_cdk::api::msg_caller();
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| ConversionError::GuardError { guard_error })?;
 
@@ -146,7 +146,7 @@ pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, Conver
             spender_subaccount: None,
             from: receiver,
             to: Account {
-                owner: ic_cdk::id(),
+                owner: ic_cdk::api::canister_self(),
                 subaccount: None,
             },
             amount: Nat::from(arg.amount_e8s),
@@ -191,7 +191,7 @@ pub async fn nicp_to_icp(arg: ConversionArg) -> Result<WithdrawalSuccess, Conver
 }
 
 pub async fn icp_to_nicp(arg: ConversionArg) -> Result<DepositSuccess, ConversionError> {
-    let caller = ic_cdk::caller();
+    let caller = ic_cdk::api::msg_caller();
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| ConversionError::GuardError { guard_error })?;
 

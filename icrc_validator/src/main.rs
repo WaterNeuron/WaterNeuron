@@ -12,7 +12,10 @@ async fn validate_nicp_icrc1_transfer(target: TransferArg) -> Result<String, Str
         runtime: CdkRuntime,
         ledger_canister_id: nicp_ledger,
     };
-    match nicp_client.balance_of(ic_cdk::caller().into()).await {
+    match nicp_client
+        .balance_of(ic_cdk::api::msg_caller().into())
+        .await
+    {
         Ok(balance) => {
             if balance >= target.amount {
                 return Ok("".to_string());

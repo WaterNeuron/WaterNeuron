@@ -1,26 +1,37 @@
 use crate::compute_neuron_staking_subaccount_bytes;
 use crate::nns_types::{NeuronId, ProposalId};
-use crate::state::{read_state, NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE};
+use crate::state::{NNS_GOVERNANCE_ID, SIX_MONTHS_NEURON_NONCE, read_state};
 use candid::{Nat, Principal};
 use ic_nns_governance_api::{
+    GovernanceError, ListNeurons, ListNeuronsResponse, ListProposalInfoRequest,
+    ListProposalInfoResponse, ManageNeuronProposal, ManageNeuronResponse, Neuron, Topic,
     manage_neuron::{
+        ClaimOrRefresh, Configure, Disburse, Follow, IncreaseDissolveDelay,
+        ManageNeuronProposalCommand, Merge, NeuronIdOrSubaccount, RegisterVote, Spawn, Split,
+        StartDissolving, StopDissolving,
         claim_or_refresh::{By, MemoAndController},
         configure::Operation,
-        ClaimOrRefresh, Command, Configure, Disburse, Follow, IncreaseDissolveDelay, Merge,
-        NeuronIdOrSubaccount, RegisterVote, Spawn, Split, StartDissolving, StopDissolving,
     },
     manage_neuron_response::{Command as CommandResponse, ConfigureResponse, DisburseResponse},
-    GovernanceError, ListNeurons, ListNeuronsResponse, ListProposalInfo, ListProposalInfoResponse,
-    ManageNeuron, ManageNeuronResponse, Neuron, Topic,
 };
 use ic_sns_governance_api::pb::v1::{
-    manage_neuron::Command as SnsCommand, GetProposal, GetProposalResponse,
-    ManageNeuron as ManageSnsNeuron, ManageNeuronResponse as ManageSnsNeuronResponse,
+    GetProposal, GetProposalResponse, ManageNeuron as ManageSnsNeuron,
+    ManageNeuronResponse as ManageSnsNeuronResponse, manage_neuron::Command as SnsCommand,
 };
 use icp_ledger::protobuf::AccountIdentifier;
 use icrc_ledger_client_cdk::{CdkRuntime, ICRC1Client};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
+
+trait WrapErr<T> {
+    fn wrap_err(self) -> Result<T, String>;
+}
+
+impl<T, E: std::fmt::Display> WrapErr<T> for Result<T, E> {
+    fn wrap_err(self) -> Result<T, String> {
+        self.map_err(|e| format!("Error while calling Governance canister: {}", e))
+    }
+}
 
 pub async fn transfer(
     to: impl Into<Account>,
@@ -73,52 +84,35 @@ pub async fn balance_of(
 /// At most this endpoint can return 9_400 neurons following estimations.
 /// As the response size grows following s(n) = 212 * n + 359.
 pub async fn list_neurons(args: ListNeurons) -> Result<ListNeuronsResponse, String> {
-    let res_gov: Result<(ListNeuronsResponse,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "list_neurons", (args,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "list_neurons")
+        .with_arg(args)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
-pub async fn list_proposals(args: ListProposalInfo) -> Result<ListProposalInfoResponse, String> {
-    let res_gov: Result<(ListProposalInfoResponse,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "list_proposals", (args,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+pub async fn list_proposals(
+    args: ListProposalInfoRequest,
+) -> Result<ListProposalInfoResponse, String> {
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "list_proposals")
+        .with_arg(args)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 pub async fn get_sns_proposal(
-    governace_id: Principal,
+    governance_id: Principal,
     proposal_id: u64,
 ) -> Result<GetProposalResponse, String> {
-    let arg = GetProposal {
+    let args = GetProposal {
         proposal_id: Some(ic_sns_governance_api::pb::v1::ProposalId { id: proposal_id }),
     };
-
-    let res_gov: Result<(GetProposalResponse,), (i32, String)> =
-        ic_cdk::api::call::call(governace_id, "get_proposal", (arg,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+    ic_cdk::call::Call::unbounded_wait(governance_id, "get_proposal")
+        .with_arg(args)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 pub async fn register_vote(
@@ -127,26 +121,19 @@ pub async fn register_vote(
     vote_bool: bool,
 ) -> Result<ManageNeuronResponse, String> {
     let vote = if vote_bool { 1 } else { 2 };
-
-    let arg = ManageNeuron {
+    let args = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::NeuronId(neuron_id.to_pb())),
-        command: Some(Command::RegisterVote(RegisterVote {
+        command: Some(ManageNeuronProposalCommand::RegisterVote(RegisterVote {
             proposal: Some(proposal_id.to_pb()),
             vote,
         })),
     };
-    let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "manage_neuron", (arg,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "manage_neuron")
+        .with_arg(args)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 pub async fn manage_neuron_sns(
@@ -154,22 +141,15 @@ pub async fn manage_neuron_sns(
     command: SnsCommand,
 ) -> Result<ManageSnsNeuronResponse, String> {
     let wtn_governance_id = read_state(|s| s.wtn_governance_id);
-
-    let arg = ManageSnsNeuron {
+    let args = ManageSnsNeuron {
         subaccount,
         command: Some(command),
     };
-    let res_gov: Result<(ManageSnsNeuronResponse,), (i32, String)> =
-        ic_cdk::api::call::call(wtn_governance_id, "manage_neuron", (arg,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+    ic_cdk::call::Call::unbounded_wait(wtn_governance_id, "manage_neuron")
+        .with_arg(args)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 pub async fn follow_neuron(
@@ -177,78 +157,49 @@ pub async fn follow_neuron(
     topic: Topic,
     neuron_to_follow: NeuronId,
 ) -> Result<ManageNeuronResponse, String> {
-    let arg = ManageNeuron {
+    let args = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::NeuronId(neuron_id.to_pb())),
-        command: Some(Command::Follow(Follow {
+        command: Some(ManageNeuronProposalCommand::Follow(Follow {
             topic: topic as i32,
             followees: vec![ic_nns_common::pb::v1::NeuronId {
                 id: neuron_to_follow.id,
             }],
         })),
     };
-    let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "manage_neuron", (arg,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "manage_neuron")
+        .with_arg(args)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 pub async fn get_full_neuron(neuron_id: u64) -> Result<Result<Neuron, GovernanceError>, String> {
-    let res_gov: Result<(Result<Neuron, GovernanceError>,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "get_full_neuron", (neuron_id,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "get_full_neuron")
+        .with_arg(neuron_id)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 pub async fn get_full_neuron_by_nonce(
     neuron_nonce: u64,
 ) -> Result<Result<Neuron, GovernanceError>, String> {
-    let subaccount = compute_neuron_staking_subaccount_bytes(ic_cdk::id(), neuron_nonce);
+    let subaccount =
+        compute_neuron_staking_subaccount_bytes(ic_cdk::api::canister_self(), neuron_nonce);
     let args = NeuronIdOrSubaccount::Subaccount(subaccount.to_vec());
-
-    let res_gov: Result<(Result<Neuron, GovernanceError>,), (i32, String)> =
-        ic_cdk::api::call::call(
-            NNS_GOVERNANCE_ID,
-            "get_full_neuron_by_id_or_subaccount",
-            (args,),
-        )
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "get_full_neuron_by_id_or_subaccount")
+        .with_arg(args)
         .await
-        .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 pub async fn get_neuron_ids() -> Result<Vec<u64>, String> {
-    let res_gov: Result<(Vec<u64>,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "get_neuron_ids", ())
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "get_neuron_ids")
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 enum NeuronNonceOrId {
@@ -257,34 +208,29 @@ enum NeuronNonceOrId {
 }
 
 async fn manage_neuron(
-    command: Command,
+    command: ManageNeuronProposalCommand,
     neuron_nonce_or_id: NeuronNonceOrId,
 ) -> Result<ManageNeuronResponse, String> {
     let neuron_id_or_subaccount = match neuron_nonce_or_id {
         NeuronNonceOrId::Id(neuron_id) => NeuronIdOrSubaccount::NeuronId(neuron_id.to_pb()),
         NeuronNonceOrId::Nonce(neuron_nonce) => {
-            let subaccount = compute_neuron_staking_subaccount_bytes(ic_cdk::id(), neuron_nonce);
+            let subaccount =
+                compute_neuron_staking_subaccount_bytes(ic_cdk::api::canister_self(), neuron_nonce);
             NeuronIdOrSubaccount::Subaccount(subaccount.to_vec())
         }
     };
 
-    let arg = ManageNeuron {
+    let args = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: Some(neuron_id_or_subaccount),
         command: Some(command),
     };
 
-    let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "manage_neuron", (arg,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
-        )),
-    }
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "manage_neuron")
+        .with_arg(args)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }
 
 pub async fn increase_dissolve_delay(
@@ -292,7 +238,7 @@ pub async fn increase_dissolve_delay(
     additional_dissolve_delay_seconds: u32,
 ) -> Result<ManageNeuronResponse, String> {
     manage_neuron(
-        Command::Configure(Configure {
+        ManageNeuronProposalCommand::Configure(Configure {
             operation: Some(Operation::IncreaseDissolveDelay(IncreaseDissolveDelay {
                 additional_dissolve_delay_seconds,
             })),
@@ -307,7 +253,10 @@ pub async fn split_neuron(
     amount_e8s: u64,
 ) -> Result<ManageNeuronResponse, String> {
     manage_neuron(
-        Command::Split(Split { amount_e8s }),
+        ManageNeuronProposalCommand::Split(Split {
+            amount_e8s,
+            memo: None,
+        }),
         NeuronNonceOrId::Nonce(neuron_nonce),
     )
     .await
@@ -316,7 +265,7 @@ pub async fn split_neuron(
 pub async fn stop_dissolvement(neuron_id: NeuronId) -> Result<ManageNeuronResponse, String> {
     assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
     manage_neuron(
-        Command::Configure(Configure {
+        ManageNeuronProposalCommand::Configure(Configure {
             operation: Some(Operation::StopDissolving(StopDissolving {})),
         }),
         NeuronNonceOrId::Id(neuron_id),
@@ -329,7 +278,7 @@ pub async fn merge_neuron_into_six_months(
 ) -> Result<ManageNeuronResponse, String> {
     assert!(read_state(|s| s.is_neuron_allowed_to_dissolve(neuron_id)));
     manage_neuron(
-        Command::Merge(Merge {
+        ManageNeuronProposalCommand::Merge(Merge {
             source_neuron_id: Some(neuron_id.to_pb()),
         }),
         NeuronNonceOrId::Nonce(SIX_MONTHS_NEURON_NONCE),
@@ -351,7 +300,7 @@ impl From<String> for SpawnMaturityError {
 
 pub async fn spawn_all_maturity(neuron_id: NeuronId) -> Result<NeuronId, SpawnMaturityError> {
     let manage_neuron_response = manage_neuron(
-        Command::Spawn(Spawn {
+        ManageNeuronProposalCommand::Spawn(Spawn {
             new_controller: None,
             nonce: None,
             percentage_to_spawn: Some(100_u32),
@@ -359,10 +308,10 @@ pub async fn spawn_all_maturity(neuron_id: NeuronId) -> Result<NeuronId, SpawnMa
         NeuronNonceOrId::Id(neuron_id),
     )
     .await?;
-    if let Some(CommandResponse::Spawn(spawn_response)) = manage_neuron_response.command.clone() {
-        if let Some(neuron_id) = spawn_response.created_neuron_id {
-            return Ok(NeuronId { id: neuron_id.id });
-        }
+    if let Some(CommandResponse::Spawn(spawn_response)) = manage_neuron_response.command.clone()
+        && let Some(neuron_id) = spawn_response.created_neuron_id
+    {
+        return Ok(NeuronId { id: neuron_id.id });
     }
 
     Err(SpawnMaturityError::UnexpectedAnswer(Box::new(
@@ -391,7 +340,7 @@ pub async fn start_dissolving(neuron_id: NeuronId) -> Result<(), StartDissolving
         )));
     }
     let manage_neuron_response = manage_neuron(
-        Command::Configure(Configure {
+        ManageNeuronProposalCommand::Configure(Configure {
             operation: Some(Operation::StartDissolving(StartDissolving {})),
         }),
         NeuronNonceOrId::Id(neuron_id),
@@ -423,7 +372,7 @@ pub async fn disburse(
 ) -> Result<DisburseResponse, DisburseError> {
     let account_id: icp_ledger::AccountIdentifier = to_account.into();
     let manage_neuron_response = manage_neuron(
-        Command::Disburse(Disburse {
+        ManageNeuronProposalCommand::Disburse(Disburse {
             amount: None,
             to_account: Some(AccountIdentifier {
                 hash: account_id.to_vec(),
@@ -441,25 +390,23 @@ pub async fn disburse(
 }
 
 pub async fn refresh_neuron(neuron_nonce: u64) -> Result<ManageNeuronResponse, String> {
-    let arg = ManageNeuron {
+    let args = ManageNeuronProposal {
         id: None,
         neuron_id_or_subaccount: None,
-        command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
-            by: Some(By::MemoAndController(MemoAndController {
-                controller: Some(ic_base_types::PrincipalId::from(ic_cdk::id())),
-                memo: neuron_nonce,
-            })),
-        })),
-    };
-    let res_gov: Result<(ManageNeuronResponse,), (i32, String)> =
-        ic_cdk::api::call::call(NNS_GOVERNANCE_ID, "manage_neuron", (arg,))
-            .await
-            .map_err(|(code, msg)| (code as i32, msg));
-    match res_gov {
-        Ok((res,)) => Ok(res),
-        Err((code, msg)) => Err(format!(
-            "Error while calling Governance canister ({}): {:?}",
-            code, msg
+        command: Some(ManageNeuronProposalCommand::ClaimOrRefresh(
+            ClaimOrRefresh {
+                by: Some(By::MemoAndController(MemoAndController {
+                    controller: Some(ic_base_types::PrincipalId::from(
+                        ic_cdk::api::canister_self(),
+                    )),
+                    memo: neuron_nonce,
+                })),
+            },
         )),
-    }
+    };
+    ic_cdk::call::Call::unbounded_wait(NNS_GOVERNANCE_ID, "manage_neuron")
+        .with_arg(args)
+        .await
+        .wrap_err()
+        .and_then(|r| r.candid().wrap_err())
 }

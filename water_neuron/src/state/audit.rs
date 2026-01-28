@@ -1,8 +1,8 @@
-pub use super::event::{Event, EventType};
 use super::State;
+pub use super::event::{Event, EventType};
 use crate::state::SNS_GOVERNANCE_SUBACCOUNT;
 use crate::storage::{record_event, with_event_iter};
-use crate::{nICP, timestamp_nanos, ICP, INITIAL_NEURON_STAKE, SNS_DISTRIBUTION_MEMO};
+use crate::{ICP, INITIAL_NEURON_STAKE, SNS_DISTRIBUTION_MEMO, nICP, timestamp_nanos};
 
 /// Updates the state to reflect the given state transition.
 /// public because it's used in tests since process_event

@@ -1,4 +1,4 @@
-use ic_wasm_utils::{get_wasm_path_sync, CanisterName};
+use ic_wasm_utils::{CanisterName, get_wasm_path_sync};
 use lazy_static::lazy_static;
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};

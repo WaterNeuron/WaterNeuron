@@ -14,32 +14,36 @@ async fn check_e2e() {
     let minter = PrincipalId::new_user_test_id(DEFAULT_PRINCIPAL_ID);
 
     // WaterNeuron initialization
-    assert!(boomerang
-        .icp_transfer(
-            minter.0,
-            None,
-            3 * E8S,
-            AccountIdentifier::new(boomerang.water_neuron_id.into(), None)
-        )
-        .await
-        .is_ok());
+    assert!(
+        boomerang
+            .icp_transfer(
+                minter.0,
+                None,
+                3 * E8S,
+                AccountIdentifier::new(boomerang.water_neuron_id.into(), None)
+            )
+            .await
+            .is_ok()
+    );
 
     boomerang.advance_time_and_tick(60 * 60).await;
 
     let staking_account = boomerang.get_staking_account(caller.0).await;
 
-    assert!(boomerang
-        .icp_transfer(
-            caller.0,
-            None,
-            1_000 * E8S,
-            AccountIdentifier::new(
-                staking_account.owner.into(),
-                staking_account.subaccount.map(|s| Subaccount(s))
+    assert!(
+        boomerang
+            .icp_transfer(
+                caller.0,
+                None,
+                1_000 * E8S,
+                AccountIdentifier::new(
+                    staking_account.owner.into(),
+                    staking_account.subaccount.map(|s| Subaccount(s))
+                )
             )
-        )
-        .await
-        .is_ok());
+            .await
+            .is_ok()
+    );
 
     assert!(boomerang.notify_icp_deposit(caller.0).await.is_ok());
 
@@ -68,10 +72,12 @@ async fn check_e2e() {
 
     assert_ne!(staking_account, unstaking_account);
 
-    assert!(boomerang
-        .nicp_transfer(caller.0, None, balance - TRANSFER_FEE, unstaking_account)
-        .await
-        .is_ok());
+    assert!(
+        boomerang
+            .nicp_transfer(caller.0, None, balance - TRANSFER_FEE, unstaking_account)
+            .await
+            .is_ok()
+    );
     boomerang.advance_time_and_tick(60 * 60).await;
 
     assert!(boomerang.notify_nicp_deposit(caller.0).await.is_ok());

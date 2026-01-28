@@ -4,7 +4,7 @@ use ic_cdk_macros::{init, post_upgrade, query, update};
 use ic_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_metrics_encoder::MetricsEncoder;
 use ic_nns_governance_api::{
-    manage_neuron_response::MergeResponse, GovernanceError, ManageNeuronResponse, Neuron,
+    GovernanceError, ManageNeuronResponse, Neuron, manage_neuron_response::MergeResponse,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
@@ -19,17 +19,17 @@ use water_neuron::sns_distribution::compute_rewards;
 use water_neuron::state::audit::{process_event, replay_events};
 use water_neuron::state::event::{EventType, GetEventsArg, GetEventsResult};
 use water_neuron::state::{
-    mutate_state, read_state, replace_state, State, TransferStatus, WithdrawalDetails,
+    State, TransferStatus, WithdrawalDetails, mutate_state, read_state, replace_state,
 };
 use water_neuron::storage::total_event_count;
-use water_neuron::tasks::{schedule_now, TaskType};
+use water_neuron::tasks::{TaskType, schedule_now};
 use water_neuron::{
     CancelWithdrawalError, CanisterInfo, ConversionArg, ConversionError, DepositSuccess, LiquidArg,
     Unit, UpgradeArg, WithdrawalSuccess,
 };
 
 fn reject_anonymous_call() {
-    if ic_cdk::caller() == Principal::anonymous() {
+    if ic_cdk::api::msg_caller() == Principal::anonymous() {
         ic_cdk::trap("call rejected: anonymous caller");
     }
 }
@@ -55,12 +55,12 @@ pub fn post_upgrade(args: LiquidArg) {
             let start = ic_cdk::api::instruction_counter();
 
             fn validate_upgrade_args(args: UpgradeArg) -> Result<(), String> {
-                if let Some(governance_fee_share_percent) = args.governance_fee_share_percent {
-                    if governance_fee_share_percent > 100 {
-                        return Err(
-                            "governance_fee_share_percent has to be between 0 and 100".to_string()
-                        );
-                    }
+                if let Some(governance_fee_share_percent) = args.governance_fee_share_percent
+                    && governance_fee_share_percent > 100
+                {
+                    return Err(
+                        "governance_fee_share_percent has to be between 0 and 100".to_string()
+                    );
                 }
                 Ok(())
             }
@@ -136,12 +136,14 @@ fn check_postcondition<T>(t: T) -> T {
     t
 }
 
-#[export_name = "canister_global_timer"]
+#[unsafe(export_name = "canister_global_timer")]
 fn timer() {
     #[cfg(feature = "self_check")]
     ok_or_die(check_invariants());
 
-    water_neuron::timer();
+    ic_cdk::futures::internals::in_executor_context(|| {
+        water_neuron::timer();
+    })
 }
 
 #[query]
@@ -162,14 +164,14 @@ fn get_events(args: GetEventsArg) -> GetEventsResult {
 fn get_airdrop_allocation(p: Option<Principal>) -> WTN {
     read_state(|s| {
         *s.airdrop
-            .get(&p.unwrap_or(ic_cdk::caller()))
+            .get(&p.unwrap_or(ic_cdk::api::msg_caller()))
             .unwrap_or(&WTN::ZERO)
     })
 }
 
 #[query]
 fn get_pending_rewards(p: Option<Principal>) -> u64 {
-    water_neuron::storage::get_pending_rewards(p.unwrap_or(ic_cdk::caller())).unwrap_or(0)
+    water_neuron::storage::get_pending_rewards(p.unwrap_or(ic_cdk::api::msg_caller())).unwrap_or(0)
 }
 
 #[query]
@@ -187,7 +189,7 @@ fn get_wtn_proposal_id(nns_proposal_id: u64) -> Result<ProposalId, ProposalId> {
 #[update(hidden = true)]
 async fn get_full_neuron(neuron_id: u64) -> Result<Result<Neuron, GovernanceError>, String> {
     assert_eq!(
-        ic_cdk::caller(),
+        ic_cdk::api::msg_caller(),
         Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
     );
 
@@ -197,7 +199,7 @@ async fn get_full_neuron(neuron_id: u64) -> Result<Result<Neuron, GovernanceErro
 #[update(hidden = true)]
 async fn schedule_task(task: TaskType) {
     assert_eq!(
-        ic_cdk::caller(),
+        ic_cdk::api::msg_caller(),
         Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
     );
 
@@ -206,7 +208,10 @@ async fn schedule_task(task: TaskType) {
 
 #[update(hidden = true)]
 async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
-    assert_eq!(ic_cdk::caller(), read_state(|s| s.wtn_governance_id));
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
 
     let neuron_6m = match read_state(|s| s.neuron_id_6m) {
         Some(neuron_6m_id) => neuron_6m_id,
@@ -234,7 +239,10 @@ async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
 
 #[update(hidden = true)]
 async fn approve_proposal_validate(id: u64) -> Result<String, String> {
-    assert_eq!(ic_cdk::caller(), read_state(|s| s.wtn_governance_id));
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
 
     Ok(format!("{id}"))
 }
@@ -252,7 +260,7 @@ async fn claim_airdrop() -> Result<u64, ConversionError> {
         ic_cdk::trap("21M ICP must be staked to unlock the airdrop");
     }
 
-    let caller = ic_cdk::caller();
+    let caller = ic_cdk::api::msg_caller();
     let _guard_principal = GuardPrincipal::new(caller)
         .map_err(|guard_error| ConversionError::GuardError { guard_error })?;
 
@@ -325,7 +333,7 @@ fn get_info() -> CanisterInfo {
 
 #[query]
 fn get_withdrawal_requests(maybe_account: Option<Account>) -> Vec<WithdrawalDetails> {
-    let account = maybe_account.unwrap_or(ic_cdk::caller().into());
+    let account = maybe_account.unwrap_or(ic_cdk::api::msg_caller().into());
     read_state(|s| {
         s.account_to_withdrawals
             .get(&account)
@@ -414,12 +422,12 @@ fn http_request(req: HttpRequest) -> HttpResponse {
             read_state(|s| {
                 w.encode_gauge(
                     "cycle_balance",
-                    ic_cdk::api::canister_balance128() as f64,
+                    ic_cdk::api::canister_cycle_balance() as f64,
                     "Cycle balance.",
                 )?;
                 w.encode_gauge(
                     "stable_memory_bytes",
-                    ic_cdk::api::stable::stable_size() as f64 * WASM_PAGE_SIZE_IN_BYTES,
+                    ic_cdk::stable::stable_size() as f64 * WASM_PAGE_SIZE_IN_BYTES,
                     "Size of the stable memory allocated by this canister.",
                 )?;
                 w.encode_gauge(
@@ -527,7 +535,7 @@ fn http_request(req: HttpRequest) -> HttpResponse {
                 return HttpResponseBuilder::ok()
                     .header("Content-Type", "text/plain; version=0.0.4")
                     .with_body_and_content_length(writer.into_inner())
-                    .build()
+                    .build();
             }
             Err(err) => {
                 return HttpResponseBuilder::server_error(format!(

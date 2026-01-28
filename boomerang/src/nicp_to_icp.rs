@@ -1,7 +1,7 @@
 use crate::log::INFO;
 use crate::{
-    get_canister_ids, self_canister_id, BoomerangError, ConversionArg, ConversionError,
-    WithdrawalSuccess, E8S, TRANSFER_FEE,
+    BoomerangError, ConversionArg, ConversionError, E8S, TRANSFER_FEE, WithdrawalSuccess,
+    get_canister_ids, self_canister_id,
 };
 use candid::{Nat, Principal};
 use ic_canister_log::log;
@@ -82,15 +82,15 @@ pub async fn notify_nicp_deposit(target: Principal) -> Result<WithdrawalSuccess,
         maybe_subaccount: boomerang_account.subaccount,
     };
 
-    let conversion_result: (Result<WithdrawalSuccess, ConversionError>,) = ic_cdk::call(
-        canister_ids.water_neuron_id,
-        "nicp_to_icp",
-        (conversion_arg,),
-    )
-    .await
-    .unwrap();
+    let conversion_result: Result<WithdrawalSuccess, ConversionError> =
+        ic_cdk::call::Call::unbounded_wait(canister_ids.water_neuron_id, "nicp_to_icp")
+            .with_arg(conversion_arg)
+            .await
+            .unwrap()
+            .candid()
+            .unwrap();
 
-    match conversion_result.0 {
+    match conversion_result {
         Ok(success) => {
             log!(
                 INFO,
