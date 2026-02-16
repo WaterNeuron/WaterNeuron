@@ -2,7 +2,7 @@
 	import { isLogging, inMobileMenu, user, ledgerDevice } from '$lib/stores';
 	import { displayNumber } from '$lib';
 	import { internetIdentityLogout } from '$lib/authentification';
-	import { ThemeToggle } from '@dfinity/gix-components';
+
 	import PowerOffIcon from '$lib/icons/PowerOffIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -17,26 +17,21 @@
 
 <nav class:filter={$isLogging}>
 	<a href="/" class="menu-selection-container" title="home-btn">
-		<img src="/tokens/WTN.webp" width="50em" height="50em" alt="WTN logo" />
-		<div class="wave-title">
-			<h1>WaterNeuron</h1>
-		</div>
+		<img src="/tokens/WTN.webp" alt="WTN logo" />
+		<h1>WaterNeuron</h1>
 	</a>
 
 	<div class="right-container">
-		<div class="theme-toggle">
-			<ThemeToggle />
-		</div>
 		{#if !($page.url.pathname === '/launchpad/')}
 			{#if !$user}
 				<button
 					title="connect-btn"
-					class="smart"
+					class="login-btn"
 					on:click={() => {
 						isLogging.set(true);
 					}}
 				>
-					Connect
+					Login
 				</button>
 			{:else}
 				<a href="/wallet" class="wallet-btn" id="wallet-info">
@@ -82,10 +77,6 @@
 </nav>
 
 <style>
-	.theme-toggle {
-		color: var(--title-color);
-	}
-
 	/* === Base Styles === */
 	nav {
 		display: flex;
@@ -156,22 +147,22 @@
 
 	/* ===Layout=== */
 	.menu-selection-container {
-		gap: 1em;
+		gap: 0.5em;
 	}
 
 	.menu-selection-container:hover {
 		cursor: pointer;
 	}
 
-	.menu-selection-container h1 {
-		font-size: 1.5em;
-		cursor: pointer;
-		font-family: var(--main-font);
-		position: absolute;
+	.menu-selection-container img {
+		width: 36px;
+		height: 36px;
 	}
 
-	.wave-title {
-		position: relative;
+	.menu-selection-container h1 {
+		font-size: 1.2em;
+		cursor: pointer;
+		font-family: var(--main-font);
 	}
 
 	.right-container {
@@ -182,19 +173,20 @@
 	}
 
 	/* === Components === */
-	.smart {
+	.login-btn {
 		display: flex;
 		align-items: center;
 		height: fit-content;
-		font-size: 16px;
-		color: var(--stake-text-color);
-		padding: 0.5em;
+		font-size: 14px;
+		color: var(--main-button-text-color);
+		background-color: var(--main-color);
+		padding: 0.5em 1.25em;
 		margin: 0;
+		border-radius: 8px;
 	}
 
-	.smart:hover {
-		background-color: var(--main-color);
-		color: var(--main-button-text-color);
+	.login-btn:hover {
+		background-color: var(--main-color-hover);
 		cursor: pointer;
 	}
 
@@ -250,17 +242,17 @@
 			display: none;
 		}
 
+		.menu-selection-container img {
+			width: 32px;
+			height: 32px;
+		}
+
 		#disconnect-btn {
 			display: none;
 		}
 
 		#menu-btn {
 			display: flex;
-		}
-
-		img {
-			height: 50px;
-			width: 50px;
 		}
 
 		.right-container {

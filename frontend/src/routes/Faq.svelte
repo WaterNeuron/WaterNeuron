@@ -45,7 +45,20 @@
 
 {#key $language}
 	<div class="faq" in:fade={{ duration: 200 }}>
-		<h1>FAQ</h1>
+		<div class="faq-header">
+			<h1>FAQ</h1>
+			<div class="lang-selection">
+				{#each ['en', 'es', 'ru', 'cn', 'ja'] as lang}
+					<button
+						on:click={() => language.set(lang)}
+						class="lang-btn"
+						class:language-active={$language === lang}
+					>
+						{lang.toUpperCase()}
+					</button>
+				{/each}
+			</div>
+		</div>
 		{#each getContent($language) as section, i}
 			<button
 				class="faq-container"
@@ -64,43 +77,6 @@
 		{/each}
 	</div>
 {/key}
-<div class="lang-selection">
-	<button
-		on:click={() => language.set('en')}
-		class="lang-btn"
-		class:language-active={$language === 'en'}
-	>
-		en
-	</button>
-	<button
-		on:click={() => language.set('es')}
-		class="lang-btn"
-		class:language-active={$language === 'es'}
-	>
-		es
-	</button>
-	<button
-		on:click={() => language.set('ru')}
-		class="lang-btn"
-		class:language-active={$language === 'ru'}
-	>
-		ru
-	</button>
-	<button
-		on:click={() => language.set('cn')}
-		class="lang-btn"
-		class:language-active={$language === 'cn'}
-	>
-		cn
-	</button>
-	<button
-		on:click={() => language.set('ja')}
-		class="lang-btn"
-		class:language-active={$language === 'ja'}
-	>
-		ja
-	</button>
-</div>
 
 <style>
 	/* === Base Styles ===*/
@@ -111,7 +87,7 @@
 		width: 30em;
 		max-width: 95vw;
 		overflow-y: auto;
-		gap: 1em;
+		gap: 0.5em;
 	}
 
 	.faq-container {
@@ -128,15 +104,31 @@
 	.faq-container p {
 		width: 90%;
 		align-self: center;
+		margin: 0 0 1em;
 	}
 
 	.faq-container-title {
 		display: flex;
-		width: 90%;
-		align-self: center;
+		width: 100%;
+		padding: 0 5%;
+		box-sizing: border-box;
 		flex-direction: row;
 		justify-content: space-between;
 		align-items: center;
+	}
+
+	.faq-container-title :global(svg) {
+		flex-shrink: 0;
+		width: 16px;
+		height: 16px;
+	}
+
+	.faq-header {
+		display: flex;
+		width: 100%;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.25em;
 	}
 
 	h1 {
@@ -146,11 +138,40 @@
 		font-family: var(--main-font);
 	}
 
+	.lang-selection {
+		display: flex;
+		gap: 0.1em;
+	}
+
+	.lang-btn {
+		background: none;
+		border: none;
+		color: var(--text-color);
+		cursor: pointer;
+		font-family: CircularXX, sans-serif;
+		font-size: 0.8em;
+		padding: 0.2em 0.4em;
+		border-radius: 4px;
+		opacity: 0.5;
+		transition: opacity 0.15s;
+	}
+
+	.lang-btn:hover {
+		opacity: 1;
+	}
+
+	.language-active {
+		opacity: 1;
+		font-weight: 600;
+	}
+
 	h2 {
 		color: var(--faq-color);
 		font-weight: 500;
-		font-size: 1.2em;
+		font-size: 1em;
 		text-align: start;
+		margin: 0.85em 0;
+		padding-right: 1em;
 	}
 
 	p {
@@ -160,21 +181,5 @@
 		-webkit-font-smoothing: antialiased;
 		line-height: 24px;
 		text-align: left;
-	}
-
-	.lang-btn {
-		background: none;
-		border: none;
-		color: var(--text-color);
-		cursor: pointer;
-	}
-	/* === Layout === */
-	.lang-selection {
-		display: flex;
-	}
-
-	/* === Utilities === */
-	.language-active {
-		text-decoration: underline;
 	}
 </style>

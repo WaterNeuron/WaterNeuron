@@ -15,16 +15,18 @@
 		on:input={handleInputAmount}
 		title="swap-input"
 	/>
-	<button
-		class="max-btn"
-		on:click={() => {
-			const fee = 2 * bigintE8sToNumber(assetToTransferFee(asset));
-			const maxAmount = ($user?.getBalance(asset) ?? 0) - fee;
-			inputAmount.change(Math.max(maxAmount, 0));
-		}}
-	>
-		MAX
-	</button>
+	{#if $user}
+		<button
+			class="max-btn"
+			on:click={() => {
+				const fee = 2 * bigintE8sToNumber(assetToTransferFee(asset));
+				const maxAmount = ($user?.getBalance(asset) ?? 0) - fee;
+				inputAmount.change(Math.max(maxAmount, 0));
+			}}
+		>
+			MAX
+		</button>
+	{/if}
 	<div class="max-btn-items">
 		<h2>{asset}</h2>
 	</div>

@@ -82,6 +82,9 @@
 		signer.set(undefined);
 		isBusy.set(false);
 	}}
+	on:click={(e) => {
+		if (e.target === dialog) dialog.close();
+	}}
 >
 	<div class="wallets-container">
 		{#if $availableAccounts.length > 0}
@@ -118,26 +121,25 @@
 				</button>
 			</div>
 			<div class="selection-container">
-				<button class="login-btn" on:click={() => handleConnection('internetIdentity')}>
-					<img src="/icon/astronaut.webp" width="auto" height="40px" alt="Dfinity Astronaut." />
-					<h2>Internet Identity</h2>
+				<button class="wallet-btn" on:click={() => handleConnection('internetIdentity')}>
+					<img src="/icon/astronaut.webp" width="auto" height="28px" alt="Dfinity Astronaut." />
+					<span>Internet Identity</span>
 				</button>
-				<button class="login-btn" on:click={() => handleConnection('nfid')}>
-					<h2>Google via NFID</h2>
-					<img src="/icon/nfid.webp" width="auto" height="30em" alt="NFID Logo." />
+				<button class="wallet-btn" on:click={() => handleConnection('nfid')}>
+					<img src="/icon/nfid.webp" width="auto" height="22px" alt="NFID Logo." />
+					<span>Google via NFID</span>
 				</button>
-				<button class="login-btn" on:click={() => handleConnection('plug')}>
-					<img src="/icon/plug.png" width="auto" height="40px" alt="Plug Icon." />
-					<h2>Plug Wallet</h2>
+				<button class="wallet-btn" on:click={() => handleConnection('plug')}>
+					<img src="/icon/plug.png" width="auto" height="28px" alt="Plug Icon." />
+					<span>Plug Wallet</span>
 				</button>
-				<button class="login-btn" on:click={() => handleConnection('oisy')}>
-					<img src="/icon/oisy.webp" width="auto" height="40px" alt="Oisy Icon." />
-					<h2>Oisy Wallet</h2>
+				<button class="wallet-btn" on:click={() => handleConnection('oisy')}>
+					<img src="/icon/oisy.webp" width="auto" height="28px" alt="Oisy Icon." />
+					<span>Oisy Wallet</span>
 				</button>
 				{#if DEV || STAGING}
 					<button
-						class="login-btn"
-						style:background-color="red"
+						class="wallet-btn dev-btn"
 						on:click={async () => {
 							if ($isBusy) return;
 							try {
@@ -152,13 +154,12 @@
 							}
 						}}
 					>
-						<h2>Local Development</h2>
+						<span>Local Development</span>
 					</button>
 				{/if}
 				{#if DEV}
 					<button
-						class="login-btn"
-						style:background-color="red"
+						class="wallet-btn dev-btn"
 						on:click={async () => {
 							if ($isBusy) return;
 							try {
@@ -174,7 +175,7 @@
 						}}
 						title="ii-connect-btn"
 					>
-						<h2>Test Development</h2>
+						<span>Test Development</span>
 					</button>
 				{/if}
 			</div>
@@ -190,20 +191,13 @@
 	h1 {
 		font-family: var(--main-font);
 		font-weight: 500;
-		font-size: 20px;
+		font-size: 16px;
 		color: var(--title-color);
 	}
 
 	p {
 		font-family: var(--secondary-font);
-		color: var(--main-button-text-color);
-	}
-
-	h2 {
-		color: var(--main-button-text-color);
-		font-family: var(--secondary-font);
-		font-size: 1.2em;
-		font-weight: 500;
+		color: var(--title-color);
 	}
 
 	::backdrop {
@@ -218,6 +212,7 @@
 		gap: 1em;
 		border: none;
 		background: none;
+		margin: auto;
 	}
 
 	/* === Layout === */
@@ -225,11 +220,11 @@
 		display: flex;
 		flex-direction: column;
 		height: fit-content;
-		max-width: 20em;
+		max-width: 22em;
 		width: 80vw;
-		gap: 1em;
+		gap: 1.25em;
 		background: var(--background-color);
-		padding: 1em;
+		padding: 1.5em;
 		border: var(--main-container-border);
 		border-radius: 15px;
 	}
@@ -239,42 +234,65 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		padding: 0 0.25em;
 	}
 
 	.selection-container {
 		display: flex;
 		flex-direction: column;
-		gap: 1em;
+		gap: 0.6em;
 	}
 
 	/* === Components === */
-	.login-btn {
-		gap: 0.3em;
-		border-radius: 8px;
+	.wallet-btn {
+		border-radius: 10px;
 		border: var(--main-container-border);
-		width: auto;
-		height: 5em;
+		width: 100%;
 		align-items: center;
 		cursor: pointer;
 		display: flex;
+		gap: 0.75em;
+		background: var(--background-color);
+		padding: 0.85em 1em;
+		transition: background 0.15s;
+	}
+
+	.wallet-btn:hover {
 		background: var(--main-color);
-		position: relative;
-		padding: 0 20px;
+		transition: background 0.15s;
 	}
 
-	.login-btn:hover {
-		background: var(--main-color-hover);
-		transition: all 0.2s;
+	.wallet-btn span {
+		font-family: var(--secondary-font);
+		font-size: 0.95em;
+		font-weight: 500;
+		color: var(--title-color);
 	}
 
-	.login-btn img {
-		position: absolute;
-		right: 20px;
+	.wallet-btn:hover span {
+		color: var(--main-button-text-color);
+	}
+
+	.wallet-btn img {
+		width: 28px;
+		height: 28px;
+		object-fit: contain;
+	}
+
+	.dev-btn {
+		border-color: #e04040;
+		opacity: 0.7;
+	}
+
+	.dev-btn:hover {
+		background: #e04040;
 	}
 
 	.close-btn {
 		border: none;
 		background: none;
 		cursor: pointer;
+		width: 20px;
+		height: 20px;
 	}
 </style>

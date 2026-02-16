@@ -220,20 +220,18 @@
 			<ErrorIcon /> You don't have enough funds to complete the transaction.
 		</span>
 	{/if}
-	<p style:padding-right="0.4em">
-		<button class="change-btn" on:click={() => (invertExchangeRate = !invertExchangeRate)}>
-			<ChangeIcon />
-		</button>
-		{#if exchangeRate !== undefined}
+	{#if exchangeRate !== undefined}
+		<p style:padding-right="0.4em">
+			<button class="change-btn" on:click={() => (invertExchangeRate = !invertExchangeRate)}>
+				<ChangeIcon />
+			</button>
 			{#if !invertExchangeRate}
 				1 nICP = {displayNumber(1 / exchangeRate, 8)} ICP
 			{:else}
 				1 ICP = {displayNumber(exchangeRate, 8)} nICP
 			{/if}
-		{:else}
-			-/-
-		{/if}
-	</p>
+		</p>
+	{/if}
 	<div class="unstake-selection-container">
 		<button
 			class="unstake-container"
@@ -260,7 +258,7 @@
 				{#if fastUnstakeAmount >= 0.0002}
 					Receive {displayNumber(fastUnstakeAmount - 0.0002, 8)} ICP
 				{:else}
-					Receive -/- ICP
+					Receive &mdash; ICP
 				{/if}
 			</p>
 			<button
@@ -309,7 +307,7 @@
 						8
 					)} ICP
 				{:else}
-					-/-
+					Receive &mdash; ICP
 				{/if}
 			</p>
 			<h2 class="waiting-time">Waiting time: 6 months</h2>
@@ -349,7 +347,7 @@
 
 	h2 {
 		font-family: var(--secondary-font);
-		font-size: 16px;
+		font-size: 14px;
 		margin: 0;
 		color: var(--title-color);
 		display: flex;
@@ -375,7 +373,7 @@
 	.unstake-selection-container {
 		display: flex;
 		border-radius: 8px;
-		padding: 1em;
+		gap: 0.5em;
 	}
 
 	.unstake-container {
@@ -385,13 +383,15 @@
 		background: transparent;
 		color: white;
 		border: none;
-		border-radius: 6px;
-		padding: 1em;
-		gap: 1em;
+		border-radius: 8px;
+		padding: 0.75em;
+		gap: 0.5em;
+		transition: background 0.15s;
 	}
 
 	.unstake-container > p {
 		align-self: start;
+		font-size: 0.8em;
 	}
 	/* === Components === */
 	.change-btn {
@@ -433,13 +433,18 @@
 	.error {
 		display: flex;
 		align-items: center;
-		color: var(--text-color);
-		gap: 0.2em;
-		margin-left: 1em;
-		font-size: 16px;
+		color: #c45050;
+		gap: 0.4em;
+		font-size: 0.8em;
 		font-family: var(--secondary-font);
 		flex-wrap: wrap;
-		font-size: 14px;
+		justify-content: flex-end;
+	}
+
+	.error :global(svg) {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
 	}
 
 	.help-btn {
@@ -478,9 +483,10 @@
 	}
 
 	.waiting-time {
-		font-size: 13px;
+		font-size: 0.75em;
 		text-align: start;
 		font-weight: lighter;
+		color: var(--text-color);
 	}
 
 	/* === Utilities === */
@@ -492,6 +498,12 @@
 	.not-selected {
 		border: 1px solid transparent;
 		cursor: pointer;
+		opacity: 0.6;
+	}
+
+	.not-selected:hover {
+		opacity: 0.8;
+		background: var(--switch-background-color);
 	}
 
 	/* === Animation === */
