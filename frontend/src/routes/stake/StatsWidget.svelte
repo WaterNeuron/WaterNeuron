@@ -3,6 +3,7 @@
 	import { displayNumber } from '$lib';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
+	import Skeleton from '$lib/components/Skeleton.svelte';
 
 	let totalStaked: number;
 	let apy: number;
@@ -44,7 +45,7 @@
 			{#if totalStaked}
 				{displayNumber(totalStaked, 0)} ICP
 			{:else}
-				-/-
+				<Skeleton width="5em" />
 			{/if}
 		</p>
 	</div>
@@ -54,7 +55,7 @@
 			{#if apy}
 				{displayNumber(100 * apy, 1)}%
 			{:else}
-				-/-
+				<Skeleton width="3em" />
 			{/if}
 		</p>
 	</div>
@@ -64,7 +65,7 @@
 			{#if stakersCount || stakersCount === 0}
 				{stakersCount}
 			{:else}
-				-/-
+				<Skeleton width="3em" />
 			{/if}
 		</p>
 	</div>
@@ -72,35 +73,37 @@
 
 <style>
 	b {
-		font-weight: 800;
-		letter-spacing: -0.05em;
+		font-weight: 600;
+		font-size: 0.8em;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		opacity: 0.6;
 	}
 
 	p {
 		margin: 0;
+		font-size: 1em;
+		font-weight: 600;
 	}
 
 	/* === Layout === */
 	.stat-widget-container {
-		background: var(--background-color);
+		background: none;
 		color: var(--stake-text-color);
-		border: var(--main-container-border);
-		padding: 1em;
-		padding-left: 2em;
-		padding-right: 2em;
-		border-radius: 15px;
+		border: none;
+		padding: 0.5em 1em;
 		display: flex;
 		flex-direction: row;
-		gap: 1em;
+		gap: 2em;
+		justify-content: center;
 	}
 
 	/* === Components === */
-
 	.stat-item {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 8px;
+		gap: 4px;
 		font-family: var(--secondary-font);
 	}
 </style>

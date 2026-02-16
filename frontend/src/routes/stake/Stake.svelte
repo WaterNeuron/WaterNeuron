@@ -123,21 +123,17 @@
 				<ErrorIcon /> You don't have enough funds to complete the transaction.
 			</span>
 		{/if}
-		<p style:color="var(--important-text-color)">
-			{#if exchangeRate}
+		{#if exchangeRate}
+			<p style:color="var(--important-text-color)">
 				You will receive {displayNumber(
 					computeReceiveAmount(true, parseFloat($inputAmount), exchangeRate),
 					8
 				)} nICP
-			{:else}
-				-/-
-			{/if}
-		</p>
-		<p style:display="flex">
-			<button class="change-btn" on:click={() => (invertExchangeRate = !invertExchangeRate)}>
-				<ChangeIcon />
-			</button>
-			{#if exchangeRate}
+			</p>
+			<p style:display="flex">
+				<button class="change-btn" on:click={() => (invertExchangeRate = !invertExchangeRate)}>
+					<ChangeIcon />
+				</button>
 				{invertExchangeRate
 					? `1 nICP = ${displayNumber(1 / exchangeRate, 8)} ICP`
 					: `1 ICP = ${displayNumber(exchangeRate, 8)} nICP`}
@@ -161,20 +157,16 @@
 				<button class="full-screen" on:click={() => inChart.set(true)}>
 					<FullScreenIcon />
 				</button>
-			{:else}
-				-/-
-			{/if}
-		</p>
+			</p>
+		{/if}
 
 		<a class="reward" href="https://docs.waterneuron.fi/wtn/airdrop" target="_blank">
 			<div class="reward">
 				<p style:margin-right={'2.5em'}>
-					Future WTN Airdrop:
-					{#if totalIcpDeposited && !isNaN(parseFloat($inputAmount))}
-						{displayNumber(computeRewards(totalIcpDeposited, parseFloat($inputAmount)), 4)}
-					{:else}
-						-/-
-					{/if}
+					Future WTN Airdrop: {#if totalIcpDeposited && !isNaN(parseFloat($inputAmount))}{displayNumber(
+							computeRewards(totalIcpDeposited, parseFloat($inputAmount)),
+							4
+						)}{:else}&mdash;{/if}
 				</p>
 				<img src="/tokens/WTN.webp" width="30em" height="30em" alt="WTN logo" class="wtn-logo" />
 			</div>
@@ -241,13 +233,18 @@
 	.error {
 		display: flex;
 		align-items: center;
-		color: var(--text-color);
-		gap: 0.2em;
-		margin-left: 1em;
-		font-size: 16px;
+		color: #c45050;
+		gap: 0.4em;
+		font-size: 0.8em;
 		font-family: var(--secondary-font);
 		flex-wrap: wrap;
-		font-size: 14px;
+		justify-content: flex-end;
+	}
+
+	.error :global(svg) {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
 	}
 
 	/* === Components === */

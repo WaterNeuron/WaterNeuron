@@ -1,5 +1,5 @@
 export const DEV = import.meta.env ? import.meta.env.DEV : true;
-export const STAGING = process.env.CANISTER_ID === '47pxu-byaaa-aaaap-ahpsa-cai';
+export const STAGING = import.meta.env.CANISTER_ID === '47pxu-byaaa-aaaap-ahpsa-cai';
 
 export const HOST = DEV ? 'http://127.0.1:8080' : 'https://ic0.app';
 export const DAPP_DERIVATION_ORIGIN = 'https://n3i53-gyaaa-aaaam-acfaq-cai.icp0.io';
