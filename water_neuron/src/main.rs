@@ -97,7 +97,6 @@ pub fn post_upgrade(args: LiquidArg) {
 
 fn setup_timer() {
     schedule_now(TaskType::MaybeInitializeMainNeurons);
-    schedule_now(TaskType::ProcessLogic);
     schedule_now(TaskType::SpawnNeurons);
     schedule_now(TaskType::ProcessVoting);
     schedule_now(TaskType::ProcessEarlyVoting);
@@ -204,6 +203,19 @@ async fn schedule_task(task: TaskType) {
     );
 
     schedule_now(task);
+}
+
+#[update(hidden = true)]
+async fn process_logic() {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+
+    water_neuron::refresh_stakes().await;
+    water_neuron::process_witdhrawals_splitting().await;
+    water_neuron::process_start_dissolving().await;
+    water_neuron::process_disburse().await;
 }
 
 #[update(hidden = true)]

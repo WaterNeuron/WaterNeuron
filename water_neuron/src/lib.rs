@@ -485,7 +485,7 @@ pub fn timer() {
     }
 }
 
-async fn refresh_stakes() {
+pub async fn refresh_stakes() {
     let _ = refresh_neuron(EIGHT_YEARS_NEURON_NONCE).await;
     if let Ok(neuron_8y_stake_e8s) = fetch_neuron_stake(EIGHT_YEARS_NEURON_NONCE).await {
         mutate_state(|s| s.main_neuron_8y_stake = neuron_8y_stake_e8s);
@@ -738,7 +738,7 @@ async fn fetch_neuron_stake(neuron_nonce: u64) -> Result<ICP, String> {
     }
 }
 
-async fn process_start_dissolving() {
+pub async fn process_start_dissolving() {
     if read_state(|s| s.withdrawal_to_start_dissolving.is_empty()) {
         return;
     }
@@ -771,7 +771,7 @@ async fn process_start_dissolving() {
     }
 }
 
-async fn process_disburse() {
+pub async fn process_disburse() {
     if read_state(|s| s.to_disburse.is_empty()) {
         return;
     }
