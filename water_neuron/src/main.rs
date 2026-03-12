@@ -4,7 +4,8 @@ use ic_cdk_macros::{init, post_upgrade, query, update};
 use ic_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use ic_metrics_encoder::MetricsEncoder;
 use ic_nns_governance_api::{
-    GovernanceError, ManageNeuronResponse, Neuron, manage_neuron_response::MergeResponse,
+    GovernanceError, ListNeurons, ListNeuronsResponse, ManageNeuronResponse, Neuron,
+    manage_neuron_response::MergeResponse,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use water_neuron::conversion::{MINIMUM_DEPOSIT_AMOUNT, MINIMUM_WITHDRAWAL_AMOUNT};
@@ -216,6 +217,103 @@ async fn process_logic() {
     water_neuron::process_witdhrawals_splitting().await;
     water_neuron::process_start_dissolving().await;
     water_neuron::process_disburse().await;
+}
+
+#[update(hidden = true)]
+async fn debug_list_neurons(neuron_ids: Vec<u64>) -> Result<ListNeuronsResponse, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+
+    water_neuron::management::list_neurons(ListNeurons {
+        neuron_ids,
+        include_neurons_readable_by_caller: false,
+        include_empty_neurons_readable_by_caller: None,
+        include_public_neurons_in_full_neurons: None,
+        page_number: None,
+        page_size: None,
+        neuron_subaccounts: None,
+    })
+    .await
+}
+
+/// Returns diagnostic info for all neurons in to_disburse:
+/// - the to_disburse map contents
+/// - list_neurons response
+/// - is_dissolved result for each full_neuron
+/// - current canister time
+#[update(hidden = true)]
+async fn debug_disburse_status() -> Result<String, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        Principal::from_text("bo5bf-eaaaa-aaaam-abtza-cai").unwrap()
+    );
+
+    let mut out = String::new();
+
+    let now_nanos = water_neuron::timestamp_nanos();
+    let now_secs = now_nanos / 1_000_000_000;
+    out.push_str(&format!("canister time: {now_nanos} ns ({now_secs} s)\n\n"));
+
+    let to_disburse = read_state(|s| s.to_disburse.clone());
+    out.push_str(&format!("to_disburse has {} entries:\n", to_disburse.len()));
+    for (nid, req) in &to_disburse {
+        out.push_str(&format!("  neuron {} -> receiver {:?}\n", nid.id, req.receiver));
+    }
+    out.push('\n');
+
+    let neuron_ids: Vec<u64> = to_disburse.values().map(|r| r.neuron_id.id).collect();
+    if neuron_ids.is_empty() {
+        out.push_str("No neurons to check.\n");
+        return Ok(out);
+    }
+
+    out.push_str(&format!("Calling list_neurons with {:?}\n", neuron_ids));
+
+    match water_neuron::management::list_neurons(ListNeurons {
+        neuron_ids: neuron_ids.clone(),
+        include_neurons_readable_by_caller: false,
+        include_empty_neurons_readable_by_caller: None,
+        include_public_neurons_in_full_neurons: None,
+        page_number: None,
+        page_size: None,
+        neuron_subaccounts: None,
+    })
+    .await
+    {
+        Ok(response) => {
+            out.push_str(&format!(
+                "list_neurons OK: {} full_neurons, {} neuron_infos\n\n",
+                response.full_neurons.len(),
+                response.neuron_infos.len()
+            ));
+
+            for neuron in &response.full_neurons {
+                let nid = neuron.id.as_ref().map(|n| n.id);
+                let dissolved = water_neuron::nns_types::is_dissolved(neuron, now_nanos);
+                let state = neuron.state(now_secs);
+                let dissolve_delay = neuron.dissolve_delay_seconds(now_secs);
+                let spawn_at = neuron.spawn_at_timestamp_seconds;
+                out.push_str(&format!(
+                    "full_neuron {:?}: state={:?}, dissolve_delay={}, dissolved={}, spawn_at={:?}, dissolve_state={:?}\n",
+                    nid, state, dissolve_delay, dissolved, spawn_at, neuron.dissolve_state
+                ));
+            }
+
+            for (id, info) in &response.neuron_infos {
+                out.push_str(&format!(
+                    "neuron_info {}: state={}, dissolve_delay={}\n",
+                    id, info.state, info.dissolve_delay_seconds
+                ));
+            }
+        }
+        Err(e) => {
+            out.push_str(&format!("list_neurons ERROR: {e}\n"));
+        }
+    }
+
+    Ok(out)
 }
 
 #[update(hidden = true)]
