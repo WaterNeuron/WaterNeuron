@@ -783,6 +783,13 @@ pub async fn process_disburse() {
             .collect::<Vec<u64>>()
     });
 
+    log!(
+        INFO,
+        "[process_disburse] Processing {} neurons in to_disburse: {:?}",
+        neuron_ids.len(),
+        neuron_ids
+    );
+
     // Helper function to chunk the neuron_ids
     fn chunk_ids(ids: Vec<u64>, chunk_size: usize) -> Vec<Vec<u64>> {
         ids.chunks(chunk_size).map(|chunk| chunk.to_vec()).collect()
@@ -791,6 +798,7 @@ pub async fn process_disburse() {
     let chunks = chunk_ids(neuron_ids, 100);
 
     for chunk in chunks {
+        let chunk_ids_debug = chunk.clone();
         match list_neurons(ListNeurons {
             neuron_ids: chunk,
             include_neurons_readable_by_caller: false,
@@ -803,8 +811,23 @@ pub async fn process_disburse() {
         .await
         {
             Ok(response) => {
+                log!(
+                    INFO,
+                    "[process_disburse] list_neurons returned {} full_neurons and {} neuron_infos for chunk {:?}",
+                    response.full_neurons.len(),
+                    response.neuron_infos.len(),
+                    chunk_ids_debug
+                );
                 for neuron in response.full_neurons {
-                    if !is_dissolved(&neuron, timestamp_nanos()) {
+                    let neuron_id_debug = neuron.id.as_ref().map(|n| n.id);
+                    let dissolved = is_dissolved(&neuron, timestamp_nanos());
+                    log!(
+                        INFO,
+                        "[process_disburse] neuron {:?} dissolved: {}",
+                        neuron_id_debug,
+                        dissolved
+                    );
+                    if !dissolved {
                         continue;
                     }
                     if let Some(neuron_id) = neuron.id {
