@@ -2,8 +2,8 @@ use crate::management::{get_sns_proposal, list_proposals, manage_neuron_sns};
 use crate::nns_types::{ProposalId, convert_nns_proposal_to_sns_proposal};
 use crate::{
     DEBUG, EventType, INFO, ONE_HOUR_SECONDS, RETRY_DELAY_VOTING, SEC_NANOS, TaskType,
-    compute_neuron_staking_subaccount_bytes, mutate_state, process_event, read_state,
-    register_vote, schedule_after, self_canister_id, timestamp_nanos,
+    compute_neuron_staking_subaccount_bytes, is_canister_stopping, mutate_state, process_event,
+    read_state, register_vote, schedule_after, self_canister_id, timestamp_nanos,
 };
 use ic_canister_log::log;
 use ic_nns_governance_api::ListProposalInfoRequest;
@@ -47,6 +47,10 @@ pub async fn mirror_proposals() -> Result<(), String> {
             });
 
             for proposal_info in pending_proposals.proposal_info {
+                if is_canister_stopping() {
+                    log!(INFO, "[mirror_proposals] Canister is stopping, aborting.");
+                    return Ok(());
+                }
                 let proposal_id = match proposal_info.id {
                     Some(proposal_id) => proposal_id,
                     None => {
@@ -142,6 +146,10 @@ pub async fn vote_on_nns_proposals() {
                     .cmp(&b.deadline_timestamp_seconds.unwrap_or(u64::MAX))
             });
             for proposal in pending_proposals.proposal_info {
+                if is_canister_stopping() {
+                    log!(INFO, "[vote_on_nns_proposals] Canister is stopping, aborting.");
+                    return;
+                }
                 let deadline_timestamp_seconds = proposal.deadline_timestamp_seconds.unwrap_or(0);
                 let proposal_id = match proposal.id {
                     Some(proposal_id) => proposal_id,
@@ -241,6 +249,10 @@ pub async fn early_voting_on_nns_proposals() {
     });
 
     for proposal_id in not_voted {
+        if is_canister_stopping() {
+            log!(INFO, "[early_voting_on_nns_proposals] Canister is stopping, aborting.");
+            return;
+        }
         match get_sns_proposal(wtn_governance_id, proposal_id.id).await {
             Ok(proposal_response) => {
                 if let Some(ic_sns_governance_api::pb::v1::get_proposal_response::Result::Proposal(

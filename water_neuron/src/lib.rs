@@ -124,6 +124,18 @@ pub fn self_canister_id() -> Principal {
     Principal::anonymous()
 }
 
+/// Returns true if the canister is in the stopping state (e.g. during an upgrade).
+/// Async loops should check this to bail out early and allow the canister to stop.
+#[cfg(target_arch = "wasm32")]
+pub fn is_canister_stopping() -> bool {
+    ic_cdk::api::canister_status() == ic_cdk::api::CanisterStatusCode::Stopping
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn is_canister_stopping() -> bool {
+    false
+}
+
 #[derive(Deserialize, CandidType)]
 pub enum LiquidArg {
     Init(InitArg),
@@ -299,6 +311,9 @@ pub fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64
 }
 
 pub fn timer() {
+    if is_canister_stopping() {
+        return;
+    }
     if let Some(task) = tasks::pop_if_ready() {
         let task_type = task.task_type;
         match task.task_type {
@@ -402,9 +417,13 @@ pub fn timer() {
                         Err(_) => return,
                     };
 
+                    if is_canister_stopping() { return; }
                     refresh_stakes().await;
+                    if is_canister_stopping() { return; }
                     process_witdhrawals_splitting().await;
+                    if is_canister_stopping() { return; }
                     process_start_dissolving().await;
+                    if is_canister_stopping() { return; }
                     process_disburse().await;
 
                     schedule_after(LOGIC_DELAY, TaskType::ProcessLogic);
@@ -579,6 +598,10 @@ async fn process_pending_transfer() -> u64 {
     });
 
     for transfer in pending_transfers {
+        if is_canister_stopping() {
+            log!(INFO, "[process_pending_transfer] Canister is stopping, aborting.");
+            return error_count;
+        }
         let (ledger_id, fee) = (transfer.unit.ledger_id(), transfer.unit.fee());
         if transfer.amount <= fee || transfer.receiver == NNS_GOVERNANCE_ID.into() {
             log!(
@@ -746,6 +769,10 @@ pub async fn process_start_dissolving() {
     let dissolve_request_ids = read_state(|s| s.get_withdrawal_request_ids_to_dissolve());
 
     for neuron_id in &dissolve_request_ids {
+        if is_canister_stopping() {
+            log!(INFO, "[process_start_dissolving] Canister is stopping, aborting.");
+            return;
+        }
         let result = start_dissolving(*neuron_id).await;
         if result.is_ok() {
             mutate_state(|s| {
@@ -794,6 +821,10 @@ pub async fn process_disburse() {
     let mut chunk_size: usize = 50;
 
     while !remaining_ids.is_empty() {
+        if is_canister_stopping() {
+            log!(INFO, "[process_disburse] Canister is stopping, aborting.");
+            return;
+        }
         let chunk: Vec<u64> = remaining_ids.iter().copied().take(chunk_size).collect();
         match list_neurons(ListNeurons {
             neuron_ids: chunk.clone(),
@@ -1064,6 +1095,10 @@ pub async fn process_witdhrawals_splitting() {
     let requests_ids = read_state(|s| s.withdrawal_to_split.clone());
 
     for withdrawal_id in requests_ids {
+        if is_canister_stopping() {
+            log!(INFO, "[process_witdhrawals_splitting] Canister is stopping, aborting.");
+            return;
+        }
         let request = read_state(|s| {
             s.get_withdrawal_request(withdrawal_id)
                 .expect("bug: request not found")

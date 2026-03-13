@@ -4,8 +4,8 @@ use crate::{
     Account, CdkRuntime, DEBUG, DEFAULT_LEDGER_FEE, DisplayAmount, E8S, EventType, ICP_LEDGER_ID,
     ICRC1Client, INFO, MINIMUM_ICP_DISTRIBUTION, SEC_NANOS, SNS_DISTRIBUTION_MEMO,
     SNS_GOVERNANCE_SUBACCOUNT, TaskType, are_rewards_distributed,
-    get_rewards_ready_to_be_distributed, mutate_state, process_event, read_state, schedule_after,
-    self_canister_id, stable_sub_rewards, timestamp_nanos,
+    get_rewards_ready_to_be_distributed, is_canister_stopping, mutate_state, process_event,
+    read_state, schedule_after, self_canister_id, stable_sub_rewards, timestamp_nanos,
 };
 use async_trait::async_trait;
 use candid::{Nat, Principal};
@@ -234,6 +234,10 @@ async fn fetch_sns_neurons<R: CanisterRuntime>(
     let now_seconds = timestamp_nanos() / SEC_NANOS;
 
     loop {
+        if is_canister_stopping() {
+            log!(INFO, "[fetch_sns_neurons] Canister is stopping, aborting.");
+            return Err("Canister is stopping".to_string());
+        }
         match runtime.list_neurons(list_neurons_arg.clone()).await {
             Ok(response) => {
                 match response.neurons.last() {
