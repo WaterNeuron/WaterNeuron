@@ -790,17 +790,13 @@ pub async fn process_disburse() {
         neuron_ids
     );
 
-    // Helper function to chunk the neuron_ids
-    fn chunk_ids(ids: Vec<u64>, chunk_size: usize) -> Vec<Vec<u64>> {
-        ids.chunks(chunk_size).map(|chunk| chunk.to_vec()).collect()
-    }
+    let mut remaining_ids = neuron_ids;
+    let mut chunk_size: usize = 50;
 
-    let chunks = chunk_ids(neuron_ids, 100);
-
-    for chunk in chunks {
-        let chunk_ids_debug = chunk.clone();
+    while !remaining_ids.is_empty() {
+        let chunk: Vec<u64> = remaining_ids.iter().copied().take(chunk_size).collect();
         match list_neurons(ListNeurons {
-            neuron_ids: chunk,
+            neuron_ids: chunk.clone(),
             include_neurons_readable_by_caller: false,
             include_empty_neurons_readable_by_caller: None,
             include_public_neurons_in_full_neurons: None,
@@ -811,13 +807,25 @@ pub async fn process_disburse() {
         .await
         {
             Ok(response) => {
+                let returned_count = response.full_neurons.len();
                 log!(
                     INFO,
-                    "[process_disburse] list_neurons returned {} full_neurons and {} neuron_infos for chunk {:?}",
-                    response.full_neurons.len(),
-                    response.neuron_infos.len(),
-                    chunk_ids_debug
+                    "[process_disburse] list_neurons returned {} full_neurons for {} requested",
+                    returned_count,
+                    chunk.len(),
                 );
+
+                // Adapt chunk_size if the API returned fewer than requested.
+                if returned_count < chunk.len() && returned_count > 0 {
+                    chunk_size = returned_count;
+                }
+
+                let returned_ids: std::collections::BTreeSet<u64> = response
+                    .full_neurons
+                    .iter()
+                    .filter_map(|n| n.id.as_ref().map(|id| id.id))
+                    .collect();
+                remaining_ids.retain(|id| !returned_ids.contains(id));
                 for neuron in response.full_neurons {
                     let neuron_id_debug = neuron.id.as_ref().map(|n| n.id);
                     let dissolved = is_dissolved(&neuron, timestamp_nanos());
