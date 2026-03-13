@@ -23,29 +23,6 @@ pub fn time_left_seconds(neuron: &PbNeuron, now_secs: u64) -> Option<u64> {
     }
 }
 
-pub fn state(neuron: &PbNeuron, now_seconds: u64) -> PbNeuronState {
-    if neuron.spawn_at_timestamp_seconds.is_some() {
-        return PbNeuronState::Spawning;
-    }
-    match neuron.dissolve_state {
-        Some(DissolveState::DissolveDelaySeconds(d)) => {
-            if d > 0 {
-                PbNeuronState::NotDissolving
-            } else {
-                PbNeuronState::Dissolved
-            }
-        }
-        Some(DissolveState::WhenDissolvedTimestampSeconds(ts)) => {
-            if ts > now_seconds {
-                PbNeuronState::Dissolving
-            } else {
-                PbNeuronState::Dissolved
-            }
-        }
-        None => PbNeuronState::Dissolved,
-    }
-}
-
 pub fn is_dissolved(neuron: &PbNeuron, current_ts: u64) -> bool {
     let now_seconds = current_ts / crate::SEC_NANOS;
     if neuron.state(now_seconds) == PbNeuronState::Dissolved {
