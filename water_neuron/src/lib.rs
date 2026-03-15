@@ -2,7 +2,7 @@ use crate::dashboard::DisplayAmount;
 use crate::guards::{GuardError, TaskGuard};
 use crate::logs::{DEBUG, INFO};
 use crate::management::{
-    balance_of, disburse, follow_neuron, get_full_neuron, get_full_neuron_by_nonce,
+    balance_of, disburse, follow_neuron, get_full_neuron,
     increase_dissolve_delay, list_neurons, manage_neuron_sns, refresh_neuron, register_vote,
     spawn_all_maturity, split_neuron, start_dissolving, transfer,
 };
@@ -448,10 +448,12 @@ pub fn timer() {
                     };
 
                     let _ = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await;
-                    if let Ok(main_neuron_6m_staked) =
-                        fetch_neuron_stake(SIX_MONTHS_NEURON_NONCE).await
-                    {
-                        mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
+                    if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m) {
+                        if let Ok(main_neuron_6m_staked) =
+                            fetch_neuron_stake(neuron_id_6m.id).await
+                        {
+                            mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
+                        }
                     }
                 });
             }
@@ -506,12 +508,16 @@ pub fn timer() {
 
 pub async fn refresh_stakes() {
     let _ = refresh_neuron(EIGHT_YEARS_NEURON_NONCE).await;
-    if let Ok(neuron_8y_stake_e8s) = fetch_neuron_stake(EIGHT_YEARS_NEURON_NONCE).await {
-        mutate_state(|s| s.main_neuron_8y_stake = neuron_8y_stake_e8s);
+    if let Some(neuron_id_8y) = read_state(|s| s.neuron_id_8y) {
+        if let Ok(neuron_8y_stake_e8s) = fetch_neuron_stake(neuron_id_8y.id).await {
+            mutate_state(|s| s.main_neuron_8y_stake = neuron_8y_stake_e8s);
+        }
     }
     let _ = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await;
-    if let Ok(main_neuron_6m_staked) = fetch_neuron_stake(SIX_MONTHS_NEURON_NONCE).await {
-        mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
+    if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m) {
+        if let Ok(main_neuron_6m_staked) = fetch_neuron_stake(neuron_id_6m.id).await {
+            mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
+        }
     }
 }
 
@@ -753,10 +759,10 @@ async fn initialize_main_neuron(
     }
 }
 
-async fn fetch_neuron_stake(neuron_nonce: u64) -> Result<ICP, String> {
-    let res = get_full_neuron_by_nonce(neuron_nonce).await?;
+async fn fetch_neuron_stake(neuron_id: u64) -> Result<ICP, String> {
+    let res = get_full_neuron(neuron_id).await?;
     match res {
-        Ok(neuron) => Ok(ICP::from_e8s(neuron.maturity_e8s_equivalent)),
+        Ok(neuron) => Ok(ICP::from_e8s(neuron.cached_neuron_stake_e8s)),
         Err(gov_err) => Err(format!("governance error: {gov_err:?}")),
     }
 }
