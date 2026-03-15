@@ -756,7 +756,7 @@ async fn initialize_main_neuron(
 async fn fetch_neuron_stake(neuron_nonce: u64) -> Result<ICP, String> {
     let res = get_full_neuron_by_nonce(neuron_nonce).await?;
     match res {
-        Ok(neuron) => Ok(ICP::from_e8s(neuron.cached_neuron_stake_e8s)),
+        Ok(neuron) => Ok(ICP::from_e8s(neuron.maturity_e8s_equivalent)),
         Err(gov_err) => Err(format!("governance error: {gov_err:?}")),
     }
 }
