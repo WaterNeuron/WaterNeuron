@@ -98,6 +98,7 @@ pub fn post_upgrade(args: LiquidArg) {
 
 fn setup_timer() {
     schedule_now(TaskType::MaybeInitializeMainNeurons);
+    schedule_now(TaskType::ProcessLogic);
     schedule_now(TaskType::SpawnNeurons);
     schedule_now(TaskType::ProcessVoting);
     schedule_now(TaskType::ProcessEarlyVoting);
