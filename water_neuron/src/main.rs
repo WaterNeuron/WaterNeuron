@@ -318,6 +318,26 @@ async fn debug_disburse_status() -> Result<String, String> {
 }
 
 #[update(hidden = true)]
+async fn set_neuron_visibility(neuron_nonce: u64, visibility: i32) -> Result<ManageNeuronResponse, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
+
+    water_neuron::management::set_neuron_visibility(neuron_nonce, visibility).await
+}
+
+#[update(hidden = true)]
+async fn set_neuron_visibility_validate(neuron_nonce: u64, visibility: i32) -> Result<String, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
+
+    Ok(format!("Set neuron (nonce {neuron_nonce}) visibility to {visibility}"))
+}
+
+#[update(hidden = true)]
 async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
     assert_eq!(
         ic_cdk::api::msg_caller(),
