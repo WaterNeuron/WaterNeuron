@@ -260,7 +260,10 @@ async fn debug_disburse_status() -> Result<String, String> {
     let to_disburse = read_state(|s| s.to_disburse.clone());
     out.push_str(&format!("to_disburse has {} entries:\n", to_disburse.len()));
     for (nid, req) in &to_disburse {
-        out.push_str(&format!("  neuron {} -> receiver {:?}\n", nid.id, req.receiver));
+        out.push_str(&format!(
+            "  neuron {} -> receiver {:?}\n",
+            nid.id, req.receiver
+        ));
     }
     out.push('\n');
 
@@ -318,7 +321,10 @@ async fn debug_disburse_status() -> Result<String, String> {
 }
 
 #[update(hidden = true)]
-async fn set_neuron_visibility(neuron_nonce: u64, visibility: i32) -> Result<ManageNeuronResponse, String> {
+async fn set_neuron_visibility(
+    neuron_nonce: u64,
+    visibility: i32,
+) -> Result<ManageNeuronResponse, String> {
     assert_eq!(
         ic_cdk::api::msg_caller(),
         read_state(|s| s.wtn_governance_id)
@@ -328,13 +334,18 @@ async fn set_neuron_visibility(neuron_nonce: u64, visibility: i32) -> Result<Man
 }
 
 #[update(hidden = true)]
-async fn set_neuron_visibility_validate(neuron_nonce: u64, visibility: i32) -> Result<String, String> {
+async fn set_neuron_visibility_validate(
+    neuron_nonce: u64,
+    visibility: i32,
+) -> Result<String, String> {
     assert_eq!(
         ic_cdk::api::msg_caller(),
         read_state(|s| s.wtn_governance_id)
     );
 
-    Ok(format!("Set neuron (nonce {neuron_nonce}) visibility to {visibility}"))
+    Ok(format!(
+        "Set neuron (nonce {neuron_nonce}) visibility to {visibility}"
+    ))
 }
 
 #[update(hidden = true)]

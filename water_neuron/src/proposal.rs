@@ -147,7 +147,10 @@ pub async fn vote_on_nns_proposals() {
             });
             for proposal in pending_proposals.proposal_info {
                 if is_canister_stopping() {
-                    log!(INFO, "[vote_on_nns_proposals] Canister is stopping, aborting.");
+                    log!(
+                        INFO,
+                        "[vote_on_nns_proposals] Canister is stopping, aborting."
+                    );
                     return;
                 }
                 let deadline_timestamp_seconds = proposal.deadline_timestamp_seconds.unwrap_or(0);
@@ -250,7 +253,10 @@ pub async fn early_voting_on_nns_proposals() {
 
     for proposal_id in not_voted {
         if is_canister_stopping() {
-            log!(INFO, "[early_voting_on_nns_proposals] Canister is stopping, aborting.");
+            log!(
+                INFO,
+                "[early_voting_on_nns_proposals] Canister is stopping, aborting."
+            );
             return;
         }
         match get_sns_proposal(wtn_governance_id, proposal_id.id).await {
