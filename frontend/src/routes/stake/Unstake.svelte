@@ -310,7 +310,7 @@
 					Receive &mdash; ICP
 				{/if}
 			</p>
-			<h2 class="waiting-time">Waiting time: 6 months</h2>
+			<h2 class="waiting-time">Waiting time: 2 weeks</h2>
 		</button>
 	</div>
 

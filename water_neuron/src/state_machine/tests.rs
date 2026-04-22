@@ -284,7 +284,7 @@ async fn should_cancel_withdrawal_while_voting() {
             assert_eq!(target_neuron.id.unwrap().id, info.neuron_id_6m.unwrap().id);
             assert_eq!(
                 target_neuron_info.dissolve_delay_seconds,
-                15_865_200 // 6 months
+                1_209_600 // 2 weeks
             );
             assert_eq!(target_neuron_info.stake_e8s, 10_099_980_042_u64);
             assert_eq!(source_neuron_info.age_seconds, 0);
@@ -361,7 +361,7 @@ async fn should_cancel_withdrawal() {
             assert_eq!(target_neuron.id.unwrap().id, info.neuron_id_6m.unwrap().id);
             assert_eq!(
                 target_neuron_info.dissolve_delay_seconds,
-                15_865_200 // 6 months
+                1_209_600 // 2 weeks
             );
             assert_eq!(target_neuron_info.stake_e8s, 10_099_980_042);
             assert_eq!(source_neuron_info.age_seconds, 0);
@@ -382,7 +382,7 @@ async fn should_cancel_withdrawal() {
             .unwrap()
             .dissolve_state
             .unwrap(),
-        neuron::DissolveState::DissolveDelaySeconds(15_865_200)
+        neuron::DissolveState::DissolveDelaySeconds(1_209_600)
     );
     assert_eq!(info.exchange_rate, 99_950_496);
     assert_eq!(info.neuron_6m_stake_e8s, info.tracked_6m_stake);

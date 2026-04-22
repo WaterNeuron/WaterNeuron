@@ -255,7 +255,7 @@
 					)} ICP
 				</p>
 			{/if}
-			<p>Effective {isFastUnstake ? 'immediately' : 'in 6 months'}</p>
+			<p>Effective {isFastUnstake ? 'immediately' : 'in 2 weeks'}</p>
 		</div>
 		<div class="toggle-container">
 			<button

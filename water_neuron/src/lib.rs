@@ -81,7 +81,7 @@ pub const ONE_WEEK_SECONDS: u64 = 7 * ONE_DAY_SECONDS;
 pub const ONE_YEAR_SECONDS: u64 = (4 * 365 + 1) * ONE_DAY_SECONDS / 4;
 pub const ONE_MONTH_SECONDS: u64 = ONE_YEAR_SECONDS / 12;
 pub const MAX_DISSOLVE_DELAY_SECONDS: u64 = 8 * ONE_YEAR_SECONDS;
-pub const MIN_DISSOLVE_DELAY_FOR_REWARDS: u64 = 6 * ONE_MONTH_SECONDS + ONE_DAY_SECONDS;
+pub const MIN_DISSOLVE_DELAY_FOR_REWARDS: u64 = 2 * ONE_WEEK_SECONDS;
 
 pub const DEFAULT_LEDGER_FEE: u64 = 10_000;
 pub const NEURON_LEDGER_FEE: u64 = 1_000_000;
@@ -456,11 +456,10 @@ pub fn timer() {
                     };
 
                     let _ = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await;
-                    if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m) {
-                        if let Ok(main_neuron_6m_staked) = fetch_neuron_stake(neuron_id_6m.id).await
-                        {
-                            mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
-                        }
+                    if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m)
+                        && let Ok(main_neuron_6m_staked) = fetch_neuron_stake(neuron_id_6m.id).await
+                    {
+                        mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
                     }
                 });
             }
@@ -515,16 +514,16 @@ pub fn timer() {
 
 pub async fn refresh_stakes() {
     let _ = refresh_neuron(EIGHT_YEARS_NEURON_NONCE).await;
-    if let Some(neuron_id_8y) = read_state(|s| s.neuron_id_8y) {
-        if let Ok(neuron_8y_stake_e8s) = fetch_neuron_stake(neuron_id_8y.id).await {
-            mutate_state(|s| s.main_neuron_8y_stake = neuron_8y_stake_e8s);
-        }
+    if let Some(neuron_id_8y) = read_state(|s| s.neuron_id_8y)
+        && let Ok(neuron_8y_stake_e8s) = fetch_neuron_stake(neuron_id_8y.id).await
+    {
+        mutate_state(|s| s.main_neuron_8y_stake = neuron_8y_stake_e8s);
     }
     let _ = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await;
-    if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m) {
-        if let Ok(main_neuron_6m_staked) = fetch_neuron_stake(neuron_id_6m.id).await {
-            mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
-        }
+    if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m)
+        && let Ok(main_neuron_6m_staked) = fetch_neuron_stake(neuron_id_6m.id).await
+    {
+        mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
     }
 }
 
