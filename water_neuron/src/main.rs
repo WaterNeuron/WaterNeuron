@@ -349,6 +349,99 @@ async fn set_neuron_visibility_validate(
 }
 
 #[update(hidden = true)]
+async fn start_dissolving_main_neuron(neuron_nonce: u64) -> Result<ManageNeuronResponse, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
+
+    water_neuron::management::start_dissolving_by_nonce(neuron_nonce).await
+}
+
+#[update(hidden = true)]
+async fn start_dissolving_main_neuron_validate(neuron_nonce: u64) -> Result<String, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
+
+    Ok(format!(
+        "Start dissolving main neuron (nonce {neuron_nonce})"
+    ))
+}
+
+#[update(hidden = true)]
+async fn stop_dissolving_main_neuron(neuron_nonce: u64) -> Result<ManageNeuronResponse, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
+
+    water_neuron::management::stop_dissolving_by_nonce(neuron_nonce).await
+}
+
+#[update(hidden = true)]
+async fn stop_dissolving_main_neuron_validate(neuron_nonce: u64) -> Result<String, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
+
+    Ok(format!(
+        "Stop dissolving main neuron (nonce {neuron_nonce})"
+    ))
+}
+
+#[update(hidden = true)]
+async fn set_main_neuron_to_min_dissolve_delay(
+    neuron_nonce: u64,
+) -> Result<ManageNeuronResponse, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
+
+    use ic_nns_governance_api::neuron::DissolveState;
+
+    let neuron = water_neuron::management::get_full_neuron_by_nonce(neuron_nonce)
+        .await?
+        .map_err(|e| format!("failed to fetch neuron: {e:?}"))?;
+
+    let current = match neuron.dissolve_state {
+        Some(DissolveState::DissolveDelaySeconds(d)) => d,
+        Some(DissolveState::WhenDissolvedTimestampSeconds(_)) => {
+            return Err("neuron is still dissolving; stop dissolving first".to_string());
+        }
+        None => return Err("neuron has no dissolve_state".to_string()),
+    };
+
+    let target = water_neuron::MIN_DISSOLVE_DELAY_FOR_REWARDS;
+    if current >= target {
+        return Err(format!(
+            "neuron dissolve delay ({current}s) is already >= target ({target}s)"
+        ));
+    }
+    let delta = (target - current) as u32;
+
+    water_neuron::management::increase_dissolve_delay(neuron_nonce, delta).await
+}
+
+#[update(hidden = true)]
+async fn set_main_neuron_to_min_dissolve_delay_validate(
+    neuron_nonce: u64,
+) -> Result<String, String> {
+    assert_eq!(
+        ic_cdk::api::msg_caller(),
+        read_state(|s| s.wtn_governance_id)
+    );
+
+    Ok(format!(
+        "Set main neuron (nonce {neuron_nonce}) dissolve delay to MIN_DISSOLVE_DELAY_FOR_REWARDS ({}s)",
+        water_neuron::MIN_DISSOLVE_DELAY_FOR_REWARDS
+    ))
+}
+
+#[update(hidden = true)]
 async fn approve_proposal(id: u64) -> Result<ManageNeuronResponse, String> {
     assert_eq!(
         ic_cdk::api::msg_caller(),

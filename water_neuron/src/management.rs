@@ -263,6 +263,26 @@ pub async fn set_neuron_visibility(
     .await
 }
 
+pub async fn start_dissolving_by_nonce(neuron_nonce: u64) -> Result<ManageNeuronResponse, String> {
+    manage_neuron(
+        ManageNeuronProposalCommand::Configure(Configure {
+            operation: Some(Operation::StartDissolving(StartDissolving {})),
+        }),
+        NeuronNonceOrId::Nonce(neuron_nonce),
+    )
+    .await
+}
+
+pub async fn stop_dissolving_by_nonce(neuron_nonce: u64) -> Result<ManageNeuronResponse, String> {
+    manage_neuron(
+        ManageNeuronProposalCommand::Configure(Configure {
+            operation: Some(Operation::StopDissolving(StopDissolving {})),
+        }),
+        NeuronNonceOrId::Nonce(neuron_nonce),
+    )
+    .await
+}
+
 pub async fn split_neuron(
     neuron_nonce: u64,
     amount_e8s: u64,

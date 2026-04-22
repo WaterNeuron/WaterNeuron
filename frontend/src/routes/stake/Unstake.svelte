@@ -310,7 +310,11 @@
 					Receive &mdash; ICP
 				{/if}
 			</p>
-			<h2 class="waiting-time">Waiting time: 6 months</h2>
+			<h2 class="waiting-time">Waiting time: 2 weeks</h2>
+			<p class="transition-note">
+				Note: the main neuron is currently transitioning from a 6 months to a 2 weeks dissolve
+				delay. During this transition the actual waiting time may be longer than 2 weeks.
+			</p>
 		</button>
 	</div>
 

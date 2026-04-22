@@ -142,13 +142,13 @@ pub fn icrc21_canister_call_consent_message(
             }))?;
             match arg.maybe_subaccount {
                 Some(subaccount) => format!(
-                    "Convert {} nICP to ICP at the current exchange rate after a 6 months dissolve delay. 
-                    Specified subaccount: {}.", 
+                    "Convert {} nICP to ICP at the current exchange rate after a 2 weeks dissolve delay.
+                    Specified subaccount: {}.",
                     DisplayAmount(arg.amount_e8s),
                     hex::encode(subaccount)
                 ),
                 None => format!(
-                    "Convert {} nICP to ICP at the current exchange rate after a 6 months dissolve delay.",
+                    "Convert {} nICP to ICP at the current exchange rate after a 2 weeks dissolve delay.",
                     DisplayAmount(arg.amount_e8s)
                 )
             }
