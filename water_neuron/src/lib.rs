@@ -2,9 +2,9 @@ use crate::dashboard::DisplayAmount;
 use crate::guards::{GuardError, TaskGuard};
 use crate::logs::{DEBUG, INFO};
 use crate::management::{
-    balance_of, disburse, follow_neuron, get_full_neuron,
-    increase_dissolve_delay, list_neurons, manage_neuron_sns, refresh_neuron, register_vote,
-    spawn_all_maturity, split_neuron, start_dissolving, transfer,
+    balance_of, disburse, follow_neuron, get_full_neuron, increase_dissolve_delay, list_neurons,
+    manage_neuron_sns, refresh_neuron, register_vote, spawn_all_maturity, split_neuron,
+    start_dissolving, transfer,
 };
 use crate::nns_types::{NeuronId, ProposalId, is_dissolved};
 use crate::numeric::{ICP, nICP};
@@ -417,13 +417,21 @@ pub fn timer() {
                         Err(_) => return,
                     };
 
-                    if is_canister_stopping() { return; }
+                    if is_canister_stopping() {
+                        return;
+                    }
                     refresh_stakes().await;
-                    if is_canister_stopping() { return; }
+                    if is_canister_stopping() {
+                        return;
+                    }
                     process_witdhrawals_splitting().await;
-                    if is_canister_stopping() { return; }
+                    if is_canister_stopping() {
+                        return;
+                    }
                     process_start_dissolving().await;
-                    if is_canister_stopping() { return; }
+                    if is_canister_stopping() {
+                        return;
+                    }
                     process_disburse().await;
 
                     schedule_after(LOGIC_DELAY, TaskType::ProcessLogic);
@@ -449,8 +457,7 @@ pub fn timer() {
 
                     let _ = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await;
                     if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m) {
-                        if let Ok(main_neuron_6m_staked) =
-                            fetch_neuron_stake(neuron_id_6m.id).await
+                        if let Ok(main_neuron_6m_staked) = fetch_neuron_stake(neuron_id_6m.id).await
                         {
                             mutate_state(|s| s.main_neuron_6m_staked = main_neuron_6m_staked);
                         }
@@ -605,7 +612,10 @@ async fn process_pending_transfer() -> u64 {
 
     for transfer in pending_transfers {
         if is_canister_stopping() {
-            log!(INFO, "[process_pending_transfer] Canister is stopping, aborting.");
+            log!(
+                INFO,
+                "[process_pending_transfer] Canister is stopping, aborting."
+            );
             return error_count;
         }
         let (ledger_id, fee) = (transfer.unit.ledger_id(), transfer.unit.fee());
@@ -776,7 +786,10 @@ pub async fn process_start_dissolving() {
 
     for neuron_id in &dissolve_request_ids {
         if is_canister_stopping() {
-            log!(INFO, "[process_start_dissolving] Canister is stopping, aborting.");
+            log!(
+                INFO,
+                "[process_start_dissolving] Canister is stopping, aborting."
+            );
             return;
         }
         let result = start_dissolving(*neuron_id).await;
@@ -1102,7 +1115,10 @@ pub async fn process_witdhrawals_splitting() {
 
     for withdrawal_id in requests_ids {
         if is_canister_stopping() {
-            log!(INFO, "[process_witdhrawals_splitting] Canister is stopping, aborting.");
+            log!(
+                INFO,
+                "[process_witdhrawals_splitting] Canister is stopping, aborting."
+            );
             return;
         }
         let request = read_state(|s| {

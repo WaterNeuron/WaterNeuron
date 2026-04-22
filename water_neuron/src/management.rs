@@ -7,8 +7,8 @@ use ic_nns_governance_api::{
     ListProposalInfoResponse, ManageNeuronProposal, ManageNeuronResponse, Neuron, Topic,
     manage_neuron::{
         ClaimOrRefresh, Configure, Disburse, Follow, IncreaseDissolveDelay,
-        ManageNeuronProposalCommand, Merge, NeuronIdOrSubaccount, RegisterVote, Spawn, Split,
-        StartDissolving, StopDissolving,
+        ManageNeuronProposalCommand, Merge, NeuronIdOrSubaccount, RegisterVote, SetVisibility,
+        Spawn, Split, StartDissolving, StopDissolving,
         claim_or_refresh::{By, MemoAndController},
         configure::Operation,
     },
@@ -241,6 +241,21 @@ pub async fn increase_dissolve_delay(
         ManageNeuronProposalCommand::Configure(Configure {
             operation: Some(Operation::IncreaseDissolveDelay(IncreaseDissolveDelay {
                 additional_dissolve_delay_seconds,
+            })),
+        }),
+        NeuronNonceOrId::Nonce(neuron_nonce),
+    )
+    .await
+}
+
+pub async fn set_neuron_visibility(
+    neuron_nonce: u64,
+    visibility: i32,
+) -> Result<ManageNeuronResponse, String> {
+    manage_neuron(
+        ManageNeuronProposalCommand::Configure(Configure {
+            operation: Some(Operation::SetVisibility(SetVisibility {
+                visibility: Some(visibility),
             })),
         }),
         NeuronNonceOrId::Nonce(neuron_nonce),
