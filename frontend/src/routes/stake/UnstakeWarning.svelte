@@ -256,6 +256,12 @@
 				</p>
 			{/if}
 			<p>Effective {isFastUnstake ? 'immediately' : 'in 2 weeks'}</p>
+			{#if !isFastUnstake}
+				<p class="transition-note">
+					Note: the main neuron is currently transitioning from a 6 months to a 2 weeks dissolve
+					delay. During this transition the actual waiting time may be longer than 2 weeks.
+				</p>
+			{/if}
 		</div>
 		<div class="toggle-container">
 			<button
