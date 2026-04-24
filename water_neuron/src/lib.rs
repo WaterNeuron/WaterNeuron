@@ -8,7 +8,7 @@ use crate::management::{
 };
 use crate::nns_types::{NeuronId, ProposalId, is_dissolved};
 use crate::numeric::{ICP, nICP};
-use crate::proposal::{early_voting_on_nns_proposals, mirror_proposals, vote_on_nns_proposals};
+use crate::proposal::{early_voting_on_nns_proposals, process_voting_cycle};
 use crate::sns_governance::{
     CanisterRuntime, IcCanisterRuntime, WTN_MAX_DISSOLVE_DELAY_SECONDS, process_icp_distribution,
 };
@@ -366,16 +366,17 @@ pub fn timer() {
                         Err(_) => return,
                     };
 
-                    if let Err(e) = mirror_proposals().await {
-                        log!(
-                            INFO,
-                            "[ProcessVoting] failed to mirror proposals with error: {e}"
-                        );
-                        schedule_after(RETRY_DELAY, TaskType::ProcessVoting);
-                    }
-                    vote_on_nns_proposals().await;
-
-                    schedule_after(Duration::from_secs(30 * 60), TaskType::ProcessVoting);
+                    let next_delay = match process_voting_cycle().await {
+                        Ok(delay) => delay,
+                        Err(e) => {
+                            log!(
+                                INFO,
+                                "[ProcessVoting] failed to run voting cycle with error: {e}"
+                            );
+                            RETRY_DELAY
+                        }
+                    };
+                    schedule_after(next_delay, TaskType::ProcessVoting);
                 });
             }
             TaskType::ProcessEarlyVoting => {
