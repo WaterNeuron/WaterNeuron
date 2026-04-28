@@ -456,7 +456,14 @@ pub fn timer() {
                         Err(_) => return,
                     };
 
-                    let _ = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await;
+                    if let Err(err) = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await {
+                        log!(
+                            INFO,
+                            "[RefreshShortTerm] claim_or_refresh failed for main 6-month neuron (nonce {}): {}",
+                            SIX_MONTHS_NEURON_NONCE,
+                            err,
+                        );
+                    }
                     if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m)
                         && let Ok(main_neuron_6m_staked) = fetch_neuron_stake(neuron_id_6m.id).await
                     {
@@ -514,13 +521,27 @@ pub fn timer() {
 }
 
 pub async fn refresh_stakes() {
-    let _ = refresh_neuron(EIGHT_YEARS_NEURON_NONCE).await;
+    if let Err(err) = refresh_neuron(EIGHT_YEARS_NEURON_NONCE).await {
+        log!(
+            INFO,
+            "[refresh_stakes] claim_or_refresh failed for main 8-year neuron (nonce {}): {}",
+            EIGHT_YEARS_NEURON_NONCE,
+            err,
+        );
+    }
     if let Some(neuron_id_8y) = read_state(|s| s.neuron_id_8y)
         && let Ok(neuron_8y_stake_e8s) = fetch_neuron_stake(neuron_id_8y.id).await
     {
         mutate_state(|s| s.main_neuron_8y_stake = neuron_8y_stake_e8s);
     }
-    let _ = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await;
+    if let Err(err) = refresh_neuron(SIX_MONTHS_NEURON_NONCE).await {
+        log!(
+            INFO,
+            "[refresh_stakes] claim_or_refresh failed for main 6-month neuron (nonce {}): {}",
+            SIX_MONTHS_NEURON_NONCE,
+            err,
+        );
+    }
     if let Some(neuron_id_6m) = read_state(|s| s.neuron_id_6m)
         && let Ok(main_neuron_6m_staked) = fetch_neuron_stake(neuron_id_6m.id).await
     {
