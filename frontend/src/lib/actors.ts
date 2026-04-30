@@ -169,8 +169,8 @@ export async function fetchWtnAllocation(
 }
 
 const DAO_SHARE = 0.1;
-const APY_6M = 0.073;
-const APY_8Y = 0.137;
+const APY_SHORT = 0.0251;
+const APY_LONG = 0.0794;
 
 export class WaterNeuronInfo {
 	public info: CanisterInfo;
@@ -201,8 +201,8 @@ export class WaterNeuronInfo {
 
 		if (neuron6mStake + neuron8yStake === 0) return 0;
 
-		const reward6m = APY_6M * neuron6mStake;
-		const reward8y = APY_8Y * neuron8yStake;
+		const reward6m = APY_SHORT * neuron6mStake;
+		const reward8y = APY_LONG * neuron8yStake;
 		const rewardTotal = reward6m + reward8y;
 		const share = 1 - DAO_SHARE;
 
